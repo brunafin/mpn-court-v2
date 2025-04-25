@@ -106,7 +106,7 @@ function ReservationDetails() {
   >(null);
   const [isResrvationFixed, setIsReservationFixed] = useState(false);
   const [isReservationPrepaid, setIsReservationPrepaid] = useState(false);
-  const [court, setCourt] = useState<IReservationDetailsItemProps | null>({
+  const [court] = useState<IReservationDetailsItemProps | null>({
     id: 1,
     status: ReservationStatusEnum.AVAILABLE,
     date: "2025-04-21",
@@ -144,7 +144,7 @@ function ReservationDetails() {
         >
           <button
             onClick={() => navigate(-1)}
-            className="w-1/4 flex items-center justify-center w-fit shadow-none text-neutral-100"
+            className="w-1/4 flex items-center justify-center shadow-none text-neutral-100"
           >
             <MdOutlineArrowBackIos size={24} />
           </button>

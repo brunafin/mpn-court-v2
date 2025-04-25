@@ -10,7 +10,6 @@ import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
-import DatePicker from "react-datepicker";
 import CustomDatepicker from "../../components/Datepicker";
 import { HiX } from "react-icons/hi";
 
@@ -313,7 +312,7 @@ function Reservation() {
           />
         </a>
         <h1 className="font-bold text-center text-base text-neutral-800">
-          Sua quadra
+          Sua Quadra
         </h1>
         <BsList className="text-neutral-800 cursor-pointer" size={24} />
       </header>
