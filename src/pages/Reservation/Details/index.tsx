@@ -1,25 +1,23 @@
 import {
   BsArrowCounterclockwise,
-  BsCashCoin,
   BsList,
   BsPersonCheck,
   BsPersonX,
   BsQuestionCircle,
   BsWhatsapp,
 } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router";
 import { ReservationStatusEnum } from "../enum";
 import {
   MdNotInterested,
   MdOutlineAccessTime,
+  MdOutlineArrowBackIos,
   MdOutlineLockClock,
   MdOutlineLockOpen,
 } from "react-icons/md";
 import { FaRegCalendarCheck } from "react-icons/fa";
-import {
-  IReservationDetailsItemProps,
-  IReservationItemProps,
-} from "../interface";
+import { IReservationDetailsItemProps } from "../interface";
 import { useState } from "react";
 import Input from "../../../components/Input";
 
@@ -64,7 +62,7 @@ const renderButtonByStatus = (status?: ReservationStatusEnum | null) => {
     case ReservationStatusEnum.INACTIVE:
       return (
         <div className="w-full flex justify-end">
-          <button className="flex items-center justify-center w-fit  m-4 rounded-sm bg-tertiary-700 text-neutral-100 gap-2">
+          <button className="flex items-center justify-center w-fit rounded-sm bg-tertiary-700 text-neutral-100 gap-2 text-sm py-1 px-2">
             <MdOutlineLockOpen size={18} />
             Liberar horário
           </button>
@@ -74,7 +72,7 @@ const renderButtonByStatus = (status?: ReservationStatusEnum | null) => {
     case ReservationStatusEnum.PREPAID:
       return (
         <div className="w-full flex justify-end">
-          <button className="flex items-center justify-center w-fit  m-4 rounded-sm bg-neutral-700 text-neutral-100 gap-2">
+          <button className="flex items-center justify-center w-fit rounded-sm bg-neutral-700 text-neutral-100 gap-2 text-sm py-1 px-2">
             <MdOutlineLockClock size={18} />
             Fixar horário
           </button>
@@ -82,8 +80,8 @@ const renderButtonByStatus = (status?: ReservationStatusEnum | null) => {
       );
     case ReservationStatusEnum.AVAILABLE:
       return (
-        <div className="w-full flex justify-end">
-          <button className="flex items-center justify-center w-fit  m-4 rounded-sm bg-danger-400 text-neutral-100 gap-2">
+        <div className="w-full flex justify-end items-start">
+          <button className="flex items-center justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-2 text-xs py-1 px-2">
             <MdNotInterested size={18} />
             Inativar horário
           </button>
@@ -96,6 +94,7 @@ const renderButtonByStatus = (status?: ReservationStatusEnum | null) => {
 
 function ReservationDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [customerReservationName, setCustomerReservationName] = useState<
     string | null
   >(null);
@@ -116,7 +115,7 @@ function ReservationDetails() {
     time: "21:00",
     price: 120,
     customer: {
-      name: "Bruna Margarida",
+      name: "Bruna",
       email: "bruna.nunes@example.com",
       phone: "51999365380",
     },
@@ -143,10 +142,20 @@ function ReservationDetails() {
             court?.status
           )}`}
         >
-          <div className="flex items-center md:items-center gap-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-1/4 flex items-center justify-center w-fit shadow-none text-neutral-100"
+          >
+            <MdOutlineArrowBackIos size={24} />
+          </button>
+          <div className="w-3/4 flex items-center md:items-center gap-2">
             {getReservationIcon(court?.status)}
             <p className="text-neutral-100 font-bold">12/12/2023 - 18:00</p>
           </div>
+        </header>
+      </section>
+      <section className="bg-neutral-800 min-h-[calc(100vh-200px)] md:h-[calc(100vh-64px)] w-full flex flex-col items-center">
+        <div className="w-full flex justify-between p-2 px-4">
           <a
             href={`${import.meta.env.VITE_WHATSAPP_URL_BASE}${
               court?.customer.phone
@@ -158,12 +167,10 @@ function ReservationDetails() {
             {court?.customer.name}
             <BsWhatsapp size={20} />
           </a>
-        </header>
-      </section>
-      <section className="bg-neutral-800 min-h-[calc(100vh-200px)] md:h-[calc(100vh-64px)] w-full flex flex-col items-center">
-        {renderButtonByStatus(court?.status)}
+          {renderButtonByStatus(court?.status)}
+        </div>
         <section className="flex justify-center items-center">
-          <h2 className="text-xl">
+          <h2 className="text-xl mt-4">
             Quadra {court?.court} -{" "}
             {court?.price.toLocaleString("pt-BR", {
               style: "currency",
@@ -229,7 +236,7 @@ function ReservationDetails() {
           ReservationStatusEnum.PREPAID,
         ].includes(court?.status as ReservationStatusEnum) && (
           <div className="flex justify-center mt-4">
-            <button className="flex items-center justify-center w-fit m-4 rounded-sm bg-danger-600 text-neutral-100 gap-2">
+            <button className="flex items-center justify-center w-fit m-4 rounded-sm bg-danger-600 text-neutral-100 gap-2 py-1 px-2">
               <BsArrowCounterclockwise size={20} />
               Cancelar reserva
             </button>
@@ -292,7 +299,7 @@ function ReservationDetails() {
                 Horário fixo
               </label>
             </div>
-            <button className="flex items-start justify-center w-full m-4 mt-8 rounded-sm bg-secondary-600 text-neutral-100 gap-2">
+            <button className="flex items-start justify-center w-full m-4 mt-8 rounded-sm bg-secondary-600 text-neutral-100 gap-2 py-3 px-2">
               <FaRegCalendarCheck size={20} />
               Reservar
             </button>

@@ -7,9 +7,12 @@ import {
 } from "react-icons/bs";
 import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
-import Legend from "./Legend";
+import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
+import DatePicker from "react-datepicker";
+import CustomDatepicker from "../../components/Datepicker";
+import { HiX } from "react-icons/hi";
 
 const mock: IReservationItemProps[] = [
   {
@@ -41,7 +44,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 3,
     status: ReservationStatusEnum.RESERVED,
-    date: "2025-04-21",
+    date: "2025-04-23",
     court: "A",
     time: "19:00",
     price: 100,
@@ -54,7 +57,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 4,
     status: ReservationStatusEnum.PREPAID,
-    date: "2025-04-21",
+    date: "2025-04-24",
     court: "B",
     time: "18:00",
     price: 80,
@@ -80,7 +83,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 6,
     status: ReservationStatusEnum.FIXED,
-    date: "2025-04-20",
+    date: "2025-04-22",
     court: "A",
     time: "18:00",
     price: 120,
@@ -93,7 +96,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 7,
     status: ReservationStatusEnum.INACTIVE,
-    date: "2025-04-21",
+    date: "2025-04-23",
     court: "B",
     time: "08:00",
     price: 50,
@@ -106,7 +109,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 8,
     status: ReservationStatusEnum.RESERVED,
-    date: "2025-04-21",
+    date: "2025-04-24",
     court: "A",
     time: "10:00",
     price: 100,
@@ -132,7 +135,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 10,
     status: ReservationStatusEnum.AVAILABLE,
-    date: "2025-04-21",
+    date: "2025-04-22",
     court: "A",
     time: "16:00",
     price: 60,
@@ -145,7 +148,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 11,
     status: ReservationStatusEnum.AVAILABLE,
-    date: "2025-04-22",
+    date: "2025-04-23",
     court: "A",
     time: "09:00",
     price: 60,
@@ -158,7 +161,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 12,
     status: ReservationStatusEnum.RESERVED,
-    date: "2025-04-22",
+    date: "2025-04-24",
     court: "B",
     time: "10:00",
     price: 100,
@@ -171,7 +174,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 13,
     status: ReservationStatusEnum.PREPAID,
-    date: "2025-04-22",
+    date: "2025-04-21",
     court: "A",
     time: "11:00",
     price: 80,
@@ -197,7 +200,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 15,
     status: ReservationStatusEnum.INACTIVE,
-    date: "2025-04-22",
+    date: "2025-04-23",
     court: "A",
     time: "13:00",
     price: 50,
@@ -210,7 +213,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 16,
     status: ReservationStatusEnum.AVAILABLE,
-    date: "2025-04-22",
+    date: "2025-04-24",
     court: "B",
     time: "14:00",
     price: 60,
@@ -223,7 +226,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 17,
     status: ReservationStatusEnum.RESERVED,
-    date: "2025-04-22",
+    date: "2025-04-21",
     court: "A",
     time: "15:00",
     price: 100,
@@ -249,7 +252,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 19,
     status: ReservationStatusEnum.FIXED,
-    date: "2025-04-22",
+    date: "2025-04-23",
     court: "A",
     time: "17:00",
     price: 120,
@@ -262,7 +265,7 @@ const mock: IReservationItemProps[] = [
   {
     id: 20,
     status: ReservationStatusEnum.INACTIVE,
-    date: "2025-04-22",
+    date: "2025-04-24",
     court: "B",
     time: "18:00",
     price: 50,
@@ -275,19 +278,25 @@ const mock: IReservationItemProps[] = [
 ];
 
 function Reservation() {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date | null>(
+    new Date(new Date().setHours(0, 0, 0, 0))
+  );
   const [statusSelected, setStatusSelected] =
     useState<ReservationStatusEnum | null>(null);
-  const [courtSelected, setCourtSelected] = useState<string | null>("all");
+  const [courtSelected, setCourtSelected] = useState<string>("all");
   const [isOpenFilters, setIsOpenFilters] = useState(false);
 
-  function handleSubtractOneDay(date: Date): void {
+  function handleSubtractOneDay(date: Date | null): void {
+    setIsOpenFilters(false);
+    if (!date) return;
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() - 1);
     setDate(newDate);
   }
 
-  function handleAddOneDay(date: Date): void {
+  function handleAddOneDay(date: Date | null): void {
+    setIsOpenFilters(false);
+    if (!date) return;
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + 1);
     setDate(newDate);
@@ -304,17 +313,35 @@ function Reservation() {
           />
         </a>
         <h1 className="font-bold text-center text-base text-neutral-800">
-          NENA Sports
+          Sua quadra
         </h1>
         <BsList className="text-neutral-800 cursor-pointer" size={24} />
       </header>
       <section className="bg-neutral-800 h-[calc(100vh-136px)] md:h-[calc(100vh-64px)] w-full flex flex-col">
-        <div className="flex items-center justify-center h-16">
+        <div className="flex items-center justify-center h-16 px-2">
           <div className="flex items-center gap-2 justify-center p-4">
             <button onClick={() => handleSubtractOneDay(date)}>
               <BsChevronLeft size={24} cursor="pointer" />
             </button>
-            <p>{date.toLocaleDateString("pt-BR")}</p>
+            {/* <p>{date.toLocaleDateString("pt-BR")}</p> */}
+            {/* <input
+              type="date"
+              value={date
+                .toLocaleDateString("pt-BR")
+                .split("/")
+                .reverse()
+                .join("-")}
+              onChange={(e) => {
+                const [year, month, day] = e.target.value.split("-");
+                setDate(new Date(`${year}-${month}-${day}`));
+              }}
+              className="border-none px-2 py-1"
+            /> */}
+            <CustomDatepicker
+              dateSelected={date}
+              setDateSelected={setDate}
+              onFocus={() => setIsOpenFilters(false)}
+            />
             <button onClick={() => handleAddOneDay(date)}>
               <BsChevronRight size={24} cursor="pointer" />
             </button>
@@ -326,65 +353,36 @@ function Reservation() {
             <BsArrowRepeat size={24} />
           </button>
           <button
-            className="md:hidden text-neutral-200 hover:text-neutral-100 bg-neutral-900 flex justify-end items-center underline gap-2"
+            className="md:hidden text-neutral-200 hover:text-neutral-100 bg-neutral-900 py-2 px-2 flex justify-end items-center gap-2 rounded-sm"
             onClick={() => setIsOpenFilters(!isOpenFilters)}
           >
-            <HiOutlineAdjustmentsHorizontal />
-            Filtrar
+            {isOpenFilters ? (
+              <>
+                <HiX /> Fechar
+              </>
+            ) : (
+              <>
+                <HiOutlineAdjustmentsHorizontal /> Filtrar
+              </>
+            )}
           </button>
         </div>
-        <Legend
+        <LegendAndFilters
           statusSelected={statusSelected}
           setStatusSelected={setStatusSelected}
+          courtSelected={courtSelected}
+          setCourtSelected={setCourtSelected}
           isOpen={isOpenFilters}
         />
-        <div
-          className={`flex flex-col md:items-center gap-4 py-4 px-2 bg-neutral-900 ${
-            isOpenFilters ? "flex" : "hidden md:flex"
-          }`}
-        >
-          <p>Selecione a quadra para filtrar:</p>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-neutral-100">
-              <input
-                type="radio"
-                name="court"
-                value="all"
-                className="accent-primary-500"
-                onChange={() => setCourtSelected("all")}
-                checked={courtSelected === "all"}
-              />
-              Todas
-            </label>
-            <label className="flex items-center gap-2 text-neutral-100">
-              <input
-                type="radio"
-                name="court"
-                value="A"
-                className="accent-primary-500"
-                onChange={() => setCourtSelected("A")}
-                checked={courtSelected === "A"}
-              />
-              Quadra A
-            </label>
-            <label className="flex items-center gap-2 text-neutral-100">
-              <input
-                type="radio"
-                name="court"
-                value="B"
-                className="accent-primary-500"
-                onChange={() => setCourtSelected("B")}
-                checked={courtSelected === "B"}
-              />
-              Quadra B
-            </label>
-          </div>
-        </div>
         <ul className="flex flex-col gap-4 overflow-y-auto bg-neutral-800">
           {mock
             .filter((elementDate) => {
               if (!date) return elementDate;
-              const formattedDate = date.toISOString().split("T")[0];
+              const formattedDate = new Date(
+                date.getTime() + date.getTimezoneOffset() * 60000
+              )
+                .toISOString()
+                .split("T")[0];
               return elementDate.date === formattedDate;
             })
             .filter((elementStatus) => {
@@ -394,13 +392,17 @@ function Reservation() {
                   elementStatus.status === ReservationStatusEnum.RESERVED ||
                   elementStatus.status === ReservationStatusEnum.PREPAID
                 );
+              } else {
+                return elementStatus.status === statusSelected;
               }
-              return elementStatus.status === statusSelected;
             })
             .filter((elementCourt) => {
               if (!courtSelected) return elementCourt;
-              if (courtSelected === "all") return elementCourt;
-              return elementCourt.court === courtSelected;
+              if (courtSelected === "all") {
+                return elementCourt;
+              } else {
+                return elementCourt.court === courtSelected;
+              }
             })
             .map((item) => (
               <ReservationItem
@@ -411,7 +413,7 @@ function Reservation() {
                 date={item.date}
                 status={item.status}
                 time={item.time}
-                key={`${item.date}-${item.court}-${item.time}`}
+                key={item.id}
               />
             ))}
         </ul>

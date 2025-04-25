@@ -50,17 +50,17 @@
   line-height: 1.5;
   font-weight: 400;
   color: var(--color-neutral-100);
+
   @media (min-width: 1024px) {
     overflow: hidden;
   }
 }
 
-button{
+button {
   cursor: pointer;
   transition: background-color 0.25s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
-  padding: 0.6em 1.2em;
 }
+
 button:hover {
   filter: brightness(1.1);
 }
@@ -70,17 +70,16 @@ input[type="radio"] {
 }
 
 input[type="checkbox"] {
-  width: 1.2rem; /* 24px converted to rem assuming the root font size is 16px */
-  height: 1.2rem; /* 24px converted to rem assuming the root font size is 16px */
+  width: 1.2rem;
+  height: 1.2rem;
   cursor: pointer;
-  border-radius: 0.25rem; /* 4px converted to rem assuming the root font size is 16px */
+  border-radius: 0.25rem;
 }
 
 input[type="checkbox"]:checked {
   background-color: var(--color-primary-500);
 }
 
-/* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 12px;
 }
