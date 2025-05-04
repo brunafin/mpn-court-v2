@@ -1,15 +1,15 @@
-FROM node:22-slim
+FROM node:23-slim AS builder
 
-WORKDIR /PORTFOLIO
+WORKDIR /usr/src/app
 
-COPY package.json .
-
+COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN npm run build
 
-ENV PORT=8080
+FROM nginx:alpine
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
 
-EXPOSE 8080
-
-CMD [ "npm", "run", "dev"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

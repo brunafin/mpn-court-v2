@@ -12,6 +12,7 @@ interface LegendProps {
   setStatusSelected: (status: ReservationStatusEnum | null) => void;
   courtSelected: string;
   setCourtSelected: (court: string) => void;
+  courts: string[];
   isOpen: boolean;
 }
 
@@ -84,6 +85,7 @@ function LegendAndFilters({
   statusSelected,
   courtSelected,
   setCourtSelected,
+  courts,
   isOpen,
 }: LegendProps) {
   return (
@@ -202,28 +204,22 @@ function LegendAndFilters({
             />
             Todas
           </label>
-          <label className="flex items-center gap-2 text-neutral-100">
-            <input
-              type="radio"
-              name="court"
-              value="A"
-              className="accent-primary-500"
-              onChange={() => setCourtSelected("A")}
-              checked={courtSelected === "A"}
-            />
-            Quadra A
-          </label>
-          <label className="flex items-center gap-2 text-neutral-100">
-            <input
-              type="radio"
-              name="court"
-              value="B"
-              className="accent-primary-500"
-              onChange={() => setCourtSelected("B")}
-              checked={courtSelected === "B"}
-            />
-            Quadra B
-          </label>
+          {courts?.map((item) => (
+            <label
+              className="flex items-center gap-2 text-neutral-100"
+              key={item}
+            >
+              <input
+                type="radio"
+                name="court"
+                value={item}
+                className="accent-primary-500"
+                onChange={() => setCourtSelected(item)}
+                checked={courtSelected === item}
+              />
+              {item}
+            </label>
+          ))}
         </div>
       </div>
     </div>

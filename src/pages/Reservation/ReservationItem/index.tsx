@@ -10,8 +10,9 @@ import { FaRegCalendarCheck } from "react-icons/fa";
 import { IReservationItemProps } from "../interface";
 
 function ReservationItem({
+  scheduleId,
   court,
-  customer,
+  customerName,
   date,
   status,
   time,
@@ -28,7 +29,7 @@ function ReservationItem({
         >
           <Link
             className="flex items-start py-3 justify-between"
-            to="/reservas/1"
+            to={`/reservas/${scheduleId}`}
           >
             <MdOutlineLockClock size={18} className="w-1/12 ms-6" />
             <span
@@ -37,7 +38,7 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customer.name}</span>
+            <span className="w-5/12">{customerName}</span>
             <BsBoxArrowInRight size={24} className="w-1/12" />
           </Link>
         </li>
@@ -51,7 +52,7 @@ function ReservationItem({
         >
           <Link
             className="flex items-center py-3   justify-between"
-            to="/reservas/5"
+            to={`/reservas/${scheduleId}`}
           >
             <MdNotInterested size={18} className="w-1/12 ms-6" />
             <span
@@ -60,7 +61,7 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customer.name || "-"}</span>
+            <span className="w-5/12">-</span>
             <BsBoxArrowInRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
@@ -74,7 +75,7 @@ function ReservationItem({
         >
           <Link
             className="flex items-start py-3   justify-between"
-            to="/reservas/2"
+            to={`/reservas/${scheduleId}`}
           >
             <FaRegCalendarCheck size={18} className="w-1/12 ms-6" />
             <span
@@ -83,7 +84,7 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customer.name}</span>
+            <span className="w-5/12">{customerName}</span>
             <BsBoxArrowInRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
@@ -97,7 +98,7 @@ function ReservationItem({
         >
           <Link
             className="flex items-center py-3 justify-between"
-            to="/reservas/3"
+            to={`/reservas/${scheduleId}`}
           >
             <MdOutlineAccessTime size={18} className="w-1/12 ms-6" />
             <span
@@ -106,7 +107,7 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customer.name || "-"}</span>
+            <span className="w-5/12">-</span>
             <BsBoxArrowInRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
@@ -123,7 +124,7 @@ function ReservationItem({
           </div>
           <Link
             className="flex items-start py-3   justify-between"
-            to="/reservas/2"
+            to={`/reservas/${scheduleId}`}
           >
             <FaRegCalendarCheck size={18} className="w-1/12 ms-6" />
             <span
@@ -132,7 +133,7 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customer.name}</span>
+            <span className="w-5/12">{customerName}</span>
             <BsBoxArrowInRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>

@@ -1,31 +1,26 @@
 import { ReservationStatusEnum } from "./enum";
 
 export interface IReservationItemProps {
-  id: number;
+  scheduleId: string;
   status: ReservationStatusEnum;
   date: string;
-  reservationDate?: string;
   court: string;
   time: string;
-  price: number;
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-  };
+  customerName: string | null;
 }
 
 export interface IReservationDetailsItemProps {
-  id: number;
+  scheduleId: string;
   status: ReservationStatusEnum;
   date: string;
-  reservationDate: string;
+  reservation: {
+    createdAt: string;
+    isPrepaid: boolean;
+    contactName: string;
+    contactPhone: string;
+    tokenToCancel: string;
+  } | null;
   court: string;
   time: string;
-  price: number;
-  customer: {
-    name: string;
-    email: string;
-    phone: string;
-  };
+  price: string;
 }
