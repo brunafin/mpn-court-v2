@@ -9,6 +9,8 @@ function Login() {
     navigate("/reservas");
   };
 
+  console.log('TESTE', import.meta.env.VITE_LOGO_URL)
+
   return (
     <div className="h-screen flex flex-col items-center justify-center">
       <img
