@@ -2,7 +2,6 @@ import {
   BsArrowCounterclockwise,
   BsList,
   BsPersonCheck,
-  BsPersonX,
   BsQuestionCircle,
   BsWhatsapp,
 } from "react-icons/bs";
