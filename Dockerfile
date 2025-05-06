@@ -1,38 +1,28 @@
 # Build stage
 FROM node:18-alpine as build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY package.json package-lock.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy source code
 COPY . .
-
-# Build the app
 RUN npm run build
 
 # Serve stage
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Set working directory for nginx
-WORKDIR /usr/share/nginx/html
+WORKDIR /app
 
-# Remove default nginx static assets
-RUN rm -rf ./*
+# Instala o 'serve' globalmente
+RUN npm install -g serve
 
-# Copy built assets from build stage
-COPY --from=build /app/dist .
+# Copia os arquivos construídos
+COPY --from=build /app/dist ./dist
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Define a porta usada pela Railway
+ENV PORT=3000
+EXPOSE 3000
 
-# Expose port
-EXPOSE 80
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Inicia o servidor com 'serve'
+CMD ["serve", "-s", "dist", "-l", "3000"]
