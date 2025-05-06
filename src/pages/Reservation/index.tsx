@@ -75,7 +75,7 @@ function Reservation() {
         </h1>
         <BsList className="text-neutral-800 cursor-pointer" size={24} />
       </header>
-      <section className="bg-neutral-800 h-[calc(100vh-136px)] md:h-[calc(100vh-64px)] w-full flex flex-col">
+      <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
         <div className="flex items-center justify-center h-16 px-2">
           <div className="flex items-center gap-2 justify-center p-4">
             <button onClick={() => handleSubtractOneDay(date)}>
@@ -123,7 +123,7 @@ function Reservation() {
           isOpen={isOpenFilters}
         />
         {list.length > 0 ? (
-          <ul className="flex flex-col gap-4 overflow-y-auto bg-neutral-800">
+          <ul className="flex flex-col gap-4 overflow-y-auto bg-neutral-800 pb-4">
             {list
               .filter((elementDate) => {
                 if (!date) return elementDate;

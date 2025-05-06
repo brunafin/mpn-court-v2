@@ -133,7 +133,7 @@ function ReservationDetails() {
           />
         </a>
         <h1 className="font-bold text-center text-base text-neutral-800">
-          NENA Sports {id}
+          Sua Quadra
         </h1>
         <BsList className="text-neutral-800 cursor-pointer" size={24} />
       </header>
@@ -170,7 +170,7 @@ function ReservationDetails() {
               }`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-neutral-100"
+              className="w-1/2 flex items-center gap-2 text-neutral-100"
             >
               {court?.reservation.contactName}
               <BsWhatsapp size={20} />
@@ -199,7 +199,7 @@ function ReservationDetails() {
               <div className="mt-8">
                 <p className="text-xl">Valor restante a pagar:</p>
                 <p className="text-xl text-center">
-                  {formatCurrencyBRL(parseFloat(court.price))}
+                  {formatCurrencyBRL(parseFloat(court.price) / 2)}
                 </p>
               </div>
             </section>
@@ -207,12 +207,6 @@ function ReservationDetails() {
           {(court?.status === ReservationStatusEnum.RESERVED ||
             court?.status === ReservationStatusEnum.FIXED) && (
             <section className="flex flex-col justify-center items-center mt-4">
-              <div className="flex items-center justify-center gap-2 text-neutral-100 p-4 w-full">
-                <BsPersonX size={20} />
-                <p className="text-center font-medium">
-                  Nenhum valor foi pago com antecedência.
-                </p>
-              </div>
               <div className="mt-8">
                 <p className="text-xl">Valor total a pagar:</p>
                 <p className="text-xl text-center">
