@@ -28,7 +28,7 @@ function Reservation() {
   const fetchData = useCallback(
     async (dateInput: string) => {
       const response = await getSchedulesByCompanyPublicIdAndDate({
-        companyPublicId: "d5371668-d613-4dd0-9103-43bdb06f3d18",
+        companyPublicId: "c26bb6e2-693f-4205-bc90-63f7003d895d",
         date: dateInput,
       });
       setList(response);
