@@ -2,7 +2,7 @@ import { BsList } from "react-icons/bs";
 
 function Header() {
   return (
-    <header className="bg-neutral-200 h-16 flex items-center justify-between px-4 sticky top-0 z-10">
+    <header className="bg-neutral-200 h-16 flex items-center justify-between px-4 sticky top-0 z-20">
       <a href="/">
         <img
           src={import.meta.env.VITE_LOGO_URL_HEADER}
