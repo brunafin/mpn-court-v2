@@ -183,7 +183,7 @@ function ReservationDetails() {
           ReservationStatusEnum.RESERVED,
           ReservationStatusEnum.PREPAID,
         ].includes(court?.status as ReservationStatusEnum) && (
-          <button className="flex items-start justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-xs py-2 px-4 mx-auto mt-4">
+          <button className="flex items-start justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 py-2 px-4 mx-auto mt-4">
             <BsArrowCounterclockwise size={20} />
             Cancelar reserva
           </button>
@@ -240,7 +240,7 @@ function ReservationDetails() {
                 Horário fixo
               </label>
             </div>
-            <button className="flex items-start justify-center w-fit rounded-sm bg-secondary-600 text-neutral-100 gap-1 text-xs py-2 px-4 mx-auto mt-4">
+            <button className="flex items-start justify-center w-fit rounded-sm bg-secondary-600 text-neutral-100 gap-1 py-2 px-4 mx-auto mt-4">
               <FaRegCalendarCheck size={20} />
               Reservar
             </button>
