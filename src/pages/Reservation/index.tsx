@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  BsArrowRepeat,
-  BsChevronLeft,
-  BsChevronRight,
-  BsList,
-} from "react-icons/bs";
+import { BsArrowRepeat, BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
@@ -13,6 +8,7 @@ import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
 import CustomDatepicker from "../../components/Datepicker";
 import { HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
+import Header from "../../components/Header";
 
 function Reservation() {
   const [date, setDate] = useState<Date | null>(
@@ -61,20 +57,7 @@ function Reservation() {
   }
   return (
     <>
-      <header className="bg-neutral-200 h-16 flex items-center justify-between px-4 sticky top-0 z-10">
-        <a href="/">
-          <img
-            src={import.meta.env.VITE_LOGO_URL_HEADER}
-            title="logo"
-            alt="logo"
-            className="h-16 py-2"
-          />
-        </a>
-        <h1 className="font-bold text-center text-base text-neutral-800">
-          Sua Quadra
-        </h1>
-        <BsList className="text-neutral-800 cursor-pointer" size={24} />
-      </header>
+      <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
         <div className="flex items-center justify-center h-16 px-2">
           <div className="flex items-center gap-2 justify-center p-4">

@@ -65,6 +65,13 @@ button:hover {
   filter: brightness(1.1);
 }
 
+@media (max-width: 768px) {
+  button:active {
+    border: 2px solid var(--color-neutral-900);
+    border-radius: 0.25rem;
+  }
+}
+
 input[type="radio"] {
   cursor: pointer;
 }
