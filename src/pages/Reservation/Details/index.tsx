@@ -118,10 +118,10 @@ function ReservationDetails() {
     <div className="h-screen">
       <Header />
       <section
-        className="bg-neutral-700"
+        className="bg-neutral-700 overflow-y-auto"
         style={{ height: "calc(100vh - 4rem)" }}
       >
-        <header className="flex flex-col">
+        <header className="flex flex-col sticky top-0 z-10">
           <div
             className={`flex w-full justify-around md:justify-between ${getColorByStatus(
               court?.status
@@ -189,7 +189,7 @@ function ReservationDetails() {
           </button>
         )}
         {court?.status === ReservationStatusEnum.AVAILABLE && (
-          <form className="bg-neutral-800 px-4 py-8 rounded-md mx-4 md:w-1/2 md:mx-auto">
+          <form className="bg-neutral-800 px-4 py-8 rounded-md mx-4 mb-4 md:w-1/2 md:mx-auto">
             <Input
               name="name"
               title="Nome:"
