@@ -25,3 +25,37 @@ export const getScheduleById = async (id: string) => {
     throw error;
   }
 }
+
+interface ICreateReservation {
+  contactName: string;
+  contactPhone: string;
+  courtSchedulePublicId: string;
+}
+
+export const createReservation = async (data: ICreateReservation) => {
+  try {
+    const response = await api.post<IReservationDetailsItemProps>('/reservation', data);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao reservar:', error);
+    throw error;
+  }
+}
+
+export const cancelReservation = async (token: string): Promise<void> => {
+  try {
+    await api.post<IReservationDetailsItemProps>('/reservation/cancel', { token });
+  } catch (error) {
+    console.error('Erro ao cancelar reserva:', error);
+    throw error;
+  }
+}
+
+export const changeAvailability = async (courtScheduleId: string, available: boolean): Promise<void> => {
+  try {
+    await api.patch(`court-schedules/${courtScheduleId}/availability`, { available })
+  } catch (error) {
+    console.error('Erro ao alterar a disponibilidade do horário:', error);
+    throw error;
+  }
+}
