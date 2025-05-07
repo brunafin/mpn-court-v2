@@ -10,6 +10,26 @@ import { HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
 
+const getBorderColorByStatusSelected = (
+  status: ReservationStatusEnum | null
+): string => {
+  if (!status) return "border-2 border-neutral-900";
+  switch (status) {
+    case ReservationStatusEnum.FIXED:
+      return "border-2 border-neutral-600";
+    case ReservationStatusEnum.INACTIVE:
+      return "border-2 border-danger-400";
+    case ReservationStatusEnum.RESERVED:
+      return "border-2 border-secondary-600";
+    case ReservationStatusEnum.PREPAID:
+      return "border-2 border-warning-500";
+    case ReservationStatusEnum.AVAILABLE:
+      return "border-2 border-tertiary-700";
+    default:
+      return "border-2 border-gray-400";
+  }
+};
+
 function Reservation() {
   const [date, setDate] = useState<Date | null>(
     new Date(new Date().setHours(0, 0, 0, 0))
@@ -83,7 +103,9 @@ function Reservation() {
             <BsArrowRepeat size={24} />
           </button>
           <button
-            className="md:hidden text-neutral-200 hover:text-neutral-100 bg-neutral-900 py-2 px-2 flex justify-end items-center gap-2 rounded-sm"
+            className={`md:hidden text-neutral-200 hover:text-neutral-100 bg-neutral-900 py-2 px-2 flex justify-end items-center gap-2 rounded-sm ${getBorderColorByStatusSelected(
+              statusSelected
+            )}`}
             onClick={() => setIsOpenFilters(!isOpenFilters)}
           >
             {isOpenFilters ? (

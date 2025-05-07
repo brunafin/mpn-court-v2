@@ -22,7 +22,7 @@ export default function CustomDatepicker({
         onChange={onChange}
         onFocus={onFocus}
         dateFormat="dd/MM/yyyy"
-        className="w-full bg-neutral-800 text-neutral-100 p-2 pr-10 rounded-md border border-neutral-500 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+        className="w-full bg-neutral-800 text-neutral-100 p-2 pr-10 rounded-md border border-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-500"
         calendarClassName="!bg-neutral-800 !text-white !border-neutral-700"
         dayClassName={() =>
           "!bg-neutral-800 rounded-sm hover:!bg-primary-600 active:scale-95 active:!bg-primary-700 transition duration-100 !text-neutral-100"

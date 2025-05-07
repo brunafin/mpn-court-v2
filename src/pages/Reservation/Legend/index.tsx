@@ -16,70 +16,6 @@ interface LegendProps {
   isOpen: boolean;
 }
 
-// const getReservationBadge = (status: ReservationStatusEnum | null) => {
-//   switch (status) {
-//     case ReservationStatusEnum.FIXED:
-//       return (
-//         <span
-//           className="flex items-center justify-center gap-2 text-neutral-100 bg-neutral-600 rounded-sm py-1 px-2"
-//           aria-label="Fixo"
-//         >
-//           <MdOutlineLockClock size={18} />
-//           Fixo
-//         </span>
-//       );
-//     case ReservationStatusEnum.INACTIVE:
-//       return (
-//         <span
-//           className="flex items-center justify-center gap-2 text-neutral-100 bg-danger-400 rounded-sm py-1 px-2"
-//           aria-label="Inativo"
-//         >
-//           <MdNotInterested size={18} />
-//           Inativo
-//         </span>
-//       );
-//     case ReservationStatusEnum.RESERVED:
-//       return (
-//         <span
-//           className="flex items-center justify-center gap-2 text-neutral-100 bg-secondary-500 rounded-sm py-1 px-2"
-//           aria-label="Reservado"
-//         >
-//           <FaRegCalendarCheck size={18} />
-//           Reservado
-//         </span>
-//       );
-//     case ReservationStatusEnum.AVAILABLE:
-//       return (
-//         <span
-//           className="flex items-center justify-center gap-2 text-neutral-100 bg-tertiary-700 rounded-sm py-1 px-2"
-//           aria-label="Livre"
-//         >
-//           <MdOutlineAccessTime size={18} />
-//           Livre
-//         </span>
-//       );
-//     case ReservationStatusEnum.PREPAID:
-//       return (
-//         <span
-//           className="flex items-center justify-center gap-2 text-neutral-800 bg-warning-500 rounded-sm py-1 px-2"
-//           aria-label="Pagamento antecipado"
-//         >
-//           <BsCashCoin size={18} />
-//           Pgto. antecipado
-//         </span>
-//       );
-//     default:
-//       return (
-//         <span
-//           className="flex items-center justify-center gap-2 text-neutral-100 bg-primary-500 rounded-sm py-1 px-2"
-//           aria-label="Todos"
-//         >
-//           Todos
-//         </span>
-//       );
-//   }
-// };
-
 function LegendAndFilters({
   setStatusSelected,
   statusSelected,
@@ -102,7 +38,7 @@ function LegendAndFilters({
             isOpen ? "rounded-tl-lg flex" : "hidden md:flex bg-neutral-900"
           }"`}
         >
-          <p>Selecione um status para filtrar</p>
+          <p className="text-lg my-2">Selecione um status para filtrar</p>
         </div>
         <ul
           className={`bg-neutral-900 flex p-2 items-center gap-2 md:gap-8 justify-start flex-wrap md:justify-center ${
@@ -191,7 +127,7 @@ function LegendAndFilters({
           isOpen ? "p-2 rounded-b-lg" : "hidden md:flex"
         } flex flex-col md:items-center gap-4 py-4 px-2 bg-neutral-900`}
       >
-        <p>Selecione a quadra para filtrar:</p>
+        <p className="text-lg">Selecione a quadra para filtrar:</p>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-neutral-100">
             <input
