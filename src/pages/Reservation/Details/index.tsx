@@ -1,6 +1,5 @@
 import {
   BsArrowCounterclockwise,
-  BsList,
   BsPersonCheck,
   BsQuestionCircle,
   BsWhatsapp,
