@@ -23,4 +23,5 @@ export interface IReservationDetailsItemProps {
   court: string;
   time: string;
   price: string;
+  weekday: string;
 }

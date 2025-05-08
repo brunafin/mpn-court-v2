@@ -1,4 +1,4 @@
-import { BsQuestionCircle } from "react-icons/bs";
+import { BsQuestionCircle, BsWhatsapp } from "react-icons/bs";
 import { ReservationStatusEnum } from "../enum";
 import {
   MdNotInterested,
@@ -28,10 +28,41 @@ export function getReservationIcon(status?: ReservationStatusEnum | null) {
 }
 
 export function getColorByStatus(status?: ReservationStatusEnum | null) {
-  if (!status) return "bg-gray-400";
+  // if (!status) return "bg-gray-400";
+  // switch (status) {
+  //   case ReservationStatusEnum.FIXED:
+  //     return "bg-neutral-600";
+  //   case ReservationStatusEnum.INACTIVE:
+  //     return "bg-danger-400";
+  //   case ReservationStatusEnum.RESERVED:
+  //   case ReservationStatusEnum.PREPAID:
+  //     return "bg-secondary-600";
+  //   case ReservationStatusEnum.AVAILABLE:
+  //     return "bg-tertiary-700";
+  //   default:
+  //     return "bg-gray-400";
+  // }
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "bg-neutral-600";
+      return "border-b-8 border-b-purple-800";
+    case ReservationStatusEnum.INACTIVE:
+      return "border-b-8 border-b-danger-400";
+    case ReservationStatusEnum.RESERVED:
+    case ReservationStatusEnum.PREPAID:
+      return "border-b-8 border-b-secondary-600";
+    case ReservationStatusEnum.AVAILABLE:
+      return "border-b-8 border-b-tertiary-700";
+    default:
+      return "border-b-8 border-b-gray-400";
+  }
+}
+
+export function getBackgroundColorByStatus(
+  status?: ReservationStatusEnum | null
+) {
+  switch (status) {
+    case ReservationStatusEnum.FIXED:
+      return "bg-purple-800";
     case ReservationStatusEnum.INACTIVE:
       return "bg-danger-400";
     case ReservationStatusEnum.RESERVED:
@@ -41,6 +72,96 @@ export function getColorByStatus(status?: ReservationStatusEnum | null) {
       return "bg-tertiary-700";
     default:
       return "bg-gray-400";
+  }
+}
+
+export function getMeanByStatus(
+  status?: ReservationStatusEnum | null,
+  contactName?: string,
+  contactPhone?: string
+) {
+  switch (status) {
+    case ReservationStatusEnum.FIXED:
+      return (
+        <div
+          className={`flex items-center gap-1 h-12 justify-between px-4 ${getBackgroundColorByStatus(
+            status
+          )}`}
+        >
+          <div className="flex items-center gap-1">
+            {getReservationIcon(status)}
+            <p className="mt-2">Horário fixo</p>
+          </div>
+          {contactPhone && (
+            <div>
+              <a
+                href={`${
+                  import.meta.env.VITE_WHATSAPP_URL_BASE
+                }${contactPhone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-2 p-2 justify-center"
+              >
+                {contactName}
+                <BsWhatsapp size={20} />
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    case ReservationStatusEnum.INACTIVE:
+      return (
+        <div
+          className={`flex items-center gap-1 h-12 justify-center ${getBackgroundColorByStatus(
+            status
+          )}`}
+        >
+          {getReservationIcon(status)}
+          <p className="mt-1">Horário inativo</p>
+        </div>
+      );
+    case ReservationStatusEnum.RESERVED:
+    case ReservationStatusEnum.PREPAID:
+      return (
+        <div
+          className={`flex items-center gap-1 h-12 justify-between px-4 ${getBackgroundColorByStatus(
+            status
+          )}`}
+        >
+          <div className="flex items-center gap-1">
+            {getReservationIcon(status)}
+            <p className="mt-2">Horário reservado</p>
+          </div>
+          {contactPhone && (
+            <div>
+              <a
+                href={`${
+                  import.meta.env.VITE_WHATSAPP_URL_BASE
+                }${contactPhone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-2 p-2 justify-center"
+              >
+                {contactName}
+                <BsWhatsapp size={20} />
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    case ReservationStatusEnum.AVAILABLE:
+      return (
+        <div
+          className={`flex items-center gap-1 h-12 justify-center ${getBackgroundColorByStatus(
+            status
+          )}`}
+        >
+          {getReservationIcon(status)}
+          <p className="mt-1">Horário disponível</p>
+        </div>
+      );
+    default:
+      return "";
   }
 }
 
@@ -59,7 +180,7 @@ export function renderButtonByStatus(
             await changeAvailability(courtScheduleId, true);
             navigate("/reservas");
           }}
-          className="flex items-center justify-center w-fit rounded-sm bg-tertiary-700 text-neutral-100 gap-1 text-sm py-1 px-2"
+          className="flex items-center justify-center w-fit rounded-sm bg-tertiary-700 text-neutral-100 gap-1 text-sm py-1 px-2 mt-4 mx-2"
         >
           <MdOutlineLockOpen size={18} />
           Liberar horário
@@ -68,7 +189,7 @@ export function renderButtonByStatus(
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return (
-        <button className="flex items-start justify-center w-fit rounded-sm bg-neutral-700 text-neutral-100 gap-1 text-sm py-1 px-2">
+        <button className="flex items-start justify-center w-fit rounded-sm bg-purple-800 text-neutral-100 gap-1 text-sm py-1 px-2 mt-4 mx-2">
           <MdOutlineLockClock size={18} />
           Fixar horário
         </button>
@@ -80,7 +201,7 @@ export function renderButtonByStatus(
             await changeAvailability(courtScheduleId, false);
             navigate("/reservas");
           }}
-          className="flex items-center justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-xs py-1 px-2"
+          className="flex items-center justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-xs py-1 px-2 mt-4 mx-2"
         >
           <MdNotInterested size={18} />
           Inativar horário

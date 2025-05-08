@@ -1,8 +1,4 @@
-import {
-  BsArrowCounterclockwise,
-  BsPersonCheck,
-  BsWhatsapp,
-} from "react-icons/bs";
+import { BsArrowCounterclockwise, BsPersonCheck } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router";
 import { ReservationStatusEnum } from "../enum";
@@ -18,11 +14,7 @@ import {
 } from "../../../api/schedules";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 import Header from "../../../components/Header";
-import {
-  getColorByStatus,
-  getReservationIcon,
-  renderButtonByStatus,
-} from "./utils";
+import { getMeanByStatus, renderButtonByStatus } from "./utils";
 
 function ReservationDetails() {
   const { id } = useParams();
@@ -47,7 +39,6 @@ function ReservationDetails() {
   }, [id]);
 
   const handleSubmit = async (): Promise<void> => {
-    console.log("ENTREI");
     if (!customerReservationName) {
       return alert("Nome do cliente é obrigatório");
     }
@@ -75,36 +66,25 @@ function ReservationDetails() {
         style={{ height: "calc(100vh - 4rem)" }}
       >
         <header className="flex flex-col sticky top-0 z-10">
-          <div
-            className={`flex w-full justify-around md:justify-between ${getColorByStatus(
-              court?.status
-            )} py-4`}
-          >
+          <div className="flex w-full justify-around md:justify-between py-4 bg-neutral-800">
             <button onClick={() => navigate(-1)}>
               <MdOutlineArrowBackIos size={24} />
             </button>
-            <div className="flex align-center md:w-3/5 gap-2">
-              {getReservationIcon(court?.status)}
-              <p className="mt-1">
-                {court?.date} - {court?.time}
+            <div className="flex align-center w-4/5 md:w-3/5 gap-2">
+              {/* {getReservationIcon(court?.status)} */}
+              <p className="mt-1 text-lg">
+                {court?.date} ({court?.weekday}) - {court?.time}
               </p>
-              {court &&
-                renderButtonByStatus(court.scheduleId, court?.status, navigate)}
             </div>
           </div>
-          {court?.reservation?.contactPhone && (
-            <div className="bg-neutral-800">
-              <a
-                href={`${import.meta.env.VITE_WHATSAPP_URL_BASE}${
-                  court?.reservation.contactPhone
-                }`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex gap-2 p-2 justify-center"
-              >
-                {court?.reservation.contactName}
-                <BsWhatsapp size={20} />
-              </a>
+          {getMeanByStatus(
+            court?.status,
+            court?.reservation?.contactName,
+            court?.reservation?.contactPhone
+          )}
+          {court && (
+            <div className="flex justify-start">
+              {renderButtonByStatus(court.scheduleId, court?.status, navigate)}
             </div>
           )}
         </header>
@@ -161,7 +141,7 @@ function ReservationDetails() {
             <Input
               name="name"
               title="Nome:"
-              placeholder="Nome do cliente"
+              placeholder="João Silva"
               type="text"
               value={customerReservationName ?? ""}
               onChange={(e) => setCustomerReservationName(e.target.value)}
@@ -171,7 +151,7 @@ function ReservationDetails() {
             <Input
               name="phone"
               title="Telefone:"
-              placeholder="Telefone do cliente"
+              placeholder="51999123456"
               type="text"
               value={customerReservationPhone ?? ""}
               onChange={(e) => setCustomerReservationPhone(e.target.value)}

@@ -48,8 +48,8 @@ function LegendAndFilters({
           <li>
             <button
               onClick={() => setStatusSelected(null)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-primary-500 rounded-sm py-1 px-2 hover:bg-primary-500 hover:text-neutral-100 ${
-                statusSelected === null ? "bg-primary-500" : ""
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-neutral-700 rounded-sm py-1 px-2 hover:bg-neutral-800 hover:text-neutral-100 ${
+                statusSelected === null ? "bg-neutral-800" : ""
               }`}
             >
               Todos
@@ -71,9 +71,9 @@ function LegendAndFilters({
           <li>
             <button
               onClick={() => setStatusSelected(ReservationStatusEnum.FIXED)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-neutral-600 rounded-sm py-1 px-2 hover:bg-neutral-600 ${
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-purple-800 rounded-sm py-1 px-2 hover:bg-purple-800 ${
                 statusSelected === ReservationStatusEnum.FIXED
-                  ? "bg-neutral-600"
+                  ? "bg-purple-800"
                   : ""
               }`}
             >
