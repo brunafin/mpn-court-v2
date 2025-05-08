@@ -100,7 +100,7 @@ export function getMeanByStatus(
                 }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-2 p-2 justify-center"
+                className="flex gap-2 p-2 mt-2 justify-center"
               >
                 {contactName}
                 <BsWhatsapp size={20} />
@@ -140,7 +140,7 @@ export function getMeanByStatus(
                 }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-2 p-2 justify-center"
+                className="flex gap-2 p-2 mt-2 justify-center"
               >
                 {contactName}
                 <BsWhatsapp size={20} />

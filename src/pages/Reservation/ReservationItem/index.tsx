@@ -20,7 +20,7 @@ function ReservationItem({
   //     return (
   //       <li
   //         className={`hover:brightness-110 px-2 bg-neutral-700 ${
-  //           isPastDate ? "opacity-60 pointer-events-none" : ""
+  //           isPastDate ? "opacity-50 pointer-events-none" : ""
   //         }`}
   //       >
   //         <Link
@@ -43,7 +43,7 @@ function ReservationItem({
   //     return (
   //       <li
   //         className={`hover:brightness-110 px-2 bg-danger-400 ${
-  //           isPastDate ? "opacity-60 pointer-events-none" : ""
+  //           isPastDate ? "opacity-50 pointer-events-none" : ""
   //         }`}
   //       >
   //         <Link
@@ -66,7 +66,7 @@ function ReservationItem({
   //     return (
   //       <li
   //         className={`hover:brightness-110 px-2 bg-secondary-600 ${
-  //           isPastDate ? "opacity-60 pointer-events-none" : ""
+  //           isPastDate ? "opacity-50 pointer-events-none" : ""
   //         }`}
   //       >
   //         <Link
@@ -89,7 +89,7 @@ function ReservationItem({
   //     return (
   //       <li
   //         className={`hover:brightness-110 px-2 bg-tertiary-700 ${
-  //           isPastDate ? "opacity-60 pointer-events-none" : ""
+  //           isPastDate ? "opacity-50 pointer-events-none" : ""
   //         }`}
   //       >
   //         <Link
@@ -112,7 +112,7 @@ function ReservationItem({
   //     return (
   //       <li
   //         className={`hover:brightness-110 px-2 bg-secondary-600 relative ${
-  //           isPastDate ? "opacity-60 pointer-events-none" : ""
+  //           isPastDate ? "opacity-50 pointer-events-none" : ""
   //         }`}
   //       >
   //         <div className="absolute left-0 bg-warning-500 h-12 p-1 rounded-tr-sm rounded-br-sm">
@@ -142,7 +142,7 @@ function ReservationItem({
       return (
         <li
           className={`hover:brightness-110 px-2 border-b-4 border-b-purple-800 bg-neutral-900 relative ${
-            isPastDate ? "opacity-60 pointer-events-none" : ""
+            isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
           <div className="absolute left-0 bg-purple-800 h-12 p-1 rounded-tr-sm rounded-br-sm">
@@ -168,7 +168,7 @@ function ReservationItem({
       return (
         <li
           className={`hover:brightness-110 px-2 border-b-4 border-b-danger-400 bg-neutral-900 relative ${
-            isPastDate ? "opacity-60 pointer-events-none" : ""
+            isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
           <div className="absolute left-0 bg-danger-400 h-12 p-1 rounded-tr-sm rounded-br-sm">
@@ -194,7 +194,7 @@ function ReservationItem({
       return (
         <li
           className={`hover:brightness-110 px-2 border-b-4 border-b-secondary-600 bg-neutral-900 relative ${
-            isPastDate ? "opacity-60 pointer-events-none" : ""
+            isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
           <div className="absolute left-0 bg-secondary-600 h-12 p-1 rounded-tr-sm rounded-br-sm">
@@ -220,7 +220,7 @@ function ReservationItem({
       return (
         <li
           className={`hover:brightness-110 px-2 border-b-4 border-b-tertiary-700 bg-neutral-900 relative ${
-            isPastDate ? "opacity-60 pointer-events-none" : ""
+            isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
           <div className="absolute left-0 bg-tertiary-700 h-12 p-1 rounded-tr-sm rounded-br-sm">
@@ -246,7 +246,7 @@ function ReservationItem({
       return (
         <li
           className={`hover:brightness-110 px-2 border-b-4 border-b-secondary-600 bg-neutral-900 relative ${
-            isPastDate ? "opacity-60 pointer-events-none" : ""
+            isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
           <div className="absolute left-0 bg-warning-500 h-12 p-1 rounded-tr-sm rounded-br-sm">
