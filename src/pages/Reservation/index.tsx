@@ -102,7 +102,7 @@ function Reservation() {
             <BsArrowRepeat size={24} />
           </button>
           <button
-            className={`text-neutral-200 hover:text-neutral-100 bg-neutral-900 border-2 border-neutral-900 shadow-lg py-2 px-2 flex justify-center items-center gap-1 rounded-sm ms-4 w-28 md:w-24 me-2 ${getBorderColorByStatusSelected(
+            className={`text-neutral-200 hover:text-neutral-100 bg-neutral-900 shadow-lg py-2 px-2 flex justify-center items-center gap-1 rounded-sm ms-4 w-28 md:w-24 me-2 ${getBorderColorByStatusSelected(
               statusSelected
             )}`}
             onClick={() => setIsOpenFilters(!isOpenFilters)}
