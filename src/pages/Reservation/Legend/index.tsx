@@ -28,21 +28,23 @@ function LegendAndFilters({
     <div
       className={`${
         isOpen
-          ? "px-2 absolute top-28 w-full h-fit shadow-lg z-10 rounded-lg"
+          ? "px-2 absolute top-28 w-full h-fit shadow-lg z-10 rounded-lg md:w-1/2 md:left-100 bg-neutral-600 p-2"
           : ""
       }`}
     >
       <div className="bg-neutral-900 rounded-lg">
         <div
           className={`bg-neutral-900 items-center text-neutral-100 justify-center p-2 pb-0 ${
-            isOpen ? "rounded-tl-lg flex" : "hidden md:flex bg-neutral-900"
+            isOpen ? "rounded-t-lg flex" : "hidden bg-neutral-900"
           }"`}
         >
-          <p className="text-lg my-2">Selecione um status para filtrar</p>
+          <p className="text-lg my-2 md:text-center">
+            Selecione um status para filtrar
+          </p>
         </div>
         <ul
           className={`bg-neutral-900 flex p-2 items-center gap-2 md:gap-8 justify-start flex-wrap md:justify-center ${
-            isOpen ? "flex" : "hidden md:flex"
+            isOpen ? "flex" : "hidden"
           }`}
         >
           <li>
@@ -71,9 +73,9 @@ function LegendAndFilters({
           <li>
             <button
               onClick={() => setStatusSelected(ReservationStatusEnum.FIXED)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-purple-800 rounded-sm py-1 px-2 hover:bg-purple-800 ${
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-purple-800 rounded-sm py-1 px-2 hover:bg-purple-900 ${
                 statusSelected === ReservationStatusEnum.FIXED
-                  ? "bg-purple-800"
+                  ? "bg-purple-900 border-purple-900"
                   : ""
               }`}
             >
@@ -124,7 +126,7 @@ function LegendAndFilters({
       </div>
       <div
         className={`${
-          isOpen ? "p-2 rounded-b-lg" : "hidden md:flex"
+          isOpen ? "p-2 rounded-b-lg" : "hidden"
         } flex flex-col md:items-center gap-4 py-4 px-2 bg-neutral-900`}
       >
         <p className="text-lg">Selecione a quadra para filtrar:</p>

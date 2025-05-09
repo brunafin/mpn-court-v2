@@ -4,11 +4,11 @@ import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
-import { HiOutlineAdjustmentsHorizontal } from "react-icons/hi2";
 import CustomDatepicker from "../../components/Datepicker";
 import { HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
+import { MdOutlineFilterList } from "react-icons/md";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -16,7 +16,7 @@ const getBorderColorByStatusSelected = (
   if (!status) return "border-2 border-neutral-900";
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "border-2 border-neutral-600";
+      return "border-2 border-purple-800";
     case ReservationStatusEnum.INACTIVE:
       return "border-2 border-danger-400";
     case ReservationStatusEnum.RESERVED:
@@ -79,8 +79,8 @@ function Reservation() {
     <>
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-        <div className="flex items-center justify-center h-16 px-2">
-          <div className="flex items-center gap-2 justify-center p-4">
+        <div className="flex items-center justify-center h-16">
+          <div className="flex items-center gap-1 justify-center px-2">
             <button onClick={() => handleSubtractOneDay(date)}>
               <BsChevronLeft size={24} cursor="pointer" />
             </button>
@@ -97,13 +97,12 @@ function Reservation() {
             </button>
           </div>
           <button
-            className="hidden md:flex"
             onClick={() => fetchData(date?.toISOString().split("T")[0] || "")}
           >
             <BsArrowRepeat size={24} />
           </button>
           <button
-            className={`md:hidden text-neutral-200 hover:text-neutral-100 bg-neutral-900 py-2 px-2 flex justify-end items-center gap-2 rounded-sm ${getBorderColorByStatusSelected(
+            className={`text-neutral-200 hover:text-neutral-100 bg-neutral-900 shadow-lg py-2 px-2 flex justify-center items-center gap-1 rounded-sm ms-4 w-28 md:w-24 me-2 ${getBorderColorByStatusSelected(
               statusSelected
             )}`}
             onClick={() => setIsOpenFilters(!isOpenFilters)}
@@ -114,7 +113,7 @@ function Reservation() {
               </>
             ) : (
               <>
-                <HiOutlineAdjustmentsHorizontal /> Filtrar
+                <MdOutlineFilterList /> Filtrar
               </>
             )}
           </button>
@@ -128,7 +127,7 @@ function Reservation() {
           isOpen={isOpenFilters}
         />
         {list.length > 0 ? (
-          <ul className="flex flex-col gap-4 overflow-y-auto bg-neutral-800 pb-4">
+          <ul className="flex flex-col gap-4 overflow-y-auto bg-neutral-800 pb-4 md:w-3/4 md:mx-auto md:bg-neutral-700 md:py-4 md:px-8 md:rounded-lg">
             {list
               .filter((elementDate) => {
                 if (!date) return elementDate;

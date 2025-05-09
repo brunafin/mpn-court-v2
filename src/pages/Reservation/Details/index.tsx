@@ -72,8 +72,7 @@ function ReservationDetails() {
                 <button onClick={() => navigate(-1)}>
                   <MdOutlineArrowBackIos size={24} />
                 </button>
-                <div className="flex align-center w-4/5 md:w-3/5 gap-2">
-                  {/* {getReservationIcon(court?.status)} */}
+                <div className="flex align-center w-full justify-center gap-2">
                   <p className="mt-1 text-lg">
                     {court?.date} ({court?.weekday}) - {court?.time}
                   </p>
@@ -85,7 +84,7 @@ function ReservationDetails() {
                 court?.reservation?.contactPhone
               )}
               {court && (
-                <div className="flex justify-start">
+                <div className="flex justify-start md:justify-center">
                   {renderButtonByStatus(
                     court.scheduleId,
                     court?.status,
@@ -99,7 +98,7 @@ function ReservationDetails() {
               {court?.price && formatCurrencyBRL(parseFloat(court?.price))}
             </h2>
             {court?.status === ReservationStatusEnum.PREPAID && (
-              <div className="bg-warning-500 text-neutral-700 mx-4 rounded-md p-2 flex flex-col justify-center items-center">
+              <div className="bg-warning-500 text-neutral-700 mx-4 rounded-md p-2 flex flex-col justify-center items-center md:w-1/2 md:mx-auto">
                 <BsPersonCheck size={24} />
                 <p className="text-center my-2">
                   Pagou {formatCurrencyBRL(parseFloat(court.price) / 2)} do
@@ -175,7 +174,9 @@ function ReservationDetails() {
             )}
           </>
         ) : (
-          <p>carregando...</p>
+          <div className="h-1/2 flex items-center justify-center">
+            <p>carregando...</p>
+          </div>
         )}
       </section>
     </div>

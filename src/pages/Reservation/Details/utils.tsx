@@ -28,23 +28,9 @@ export function getReservationIcon(status?: ReservationStatusEnum | null) {
 }
 
 export function getColorByStatus(status?: ReservationStatusEnum | null) {
-  // if (!status) return "bg-gray-400";
-  // switch (status) {
-  //   case ReservationStatusEnum.FIXED:
-  //     return "bg-neutral-600";
-  //   case ReservationStatusEnum.INACTIVE:
-  //     return "bg-danger-400";
-  //   case ReservationStatusEnum.RESERVED:
-  //   case ReservationStatusEnum.PREPAID:
-  //     return "bg-secondary-600";
-  //   case ReservationStatusEnum.AVAILABLE:
-  //     return "bg-tertiary-700";
-  //   default:
-  //     return "bg-gray-400";
-  // }
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "border-b-8 border-b-purple-800";
+      return "border-b-8 border-b-purple-900";
     case ReservationStatusEnum.INACTIVE:
       return "border-b-8 border-b-danger-400";
     case ReservationStatusEnum.RESERVED:
@@ -62,14 +48,14 @@ export function getBackgroundColorByStatus(
 ) {
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "bg-purple-800";
+      return "bg-purple-900";
     case ReservationStatusEnum.INACTIVE:
       return "bg-danger-400";
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return "bg-secondary-600";
     case ReservationStatusEnum.AVAILABLE:
-      return "bg-tertiary-700";
+      return "bg-tertiary-800";
     default:
       return "bg-gray-400";
   }
@@ -84,7 +70,7 @@ export function getMeanByStatus(
     case ReservationStatusEnum.FIXED:
       return (
         <div
-          className={`flex items-center gap-1 h-12 justify-between px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
@@ -124,7 +110,7 @@ export function getMeanByStatus(
     case ReservationStatusEnum.PREPAID:
       return (
         <div
-          className={`flex items-center gap-1 h-12 justify-between px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
@@ -173,6 +159,18 @@ export function renderButtonByStatus(
   if (!status) return null;
   switch (status) {
     case ReservationStatusEnum.FIXED:
+      return (
+        <button
+          onClick={async () => {
+            await changeAvailability(courtScheduleId, true);
+            navigate("/reservas");
+          }}
+          className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2"
+        >
+          <MdOutlineLockOpen size={18} />
+          Liberar horário fixo
+        </button>
+      );
     case ReservationStatusEnum.INACTIVE:
       return (
         <button
@@ -180,16 +178,16 @@ export function renderButtonByStatus(
             await changeAvailability(courtScheduleId, true);
             navigate("/reservas");
           }}
-          className="flex items-center justify-center w-fit rounded-sm bg-tertiary-700 text-neutral-100 gap-1 text-sm py-1 px-2 mt-4 mx-2"
+          className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2"
         >
           <MdOutlineLockOpen size={18} />
-          Liberar horário
+          Reativar horário
         </button>
       );
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return (
-        <button className="flex items-start justify-center w-fit rounded-sm bg-purple-800 text-neutral-100 gap-1 text-sm py-1 px-2 mt-4 mx-2">
+        <button className="flex items-stretch justify-center w-fit rounded-sm bg-purple-900 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2">
           <MdOutlineLockClock size={18} />
           Fixar horário
         </button>
@@ -201,7 +199,7 @@ export function renderButtonByStatus(
             await changeAvailability(courtScheduleId, false);
             navigate("/reservas");
           }}
-          className="flex items-center justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-xs py-1 px-2 mt-4 mx-2"
+          className="flex items-stretch justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-xs py-1 pt-2 px-2 mt-4 mx-2"
         >
           <MdNotInterested size={18} />
           Inativar horário
