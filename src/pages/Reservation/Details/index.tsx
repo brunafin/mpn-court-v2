@@ -156,7 +156,7 @@ function ReservationDetails() {
                 <Input
                   name="phone"
                   title="Telefone:"
-                  placeholder="51999123456"
+                  placeholder="51989589197"
                   type="text"
                   value={customerReservationPhone ?? ""}
                   onChange={(e) => setCustomerReservationPhone(e.target.value)}

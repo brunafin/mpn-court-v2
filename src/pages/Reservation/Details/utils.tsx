@@ -70,7 +70,7 @@ export function getMeanByStatus(
     case ReservationStatusEnum.FIXED:
       return (
         <div
-          className={`flex items-center gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
@@ -86,10 +86,12 @@ export function getMeanByStatus(
                 }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-2 p-2 mt-2 justify-center"
+                className="flex gap-2 p-2 mt-2 justify-center items-center"
               >
                 {contactName}
-                <BsWhatsapp size={20} />
+                <div className="bg-tertiary-600 p-1 rounded-sm">
+                  <BsWhatsapp size={20} />
+                </div>
               </a>
             </div>
           )}
@@ -98,7 +100,7 @@ export function getMeanByStatus(
     case ReservationStatusEnum.INACTIVE:
       return (
         <div
-          className={`flex items-center gap-1 h-12 justify-center ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-12 justify-center ${getBackgroundColorByStatus(
             status
           )}`}
         >
@@ -110,7 +112,7 @@ export function getMeanByStatus(
     case ReservationStatusEnum.PREPAID:
       return (
         <div
-          className={`flex items-center gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
@@ -126,10 +128,12 @@ export function getMeanByStatus(
                 }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-2 p-2 mt-2 justify-center"
+                className="flex gap-2 p-2 mt-2 justify-center items-center"
               >
                 {contactName}
-                <BsWhatsapp size={20} />
+                <div className="bg-tertiary-600 p-1 rounded-sm">
+                  <BsWhatsapp size={20} />
+                </div>
               </a>
             </div>
           )}
@@ -138,7 +142,7 @@ export function getMeanByStatus(
     case ReservationStatusEnum.AVAILABLE:
       return (
         <div
-          className={`flex items-center gap-1 h-12 justify-center ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-12 justify-center ${getBackgroundColorByStatus(
             status
           )}`}
         >
@@ -178,7 +182,7 @@ export function renderButtonByStatus(
             await changeAvailability(courtScheduleId, true);
             navigate("/reservas");
           }}
-          className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2"
+          className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
         >
           <MdOutlineLockOpen size={18} />
           Reativar horário
@@ -187,7 +191,7 @@ export function renderButtonByStatus(
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return (
-        <button className="flex items-stretch justify-center w-fit rounded-sm bg-purple-900 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2">
+        <button className="flex items-stretch justify-center w-fit rounded-sm bg-purple-900 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2">
           <MdOutlineLockClock size={18} />
           Fixar horário
         </button>
@@ -199,7 +203,7 @@ export function renderButtonByStatus(
             await changeAvailability(courtScheduleId, false);
             navigate("/reservas");
           }}
-          className="flex items-stretch justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-xs py-1 pt-2 px-2 mt-4 mx-2"
+          className="flex items-stretch justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
         >
           <MdNotInterested size={18} />
           Inativar horário
