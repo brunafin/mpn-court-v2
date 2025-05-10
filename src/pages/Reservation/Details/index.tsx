@@ -68,7 +68,7 @@ function ReservationDetails() {
         {court ? (
           <>
             <header className="flex flex-col sticky top-0 z-10">
-              <div className="flex w-full justify-around md:justify-between py-4 bg-neutral-800">
+              <div className="flex w-full justify-around md:justify-between py-4 bg-danger-800">
                 <button onClick={() => navigate(-1)}>
                   <MdOutlineArrowBackIos size={24} />
                 </button>

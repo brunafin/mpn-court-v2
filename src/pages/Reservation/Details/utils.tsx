@@ -14,16 +14,16 @@ export function getReservationIcon(status?: ReservationStatusEnum | null) {
   if (!status) return <BsQuestionCircle size={18} />;
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return <MdOutlineLockClock className="mt-1" size={18} />;
+      return <MdOutlineLockClock size={18} />;
     case ReservationStatusEnum.INACTIVE:
-      return <MdNotInterested className="mt-1" size={18} />;
+      return <MdNotInterested size={18} />;
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
-      return <FaRegCalendarCheck className="mt-1" size={18} />;
+      return <FaRegCalendarCheck size={18} />;
     case ReservationStatusEnum.AVAILABLE:
-      return <MdOutlineAccessTime className="mt-1" size={18} />;
+      return <MdOutlineAccessTime size={18} />;
     default:
-      return <BsQuestionCircle className="mt-1" size={18} />;
+      return <BsQuestionCircle size={18} />;
   }
 }
 
@@ -70,13 +70,13 @@ export function getMeanByStatus(
     case ReservationStatusEnum.FIXED:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-14 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          <div className="flex items-center gap-1">
+          <div className="flex items-start gap-1">
             {getReservationIcon(status)}
-            <p className="mt-2">Horário fixo</p>
+            <p>Fixo</p>
           </div>
           {contactPhone && (
             <div>
@@ -86,7 +86,7 @@ export function getMeanByStatus(
                 }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-2 p-2 mt-2 justify-center items-center"
+                className="flex gap-2 p-2 justify-center items-center"
               >
                 {contactName}
                 <div className="bg-tertiary-600 p-1 rounded-sm">
@@ -100,25 +100,27 @@ export function getMeanByStatus(
     case ReservationStatusEnum.INACTIVE:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-12 justify-center ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-14 justify-center ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          {getReservationIcon(status)}
-          <p className="mt-1">Horário inativo</p>
+          <div className="flex gap-1">
+            {getReservationIcon(status)}
+            <p>Inativo</p>
+          </div>
         </div>
       );
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-12 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-14 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          <div className="flex items-center gap-1">
+          <div className="flex items-start gap-1">
             {getReservationIcon(status)}
-            <p className="mt-2">Horário reservado</p>
+            <p>Reservado</p>
           </div>
           {contactPhone && (
             <div>
@@ -128,7 +130,7 @@ export function getMeanByStatus(
                 }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-2 p-2 mt-2 justify-center items-center"
+                className="flex gap-2 p-2 justify-center items-center"
               >
                 {contactName}
                 <div className="bg-tertiary-600 p-1 rounded-sm">
@@ -142,12 +144,14 @@ export function getMeanByStatus(
     case ReservationStatusEnum.AVAILABLE:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-12 justify-center ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 h-14 justify-center ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          {getReservationIcon(status)}
-          <p className="mt-1">Horário disponível</p>
+          <div className="flex gap-1">
+            {getReservationIcon(status)}
+            <p>Disponível</p>
+          </div>
         </div>
       );
     default:

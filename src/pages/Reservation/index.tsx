@@ -16,7 +16,7 @@ const getBorderColorByStatusSelected = (
   if (!status) return "border-2 border-neutral-900";
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "border-2 border-purple-800";
+      return "border-2 border-danger-800";
     case ReservationStatusEnum.INACTIVE:
       return "border-2 border-danger-400";
     case ReservationStatusEnum.RESERVED:
