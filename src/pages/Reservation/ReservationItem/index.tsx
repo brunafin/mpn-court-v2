@@ -23,7 +23,7 @@ function ReservationItem({
             isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
-          <div className="absolute left-0 bg-purple-800 h-12 p-1 rounded-tr-sm">
+          <div className="absolute left-0 bg-purple-800 h-full p-1 rounded-tr-sm">
             <MdOutlineLockClock size={14} className="text-neutral-100" />
           </div>
           <Link
@@ -36,7 +36,9 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customerName}</span>
+            <div className="flex w-4/12">
+              <span className="w-5/12">{customerName}</span>
+            </div>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
@@ -61,7 +63,6 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customerName}</span>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
@@ -87,12 +88,14 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-4/12">{customerName}</span>
-            {status === ReservationStatusEnum.PREPAID && (
-              <div className="bg-warning-500 p-1 rounded-sm">
-                <BsCashCoin size={14} className="text-neutral-800" />
-              </div>
-            )}
+            <div className="flex items-center gap-2 w-4/12">
+              <span>{customerName}</span>
+              {status === ReservationStatusEnum.PREPAID && (
+                <div className="bg-warning-500 p-1 rounded-sm">
+                  <BsCashCoin size={14} className="text-neutral-800" />
+                </div>
+              )}
+            </div>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
@@ -117,7 +120,7 @@ function ReservationItem({
             >
               {time} - {court}
             </span>
-            <span className="w-5/12">{customerName}</span>
+            <div className="flex items-center gap-2 w-4/12"></div>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
         </li>
