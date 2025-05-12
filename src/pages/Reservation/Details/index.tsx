@@ -157,9 +157,12 @@ function ReservationDetails() {
                   name="phone"
                   title="Telefone:"
                   placeholder="51989589197"
-                  type="text"
+                  type="tel"
                   value={customerReservationPhone ?? ""}
-                  onChange={(e) => setCustomerReservationPhone(e.target.value)}
+                  onChange={(e) => {
+                    const phone = e.target.value.replace(/\D/g, "");
+                    setCustomerReservationPhone(phone);
+                  }}
                   required
                   mode="dark"
                 />
