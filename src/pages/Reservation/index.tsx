@@ -9,6 +9,8 @@ import { HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
 import { MdOutlineFilterList } from "react-icons/md";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -31,6 +33,8 @@ const getBorderColorByStatusSelected = (
 };
 
 function Reservation() {
+  const navigate = useNavigate();
+
   const [date, setDate] = useState<Date | null>(
     new Date(new Date().setHours(0, 0, 0, 0))
   );
@@ -40,23 +44,51 @@ function Reservation() {
   const [isOpenFilters, setIsOpenFilters] = useState(false);
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
+  const [companyPublicId, setCompanyPublicId] = useState<string>("");
+
+  useEffect(() => {
+    const token = Cookies.get("access_token");
+    if (!token) {
+      navigate("/");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const getCompanyPublicIdFromToken = () => {
+      const match = document.cookie.match(/(?:^|;\s*)access_token=([^;]*)/);
+      if (!match) return "";
+      try {
+        const token = match[1];
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload.companyPublicId || "";
+      } catch {
+        return "";
+      }
+    };
+    const id = getCompanyPublicIdFromToken();
+    setCompanyPublicId(id);
+  }, []);
+
+  useEffect(() => {
+    if (!companyPublicId || !date) return;
+    fetchData(date.toISOString().split("T")[0]);
+  }, [companyPublicId, date]);
 
   const fetchData = useCallback(
     async (dateInput: string) => {
+      if (!companyPublicId) {
+        return;
+      }
       const response = await getSchedulesByCompanyPublicIdAndDate({
-        companyPublicId: "c26bb6e2-693f-4205-bc90-63f7003d895d",
+        companyPublicId,
         date: dateInput,
       });
       setList(response);
       const uniqueCourts = [...new Set(response.map((item) => item.court))];
       setCourtsNameList(uniqueCourts);
     },
-    [date]
+    [date, companyPublicId]
   );
-
-  useEffect(() => {
-    fetchData(date?.toISOString().split("T")[0] || "");
-  }, []);
 
   function handleSubtractOneDay(date: Date | null): void {
     setIsOpenFilters(false);
