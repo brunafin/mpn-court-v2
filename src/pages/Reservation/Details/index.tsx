@@ -1,6 +1,6 @@
 import { BsArrowCounterclockwise, BsPersonCheck } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { ReservationStatusEnum } from "../enum";
 import { MdOutlineArrowBackIos } from "react-icons/md";
 import { FaRegCalendarCheck } from "react-icons/fa";
@@ -18,7 +18,10 @@ import { getMeanByStatus, renderButtonByStatus } from "./utils";
 
 function ReservationDetails() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const dateFrom = location.state?.date;
+
   const [customerReservationName, setCustomerReservationName] = useState<
     string | null
   >(null);
@@ -54,7 +57,11 @@ function ReservationDetails() {
       courtSchedulePublicId: court?.scheduleId,
     });
     if (response) {
-      navigate("/reservas");
+      navigate("/reservas", {
+        state: {
+          date: dateFrom,
+        },
+      });
     }
   };
 
@@ -69,7 +76,11 @@ function ReservationDetails() {
           <>
             <header className="flex flex-col sticky top-0 z-10">
               <div className="flex w-full justify-around md:justify-between py-4 bg-danger-800">
-                <button onClick={() => navigate(-1)}>
+                <button
+                  onClick={() =>
+                    navigate(`/reservas`, { state: { date: dateFrom } })
+                  }
+                >
                   <MdOutlineArrowBackIos size={24} />
                 </button>
                 <div className="flex align-center w-full justify-center gap-2">
@@ -88,6 +99,7 @@ function ReservationDetails() {
                   {renderButtonByStatus(
                     court.scheduleId,
                     court?.status,
+                    dateFrom,
                     navigate
                   )}
                 </div>
@@ -127,7 +139,9 @@ function ReservationDetails() {
                   await cancelReservation(
                     String(court?.reservation?.tokenToCancel)
                   );
-                  navigate("/reservas");
+                  navigate("/reservas", {
+                    state: { date: dateFrom },
+                  });
                 }}
                 className="flex items-start justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 py-2 px-4 mx-auto mt-4"
               >

@@ -7,13 +7,8 @@ export interface IScheduleApi {
 }
 
 export const getSchedulesByCompanyPublicIdAndDate = async ({ companyPublicId, date }: IScheduleApi) => {
-  try {
-    const response = await api.get<IReservationItemProps[]>(`/companies/${companyPublicId}/schedules/${date}`);
-    return response.data;
-  } catch (error) {
-    console.error('Erro ao buscar horários:', error);
-    throw error;
-  }
+  const response = await api.get<IReservationItemProps[]>(`/companies/${companyPublicId}/schedules/${date}`);
+  return response.data;
 }
 
 export const getScheduleById = async (id: string) => {
@@ -59,3 +54,21 @@ export const changeAvailability = async (courtScheduleId: string, available: boo
     throw error;
   }
 }
+
+
+interface IFixOrUnfixSchedule {
+  court_schedule_public_id: string;
+}
+
+export const fixSchedule = async (data: IFixOrUnfixSchedule): Promise<void> => {
+  await api.post('/court-schedules/fix', data);
+};
+
+export const unfixSchedule = async (data: IFixOrUnfixSchedule): Promise<void> => {
+  try {
+    await api.post('/court-schedules/unfix', data);
+  } catch (error) {
+    console.error('Erro ao desfixar horário:', error);
+    throw error;
+  }
+};

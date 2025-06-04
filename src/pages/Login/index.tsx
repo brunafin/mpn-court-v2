@@ -73,7 +73,14 @@ function Login() {
           type="text"
           mode="light"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            let value = e.target.value
+              .replace(/\s/g, "")
+              .replace(/[A-Z]/g, (c) => c.toLowerCase())
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "");
+            setUsername(value);
+          }}
           required
         />
         <Input

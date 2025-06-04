@@ -10,7 +10,7 @@ import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
 import { MdOutlineFilterList } from "react-icons/md";
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -34,9 +34,17 @@ const getBorderColorByStatusSelected = (
 
 function Reservation() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const dateFrom = location.state?.date;
 
   const [date, setDate] = useState<Date | null>(
-    new Date(new Date().setHours(0, 0, 0, 0))
+    dateFrom
+      ? new Date(
+          Number.isNaN(Date.parse(dateFrom))
+            ? new Date().setHours(0, 0, 0, 0)
+            : new Date(dateFrom + "T00:00:00").setHours(0, 0, 0, 0)
+        )
+      : new Date(new Date().setHours(0, 0, 0, 0))
   );
   const [statusSelected, setStatusSelected] =
     useState<ReservationStatusEnum | null>(null);
@@ -71,7 +79,7 @@ function Reservation() {
 
   useEffect(() => {
     if (!companyPublicId || !date) return;
-    fetchData(date.toISOString().split("T")[0]);
+    fetchData(date?.toISOString().split("T")[0]);
   }, [companyPublicId, date]);
 
   const fetchData = useCallback(
@@ -79,13 +87,23 @@ function Reservation() {
       if (!companyPublicId) {
         return;
       }
-      const response = await getSchedulesByCompanyPublicIdAndDate({
-        companyPublicId,
-        date: dateInput,
-      });
-      setList(response);
-      const uniqueCourts = [...new Set(response.map((item) => item.court))];
-      setCourtsNameList(uniqueCourts);
+      try {
+        const response = await getSchedulesByCompanyPublicIdAndDate({
+          companyPublicId,
+          date: dateInput,
+        });
+        setList(response);
+        const uniqueCourts = [...new Set(response.map((item) => item.court))];
+        setCourtsNameList(uniqueCourts);
+      } catch (error: any) {
+        if (error?.response?.status === 401) {
+          alert("Sessão expirada. Faça login novamente.");
+          Cookies.remove("access_token");
+          navigate("/");
+        } else {
+          console.error(error);
+        }
+      }
     },
     [date, companyPublicId]
   );

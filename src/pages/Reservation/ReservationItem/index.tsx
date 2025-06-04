@@ -29,6 +29,7 @@ function ReservationItem({
           <Link
             className="flex items-start py-3   justify-between"
             to={`/reservas/${scheduleId}`}
+            state={{ date }}
           >
             <span
               className="w-5/12 ms-6"
@@ -56,6 +57,7 @@ function ReservationItem({
           <Link
             className="flex items-start py-3   justify-between"
             to={`/reservas/${scheduleId}`}
+            state={{ date }}
           >
             <span
               className="w-5/12 ms-6"
@@ -81,6 +83,7 @@ function ReservationItem({
           <Link
             className="flex items-start py-3   justify-between"
             to={`/reservas/${scheduleId}`}
+            state={{ date }}
           >
             <span
               className="w-5/12 ms-6"
@@ -113,6 +116,7 @@ function ReservationItem({
           <Link
             className="flex items-start py-3   justify-between"
             to={`/reservas/${scheduleId}`}
+            state={{ date }}
           >
             <span
               className="w-5/12 ms-6"

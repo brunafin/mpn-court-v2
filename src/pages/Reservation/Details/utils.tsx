@@ -7,7 +7,11 @@ import {
   MdOutlineLockOpen,
 } from "react-icons/md";
 import { FaRegCalendarCheck } from "react-icons/fa";
-import { changeAvailability } from "../../../api/schedules";
+import {
+  changeAvailability,
+  fixSchedule,
+  unfixSchedule,
+} from "../../../api/schedules";
 import { useNavigate } from "react-router-dom";
 
 export function getReservationIcon(status?: ReservationStatusEnum | null) {
@@ -162,6 +166,7 @@ export function getMeanByStatus(
 export function renderButtonByStatus(
   courtScheduleId: string,
   status: ReservationStatusEnum | null,
+  dateFrom: Date,
   navigate: ReturnType<typeof useNavigate>
 ) {
   if (!status) return null;
@@ -170,8 +175,14 @@ export function renderButtonByStatus(
       return (
         <button
           onClick={async () => {
-            await changeAvailability(courtScheduleId, true);
-            navigate("/reservas");
+            const confirmed = window.confirm(
+              "Tem certeza que deseja liberar este horário fixo? Essa ação vai cancelar todas as reservas futuras para este horário/cliente."
+            );
+            if (!confirmed) return;
+            await unfixSchedule({ court_schedule_public_id: courtScheduleId });
+            navigate("/reservas", {
+              state: { date: dateFrom },
+            });
           }}
           className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2"
         >
@@ -184,7 +195,9 @@ export function renderButtonByStatus(
         <button
           onClick={async () => {
             await changeAvailability(courtScheduleId, true);
-            navigate("/reservas");
+            navigate("/reservas", {
+              state: { date: dateFrom },
+            });
           }}
           className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
         >
@@ -195,7 +208,23 @@ export function renderButtonByStatus(
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return (
-        <button className="flex items-stretch justify-center w-fit rounded-sm bg-purple-900 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2">
+        <button
+          onClick={async () => {
+            try {
+              await fixSchedule({ court_schedule_public_id: courtScheduleId });
+              navigate("/reservas", {
+                state: { date: dateFrom },
+              });
+            } catch (error: any) {
+              console.log(error);
+              alert(
+                error?.response.data.message ||
+                  "Ocorreu um erro ao fixar o horário."
+              );
+            }
+          }}
+          className="flex items-stretch justify-center w-fit rounded-sm bg-purple-900 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
+        >
           <MdOutlineLockClock size={18} />
           Fixar horário
         </button>
@@ -205,7 +234,9 @@ export function renderButtonByStatus(
         <button
           onClick={async () => {
             await changeAvailability(courtScheduleId, false);
-            navigate("/reservas");
+            navigate("/reservas", {
+              state: { date: dateFrom },
+            });
           }}
           className="flex items-stretch justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
         >
