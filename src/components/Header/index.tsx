@@ -1,8 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BsList } from "react-icons/bs";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const getCompanyNameFromCookie = () => {
+    const match = document.cookie.match(/access_token=([^;]+)/);
+    if (!match) return "";
+    try {
+      const payload = JSON.parse(atob(match[1].split(".")[1]));
+      return payload.companyName || "";
+    } catch {
+      return "";
+    }
+  };
+  useEffect(() => {
+    setCompanyName(getCompanyNameFromCookie());
+  }, []);
+
   return (
     <header className="bg-neutral-200 h-16 flex items-center justify-between px-4 sticky top-0 z-20">
       <a href="/">
@@ -14,7 +29,7 @@ function Header() {
         />
       </a>
       <h1 className="font-bold text-center text-base text-neutral-800">
-        Sua Quadra
+        {companyName}
       </h1>
       <div className="relative">
         <BsList

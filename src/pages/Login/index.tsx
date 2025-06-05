@@ -3,6 +3,7 @@ import Button from "../../components/Button";
 import Input from "../../components/Input";
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
+import { login } from "../../api/auth";
 
 function Login() {
   const navigate = useNavigate();
@@ -26,28 +27,22 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL_BASE}/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login inválido");
-      }
-
-      const data = await response.json();
-      Cookies.set("access_token", data.access_token, {
+      const response = await login(username, password);
+      Cookies.set("access_token", response.access_token, {
         secure: true,
         sameSite: "strict",
       });
-      navigate("/reservas");
+      console.log(response);
+      const tokenPayload = JSON.parse(
+        atob(response.access_token.split(".")[1])
+      );
+      if (tokenPayload.updatedPassword) {
+        navigate("/reservas");
+      } else {
+        navigate("/alterar-senha");
+      }
     } catch (error: any) {
-      alert(error.message || "Usuário ou senha inválidos.");
+      alert(error.response.data.messages || "Usuário ou senha inválidos.");
     } finally {
       setLoading(false);
     }
