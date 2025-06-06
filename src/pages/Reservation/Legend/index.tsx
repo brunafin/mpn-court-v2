@@ -1,4 +1,4 @@
-import { BsCashCoin } from "react-icons/bs";
+// import { BsCashCoin } from "react-icons/bs";
 import { FaRegCalendarCheck } from "react-icons/fa";
 import {
   MdNotInterested,
