@@ -109,7 +109,7 @@ function LegendAndFilters({
               Reservado
             </button>
           </li>
-          <li>
+          {/* <li>
             <button
               onClick={() => setStatusSelected(ReservationStatusEnum.PREPAID)}
               className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-warning-500 hover:bg-warning-500 hover:text-neutral-800 rounded-sm py-1 px-2 ${
@@ -121,7 +121,7 @@ function LegendAndFilters({
               <BsCashCoin size={18} />
               Pagamento antecipado
             </button>
-          </li>
+          </li> */}
         </ul>
       </div>
       <div
