@@ -17,7 +17,7 @@ interface ITextareaProps {
   className?: string;
   rows?: number;
   cols?: number;
-  maxLength?: number; // Adicionado maxLength
+  maxLength?: number;
 }
 
 function Textarea({
@@ -37,7 +37,7 @@ function Textarea({
   onKeyDown,
   onKeyUp,
   onKeyPress,
-  maxLength, // Adicionado maxLength
+  maxLength,
 }: ITextareaProps) {
   return (
     <div className={`flex flex-col ${className}`}>
@@ -57,13 +57,12 @@ function Textarea({
         value={value}
         placeholder={placeholder}
         className={`w-full px-4 py-2 mb-4 border border-neutral-300 rounded-lg shadow-sm
-       hover:border-neutral-400
-      focus:outline-none focus:ring-2 focus:ring-neutral-300
-       transition-all duration-200 ease-in-out 
-       ${mode === "dark" ? "bg-neutral-800" : "bg-neutral-100 text-neutral-800"}
-       ${
-         mode === "dark" ? "placeholder-neutral-400" : "placeholder-neutral-500"
-       }`}
+          hover:border-neutral-400
+          focus:outline-none focus:ring-2 focus:ring-neutral-300
+          transition-all duration-200 ease-in-out
+          ${mode === "dark" ? "bg-neutral-800 text-neutral-100" : "bg-neutral-100 text-neutral-800"}
+          ${mode === "dark" ? "placeholder-neutral-400" : "placeholder-neutral-500"}
+        `}
         onChange={onChange}
         onBlur={onBlur}
         onClick={onClick}
@@ -74,7 +73,7 @@ function Textarea({
         required={required}
         rows={rows}
         cols={cols}
-        maxLength={maxLength} // Adicionado maxLength
+        maxLength={maxLength}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import {
 import { BsCashCoin, BsChevronRight } from "react-icons/bs";
 import { FaRegCalendarCheck } from "react-icons/fa";
 import { IReservationItemProps } from "../interface";
+import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 
 function ReservationItem({
   scheduleId,
@@ -18,6 +19,7 @@ function ReservationItem({
   status,
   time,
   isBarbecueIncluded = false,
+  isNeedsNetting = false,
 }: IReservationItemProps) {
   const isPastDate =
     new Date(`${date}T${time}`) < new Date(new Date().setSeconds(0, 0));
@@ -42,6 +44,7 @@ function ReservationItem({
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
               {time} - {court}
+              {isNeedsNetting && <VoleyNetIcon className="ms-1" />}
               {isBarbecueIncluded && (
                 <div className="bg-warning-600 p-1 rounded-sm ms-2">
                   <MdOutlineRestaurant className="text-neutral-800" />
@@ -101,8 +104,9 @@ function ReservationItem({
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
               {time} - {court}
+              {isNeedsNetting && <VoleyNetIcon className="ms-1" />}
               {isBarbecueIncluded && (
-                <div className="bg-warning-600 p-1 rounded-sm ms-2">
+                <div className="bg-warning-600 p-1 rounded-sm ms-1">
                   <MdOutlineRestaurant className="text-neutral-800" />
                 </div>
               )}

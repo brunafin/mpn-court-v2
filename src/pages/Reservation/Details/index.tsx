@@ -17,6 +17,8 @@ import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 import Header from "../../../components/Header";
 import { getMeanByStatus, renderButtonByStatus } from "./utils";
 import Textarea from "../../../components/Textarea";
+import Select from "../../../components/Select";
+import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 
 function ReservationDetails() {
   const { id } = useParams();
@@ -33,12 +35,21 @@ function ReservationDetails() {
   const [observation, setObservation] = useState<string>("");
   const [isBarbecueIncluded, setIsBarbecueIncluded] = useState<boolean>(false);
   const [court, setCourt] = useState<IReservationDetailsItemProps | null>(null);
+  const [sportSelected, setSportSelected] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [courtSports, setCourtSports] = useState<
+    { id: number; name: string }[]
+  >([]);
 
   const fetchData = async (id: string) => {
     const response = await getScheduleById(id);
     setCourt(response);
     setIsBarbecueIncluded(response?.reservation?.isBarbecueIncluded || false);
     setObservation(response?.reservation?.observation || "");
+    setCourtSports(response?.sports || []);
+    setSportSelected(response.sports[0]);
   };
 
   useEffect(() => {
@@ -63,6 +74,7 @@ function ReservationDetails() {
       courtSchedulePublicId: court?.scheduleId,
       observation,
       isBarbecueIncluded,
+      sportId: sportSelected?.id || courtSports[0]?.id,
     });
     if (response) {
       navigate("/reservas", {
@@ -115,6 +127,7 @@ function ReservationDetails() {
               </div>
               {getMeanByStatus(
                 court?.status,
+                court?.reservation?.sportName,
                 court?.reservation?.contactName,
                 court?.reservation?.contactPhone
               )}
@@ -159,8 +172,16 @@ function ReservationDetails() {
               {court?.court} -{" "}
               {court?.price && formatCurrencyBRL(parseFloat(court?.price))}
             </h2>
+            {court.reservation?.isNeedsNetting && (
+              <div className="bg-secondary-100 p-2 mx-4 mb-4 flex justify-center items-center rounded-md md:w-2/5 md:mx-auto">
+                <VoleyNetIcon className="me-1 text-neutral-800" />
+                <p className="text-neutral-800 flex items-center pt-1 justify-center">
+                  Precisa de rede
+                </p>
+              </div>
+            )}
             {isBarbecueIncluded && (
-              <div className="bg-warning-600 p-2 mx-4 mb-4 rounded-md md:w-fit md:mx-auto">
+              <div className="bg-warning-600 p-2 mx-4 mb-4 rounded-md md:w-2/5 md:mx-auto">
                 <p className="text-neutral-800 flex items-center justify-center">
                   <MdOutlineRestaurant size={20} className="inline mr-1" />
                   Churrasqueira inclusa na reserva
@@ -225,6 +246,24 @@ function ReservationDetails() {
                   handleSubmit();
                 }}
               >
+                <div>
+                  <Select
+                    name="court-sport"
+                    title="Esporte:"
+                    value={sportSelected?.id}
+                    options={courtSports}
+                    mode="dark"
+                    className="w-full"
+                    onChange={(e) => {
+                      const selectedId = Number(e.target.value);
+                      const selectedSport = courtSports.find(
+                        (sport) => sport.id === selectedId
+                      );
+                      setSportSelected(selectedSport || null);
+                    }}
+                    disabled={courtSports.length <= 1}
+                  />
+                </div>
                 <Input
                   name="name"
                   title="Nome:"

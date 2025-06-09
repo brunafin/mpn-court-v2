@@ -27,6 +27,7 @@ interface ICreateReservation {
   courtSchedulePublicId: string;
   observation?: string;
   isBarbecueIncluded?: boolean;
+  sportId: number;
 }
 
 export const createReservation = async (data: ICreateReservation) => {

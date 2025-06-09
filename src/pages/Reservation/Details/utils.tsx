@@ -67,6 +67,7 @@ export function getBackgroundColorByStatus(
 
 export function getMeanByStatus(
   status?: ReservationStatusEnum | null,
+  sportName?: string,
   contactName?: string,
   contactPhone?: string
 ) {
@@ -81,6 +82,9 @@ export function getMeanByStatus(
           <div className="flex items-start gap-1">
             {getReservationIcon(status)}
             <p>Fixo</p>
+          </div>
+          <div className="flex items-start gap-1">
+            <p className="text-sm">({sportName})</p>
           </div>
           {contactPhone && (
             <div>
@@ -125,6 +129,9 @@ export function getMeanByStatus(
           <div className="flex items-start gap-1">
             {getReservationIcon(status)}
             <p>Reservado</p>
+          </div>
+          <div className="flex items-start gap-1">
+            <p className="text-sm">({sportName})</p>
           </div>
           {contactPhone && (
             <div>

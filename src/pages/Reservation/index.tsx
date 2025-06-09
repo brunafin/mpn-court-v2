@@ -216,6 +216,7 @@ function Reservation() {
                   status={item.status}
                   time={item.time}
                   isBarbecueIncluded={item.isBarbecueIncluded}
+                  isNeedsNetting={item.isNeedsNetting}
                   key={item.scheduleId}
                 />
               ))}
