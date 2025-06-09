@@ -43,7 +43,7 @@ function ReservationItem({
             >
               {time} - {court}
               {isBarbecueIncluded && (
-                <div className="bg-primary-300 p-1 rounded-sm ms-2">
+                <div className="bg-warning-600 p-1 rounded-sm ms-2">
                   <MdOutlineRestaurant className="text-neutral-800" />
                 </div>
               )}
@@ -102,7 +102,7 @@ function ReservationItem({
             >
               {time} - {court}
               {isBarbecueIncluded && (
-                <div className="bg-primary-300 p-1 rounded-sm ms-2">
+                <div className="bg-warning-600 p-1 rounded-sm ms-2">
                   <MdOutlineRestaurant className="text-neutral-800" />
                 </div>
               )}

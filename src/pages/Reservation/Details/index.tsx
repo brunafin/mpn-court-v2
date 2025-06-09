@@ -160,7 +160,7 @@ function ReservationDetails() {
               {court?.price && formatCurrencyBRL(parseFloat(court?.price))}
             </h2>
             {isBarbecueIncluded && (
-              <div className="bg-primary-300 p-2 mx-4 mb-4 rounded-md md:w-fit md:mx-auto">
+              <div className="bg-warning-600 p-2 mx-4 mb-4 rounded-md md:w-fit md:mx-auto">
                 <p className="text-neutral-800 flex items-center justify-center">
                   <MdOutlineRestaurant size={20} className="inline mr-1" />
                   Churrasqueira inclusa na reserva
