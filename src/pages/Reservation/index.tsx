@@ -215,6 +215,7 @@ function Reservation() {
                   date={item.date}
                   status={item.status}
                   time={item.time}
+                  isBarbecueIncluded={item.isBarbecueIncluded}
                   key={item.scheduleId}
                 />
               ))}

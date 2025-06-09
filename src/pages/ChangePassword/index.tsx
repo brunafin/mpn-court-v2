@@ -16,7 +16,6 @@ export default function ChangePassword() {
     if (accessToken) {
       try {
         const payload = JSON.parse(atob(accessToken.split(".")[1]));
-        console.log("payload", payload);
         setCompanyPublicId(payload.companyPublicId || "");
       } catch (e) {
         setCompanyPublicId("");

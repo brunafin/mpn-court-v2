@@ -67,7 +67,20 @@ function LegendAndFilters({
               }`}
             >
               <MdOutlineAccessTime size={18} />
-              Livre
+              Disponível
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => setStatusSelected(ReservationStatusEnum.RESERVED)}
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-secondary-500 hover:bg-secondary-500 rounded-sm py-1 px-2 ${
+                statusSelected === ReservationStatusEnum.RESERVED
+                  ? "bg-secondary-500"
+                  : ""
+              }`}
+            >
+              <FaRegCalendarCheck size={18} />
+              Reservado
             </button>
           </li>
           <li>
@@ -94,19 +107,6 @@ function LegendAndFilters({
             >
               <MdNotInterested size={18} />
               Inativo
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => setStatusSelected(ReservationStatusEnum.RESERVED)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-secondary-500 hover:bg-secondary-500 rounded-sm py-1 px-2 ${
-                statusSelected === ReservationStatusEnum.RESERVED
-                  ? "bg-secondary-500"
-                  : ""
-              }`}
-            >
-              <FaRegCalendarCheck size={18} />
-              Reservado
             </button>
           </li>
           {/* <li>

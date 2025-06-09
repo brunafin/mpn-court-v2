@@ -25,6 +25,8 @@ interface ICreateReservation {
   contactName: string;
   contactPhone: string;
   courtSchedulePublicId: string;
+  observation?: string;
+  isBarbecueIncluded?: boolean;
 }
 
 export const createReservation = async (data: ICreateReservation) => {
@@ -33,6 +35,22 @@ export const createReservation = async (data: ICreateReservation) => {
     return response.data;
   } catch (error) {
     console.error('Erro ao reservar:', error);
+    throw error;
+  }
+}
+
+export const updateObservationByPublicId = async (
+  publicId: string,
+  data: { observation?: string; isBarbecueIncluded?: boolean }
+) => {
+  try {
+    const response = await api.patch<IReservationDetailsItemProps>(`/reservation/${publicId}/extra`, {
+      observation: data.observation,
+      is_barbecue_included: data.isBarbecueIncluded
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao atualizar observação:', error);
     throw error;
   }
 }

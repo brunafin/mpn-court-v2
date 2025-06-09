@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 import { ReservationStatusEnum } from "../enum";
-import { MdCheck, MdNotInterested, MdOutlineLockClock } from "react-icons/md";
+import {
+  MdCheck,
+  MdNotInterested,
+  MdOutlineLockClock,
+  MdOutlineRestaurant,
+} from "react-icons/md";
 import { BsCashCoin, BsChevronRight } from "react-icons/bs";
 import { FaRegCalendarCheck } from "react-icons/fa";
 import { IReservationItemProps } from "../interface";
@@ -12,6 +17,7 @@ function ReservationItem({
   date,
   status,
   time,
+  isBarbecueIncluded = false,
 }: IReservationItemProps) {
   const isPastDate =
     new Date(`${date}T${time}`) < new Date(new Date().setSeconds(0, 0));
@@ -32,10 +38,15 @@ function ReservationItem({
             state={{ date }}
           >
             <span
-              className="w-5/12 ms-6"
+              className="flex items-center w-6/12 ms-6"
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
               {time} - {court}
+              {isBarbecueIncluded && (
+                <div className="bg-primary-300 p-1 rounded-sm ms-2">
+                  <MdOutlineRestaurant className="text-neutral-800" />
+                </div>
+              )}
             </span>
             <div className="flex w-4/12">
               <span className="w-5/12">{customerName}</span>
@@ -86,10 +97,15 @@ function ReservationItem({
             state={{ date }}
           >
             <span
-              className="w-5/12 ms-6"
+              className="flex items-center w-6/12 ms-6"
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
               {time} - {court}
+              {isBarbecueIncluded && (
+                <div className="bg-primary-300 p-1 rounded-sm ms-2">
+                  <MdOutlineRestaurant className="text-neutral-800" />
+                </div>
+              )}
             </span>
             <div className="flex items-center gap-2 w-4/12">
               <span>{customerName}</span>

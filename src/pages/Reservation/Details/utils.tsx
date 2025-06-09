@@ -187,7 +187,7 @@ export function renderButtonByStatus(
           className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2"
         >
           <MdOutlineLockOpen size={18} />
-          Liberar horário fixo
+          Liberar fixo
         </button>
       );
     case ReservationStatusEnum.INACTIVE:
@@ -202,7 +202,7 @@ export function renderButtonByStatus(
           className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
         >
           <MdOutlineLockOpen size={18} />
-          Reativar horário
+          Reativar
         </button>
       );
     case ReservationStatusEnum.RESERVED:
@@ -241,7 +241,7 @@ export function renderButtonByStatus(
           className="flex items-stretch justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
         >
           <MdNotInterested size={18} />
-          Inativar horário
+          Inativar
         </button>
       );
     default:

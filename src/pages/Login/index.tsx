@@ -32,7 +32,6 @@ function Login() {
         secure: true,
         sameSite: "strict",
       });
-      console.log(response);
       const tokenPayload = JSON.parse(
         atob(response.access_token.split(".")[1])
       );
