@@ -19,8 +19,11 @@ import { getMeanByStatus, renderButtonByStatus } from "./utils";
 import Textarea from "../../../components/Textarea";
 import Select from "../../../components/Select";
 import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
+import { useLoading } from "../../../hooks/useLoading";
+import Loader from "../../../components/Loader";
 
 function ReservationDetails() {
+  const { loading, withLoading } = useLoading();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,12 +47,14 @@ function ReservationDetails() {
   >([]);
 
   const fetchData = async (id: string) => {
-    const response = await getScheduleById(id);
-    setCourt(response);
-    setIsBarbecueIncluded(response?.reservation?.isBarbecueIncluded || false);
-    setObservation(response?.reservation?.observation || "");
-    setCourtSports(response?.sports || []);
-    setSportSelected(response.sports[0]);
+    withLoading(async () => {
+      const response = await getScheduleById(id);
+      setCourt(response);
+      setIsBarbecueIncluded(response?.reservation?.isBarbecueIncluded || false);
+      setObservation(response?.reservation?.observation || "");
+      setCourtSports(response?.sports || []);
+      setSportSelected(response.sports[0]);
+    });
   };
 
   useEffect(() => {
@@ -68,21 +73,23 @@ function ReservationDetails() {
     if (!court?.scheduleId) {
       return alert("Horário da reserva não informado");
     }
-    const response = await createReservation({
-      contactName: customerReservationName,
-      contactPhone: customerReservationPhone,
-      courtSchedulePublicId: court?.scheduleId,
-      observation,
-      isBarbecueIncluded,
-      sportId: sportSelected?.id || courtSports[0]?.id,
-    });
-    if (response) {
-      navigate("/reservas", {
-        state: {
-          date: dateFrom,
-        },
+    withLoading(async () => {
+      const response = await createReservation({
+        contactName: customerReservationName,
+        contactPhone: customerReservationPhone,
+        courtSchedulePublicId: court?.scheduleId,
+        observation,
+        isBarbecueIncluded,
+        sportId: sportSelected?.id || courtSports[0]?.id,
       });
-    }
+      if (response) {
+        navigate("/reservas", {
+          state: {
+            date: dateFrom,
+          },
+        });
+      }
+    });
   };
 
   const updateObservationByReservation = async ({
@@ -95,16 +102,22 @@ function ReservationDetails() {
     if (!court?.reservation?.publicId) {
       return alert("Reserva não encontrada");
     }
-    await updateObservationByPublicId(court?.reservation?.publicId, {
-      ...(observation !== undefined && { observation }),
-      ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
+    withLoading(async () => {
+      if (court.reservation?.publicId) {
+        await updateObservationByPublicId(court?.reservation?.publicId, {
+          ...(observation !== undefined && { observation }),
+          ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
+        });
+      }
     });
   };
+
+  if (loading) return <Loader />;
 
   return (
     <div className="h-screen">
       <Header />
-      <section className="bg-neutral-100 overflow-y-auto">
+      <section className="bg-neutral-800 h-full overflow-y-auto">
         {court ? (
           <>
             <header className="border-2flex flex-col sticky top-0 z-10">
@@ -129,7 +142,7 @@ function ReservationDetails() {
                 court?.reservation?.contactPhone
               )}
             </header>
-            <section className="bg-neutral-100 md:mx-auto">
+            <section className="bg-neutral-100 h-full md:mx-auto">
               {court && (
                 <div
                   className={`flex justify-between md:justify-center items-baseline`}
@@ -225,11 +238,13 @@ function ReservationDetails() {
               ].includes(court?.status as ReservationStatusEnum) && (
                 <button
                   onClick={async () => {
-                    await cancelReservation(
-                      String(court?.reservation?.tokenToCancel)
-                    );
-                    navigate("/reservas", {
-                      state: { date: dateFrom },
+                    withLoading(async () => {
+                      await cancelReservation(
+                        String(court?.reservation?.tokenToCancel)
+                      );
+                      navigate("/reservas", {
+                        state: { date: dateFrom },
+                      });
                     });
                   }}
                   className="w-full fixed bottom-0 flex items-start justify-center rounded-t-md bg-danger-400 text-neutral-100 gap-1 p-4 mx-auto mt-4 font-bold"

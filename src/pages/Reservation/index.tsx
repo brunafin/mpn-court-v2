@@ -10,6 +10,9 @@ import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
 import Cookies from "js-cookie";
 import { useLocation, useNavigate } from "react-router-dom";
+import Loader from "../../components/Loader";
+import { useLoading } from "../../hooks/useLoading";
+import { formatDate, isToday } from "date-fns";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -32,6 +35,7 @@ const getBorderColorByStatusSelected = (
 };
 
 function Reservation() {
+  const { loading, withLoading } = useLoading();
   const navigate = useNavigate();
   const location = useLocation();
   const dateFrom = location.state?.date;
@@ -87,13 +91,15 @@ function Reservation() {
         return;
       }
       try {
-        const response = await getSchedulesByCompanyPublicIdAndDate({
-          companyPublicId,
-          date: dateInput,
+        withLoading(async () => {
+          const response = await getSchedulesByCompanyPublicIdAndDate({
+            companyPublicId,
+            date: dateInput,
+          });
+          setList(response);
+          const uniqueCourts = [...new Set(response.map((item) => item.court))];
+          setCourtsNameList(uniqueCourts);
         });
-        setList(response);
-        const uniqueCourts = [...new Set(response.map((item) => item.court))];
-        setCourtsNameList(uniqueCourts);
       } catch (error: any) {
         if (error?.response?.status === 401) {
           alert("Sessão expirada. Faça login novamente.");
@@ -124,6 +130,37 @@ function Reservation() {
     setDate(newDate);
     fetchData(newDate.toISOString().split("T")[0]);
   }
+
+  const getResultHeaderTitleList = (): string => {
+    if (!date) return "sem data";
+    const dateFormatted = formatDate(date, "dd/MM/yyyy");
+    const isTodayComparing = isToday(new Date(date));
+    switch (statusSelected) {
+      case ReservationStatusEnum.AVAILABLE:
+        return `Exibindos somente os horários disponíveis do dia ${
+          isTodayComparing ? "hoje" : dateFormatted
+        }.`;
+      case ReservationStatusEnum.RESERVED:
+        return `Exibindos somente os horários reservados do dia ${
+          isTodayComparing ? "hoje" : dateFormatted
+        }.`;
+      case ReservationStatusEnum.FIXED:
+        return `Exibindos somente os horários fixos do dia ${
+          isTodayComparing ? "hoje" : dateFormatted
+        }.`;
+      case ReservationStatusEnum.INACTIVE:
+        return `Exibindos somente os horários inativos do dia ${
+          isTodayComparing ? "hoje" : dateFormatted
+        }.`;
+      default:
+        return `Exibindo todos os horários do dia ${
+          isTodayComparing ? "hoje" : dateFormatted
+        }.`;
+    }
+  };
+
+  if (loading) return <Loader />;
+
   return (
     <>
       <Header />
@@ -151,7 +188,7 @@ function Reservation() {
             <BsArrowRepeat size={24} />
           </button>
           <button
-            className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm z-11 ${getBorderColorByStatusSelected(
+            className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm  mx-2 z-11 ${getBorderColorByStatusSelected(
               statusSelected
             )} ${
               isOpenFilters ? "bg-neutral-900 border-1 border-neutral-900" : ""
@@ -175,54 +212,90 @@ function Reservation() {
           courts={courtsNameList}
           isOpen={isOpenFilters}
         />
-        {list.length > 0 ? (
-          <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg">
-            {list
-              .filter((elementDate) => {
-                if (!date) return elementDate;
-                const formattedDate = new Date(
-                  date.getTime() + date.getTimezoneOffset() * 60000
-                )
-                  .toISOString()
-                  .split("T")[0];
-                return elementDate.date === formattedDate;
-              })
-              .filter((elementStatus) => {
-                if (!statusSelected) return elementStatus;
-                if (statusSelected === ReservationStatusEnum.RESERVED) {
-                  return (
-                    elementStatus.status === ReservationStatusEnum.RESERVED ||
-                    elementStatus.status === ReservationStatusEnum.PREPAID
-                  );
-                } else {
-                  return elementStatus.status === statusSelected;
-                }
-              })
-              .filter((elementCourt) => {
-                if (!courtSelected) return elementCourt;
-                if (courtSelected === "all") {
-                  return elementCourt;
-                } else {
-                  return elementCourt.court === courtSelected;
-                }
-              })
-              .map((item) => (
-                <ReservationItem
-                  scheduleId={item.scheduleId}
-                  court={item.court}
-                  customerName={item.customerName}
-                  date={item.date}
-                  status={item.status}
-                  time={item.time}
-                  isBarbecueIncluded={item.isBarbecueIncluded}
-                  isNeedsNetting={item.isNeedsNetting}
-                  key={item.scheduleId}
-                />
-              ))}
-          </ul>
+        {list
+          .filter((elementDate) => {
+            if (!date) return elementDate;
+            const formattedDate = new Date(
+              date.getTime() + date.getTimezoneOffset() * 60000
+            )
+              .toISOString()
+              .split("T")[0];
+            return elementDate.date === formattedDate;
+          })
+          .filter((elementStatus) => {
+            if (!statusSelected) return elementStatus;
+            if (statusSelected === ReservationStatusEnum.RESERVED) {
+              return (
+                elementStatus.status === ReservationStatusEnum.RESERVED ||
+                elementStatus.status === ReservationStatusEnum.PREPAID
+              );
+            } else {
+              return elementStatus.status === statusSelected;
+            }
+          })
+          .filter((elementCourt) => {
+            if (!courtSelected) return elementCourt;
+            if (courtSelected === "all") {
+              return elementCourt;
+            } else {
+              return elementCourt.court === courtSelected;
+            }
+          }).length > 0 ? (
+          <>
+            <h3 className="bg-neutral-900 py-4 text-center">
+              {getResultHeaderTitleList()}
+            </h3>
+            <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg h-full">
+              {list
+                .filter((elementDate) => {
+                  if (!date) return elementDate;
+                  const formattedDate = new Date(
+                    date.getTime() + date.getTimezoneOffset() * 60000
+                  )
+                    .toISOString()
+                    .split("T")[0];
+                  return elementDate.date === formattedDate;
+                })
+                .filter((elementStatus) => {
+                  if (!statusSelected) return elementStatus;
+                  if (statusSelected === ReservationStatusEnum.RESERVED) {
+                    return (
+                      elementStatus.status === ReservationStatusEnum.RESERVED ||
+                      elementStatus.status === ReservationStatusEnum.PREPAID
+                    );
+                  } else {
+                    return elementStatus.status === statusSelected;
+                  }
+                })
+                .filter((elementCourt) => {
+                  if (!courtSelected) return elementCourt;
+                  if (courtSelected === "all") {
+                    return elementCourt;
+                  } else {
+                    return elementCourt.court === courtSelected;
+                  }
+                })
+                .map((item) => (
+                  <ReservationItem
+                    scheduleId={item.scheduleId}
+                    court={item.court}
+                    customerName={item.customerName}
+                    date={item.date}
+                    status={item.status}
+                    time={item.time}
+                    isBarbecueIncluded={item.isBarbecueIncluded}
+                    isNeedsNetting={item.isNeedsNetting}
+                    key={item.scheduleId}
+                  />
+                ))}
+            </ul>
+          </>
         ) : (
-          <div className="flex justify-center m-16">
-            <p>Nenhum horário encontrado.</p>
+          <div className="flex flex-col items-center justify-center m-16">
+            <p>
+              Nenhum horário encontrado{""}
+              {statusSelected && "para o filtro selecionado"}.
+            </p>
           </div>
         )}
       </section>

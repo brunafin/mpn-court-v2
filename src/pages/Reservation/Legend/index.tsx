@@ -50,8 +50,8 @@ function LegendAndFilters({
           <li>
             <button
               onClick={() => setStatusSelected(null)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-1 border-neutral-200 rounded-sm py-1 px-2 bg-neutral-800 hover:text-neutral-100 ${
-                statusSelected === null ? "bg-neutral-800" : ""
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-1 border-neutral-400 rounded-sm py-1 px-2 hover:text-neutral-100 active:bg-neutral-100 active:text-neutral-800 ${
+                statusSelected === null ? "bg-neutral-900" : ""
               }`}
             >
               Todos
