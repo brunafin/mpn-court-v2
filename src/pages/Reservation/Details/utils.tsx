@@ -191,7 +191,7 @@ export function renderButtonByStatus(
               state: { date: dateFrom },
             });
           }}
-          className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-100 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
+          className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-50 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
         >
           <MdOutlineLockOpen size={18} />
           Liberar fixo
@@ -206,7 +206,7 @@ export function renderButtonByStatus(
               state: { date: dateFrom },
             });
           }}
-          className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-100 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
+          className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-50 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
         >
           <MdOutlineLockOpen size={18} />
           Reativar
@@ -230,7 +230,7 @@ export function renderButtonByStatus(
               );
             }
           }}
-          className="w-full flex items-center justify-center text-purple-800 gap-2 mx-4 my-2 py-2 px-4 bg-purple-100 border-purple-800 border-1 rounded-sm shadow-md hover:bg-purple-900 hover:text-neutral-100 active:bg-purple-900 active:text-neutral-100 active:ring-2 active:ring-purple-200 md:w-fit"
+          className="w-full flex items-center justify-center text-purple-800 gap-2 mx-4 my-2 py-2 px-4 bg-fixed-50 border-purple-800 border-1 rounded-sm shadow-md hover:bg-purple-900 hover:text-neutral-100 active:bg-purple-900 active:text-neutral-100 active:ring-2 active:ring-purple-200 md:w-fit"
         >
           <MdOutlineLockClock size={24} />
           Fixar horário

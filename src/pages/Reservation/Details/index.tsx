@@ -305,7 +305,7 @@ function ReservationDetails() {
                     <Textarea
                       name="observation"
                       title="Observação:"
-                      placeholder="Ex: Preciso de churrasqueira"
+                      placeholder="Ex: jogo contra, jogo arreganho, 10 pessoas"
                       value={observation}
                       onChange={(e) => setObservation(e.target.value)}
                       mode="light"

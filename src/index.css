@@ -19,6 +19,7 @@
   --color-secondary-700: #001185;
   --color-secondary-800: #020F6A;
   --color-secondary-900: #081154;
+  --color-tertiary-50:#eaffe3;
   --color-tertiary-100: #CFFFD1;
   --color-tertiary-200: #B2E9B4;
   --color-tertiary-300: #94DA96;
@@ -43,6 +44,7 @@
   --color-danger-600: #b10000;
   --color-warning-500: #FFBF00;
   --color-warning-600: #F0C163;
+  --color-fixed-50: #e7e3f3;
   --breakpoint-xs: 300px;
 }
 
