@@ -75,16 +75,16 @@ export function getMeanByStatus(
     case ReservationStatusEnum.FIXED:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-14 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 md:gap-4 h-18 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          <div className="flex items-start gap-1">
-            {getReservationIcon(status)}
-            <p>Fixo</p>
-          </div>
-          <div className="flex items-start gap-1">
-            <p className="text-sm">({sportName})</p>
+          <div className="flex flex-col md:flex-row md:gap-1 items-center">
+            <div className="flex items-start gap-1">
+              {getReservationIcon(status)}
+              <p className="font-bold">Fixo</p>
+            </div>
+            <span className="text-sm">({sportName})</span>
           </div>
           {contactPhone && (
             <div>
@@ -112,9 +112,9 @@ export function getMeanByStatus(
             status
           )}`}
         >
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             {getReservationIcon(status)}
-            <p>Inativo</p>
+            <p className="font-bold">Inativo</p>
           </div>
         </div>
       );
@@ -122,16 +122,16 @@ export function getMeanByStatus(
     case ReservationStatusEnum.PREPAID:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-14 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
+          className={`flex items-center shadow-lg gap-1 md:gap-4 h-18 justify-between md:justify-center px-4 ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          <div className="flex items-start gap-1">
-            {getReservationIcon(status)}
-            <p>Reservado</p>
-          </div>
-          <div className="flex items-start gap-1">
-            <p className="text-sm">({sportName})</p>
+          <div className="flex flex-col md:flex-row md:gap-1 items-center">
+            <div className="flex items-start gap-1">
+              {getReservationIcon(status)}
+              <p className="font-bold">Reservado</p>
+            </div>
+            <span className="text-sm">({sportName})</span>
           </div>
           {contactPhone && (
             <div>
@@ -155,13 +155,13 @@ export function getMeanByStatus(
     case ReservationStatusEnum.AVAILABLE:
       return (
         <div
-          className={`flex items-center shadow-lg gap-1 h-14 justify-center ${getBackgroundColorByStatus(
+          className={`shadow-lg flex justify-center items-center h-14  ${getBackgroundColorByStatus(
             status
           )}`}
         >
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             {getReservationIcon(status)}
-            <p>Disponível</p>
+            <p className="font-bold pt-1">Disponível</p>
           </div>
         </div>
       );
@@ -191,7 +191,7 @@ export function renderButtonByStatus(
               state: { date: dateFrom },
             });
           }}
-          className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm py-1 pt-2 px-2 mt-4 mx-2"
+          className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-100 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
         >
           <MdOutlineLockOpen size={18} />
           Liberar fixo
@@ -206,7 +206,7 @@ export function renderButtonByStatus(
               state: { date: dateFrom },
             });
           }}
-          className="flex items-stretch justify-center w-fit rounded-sm bg-tertiary-800 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
+          className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-100 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
         >
           <MdOutlineLockOpen size={18} />
           Reativar
@@ -230,9 +230,9 @@ export function renderButtonByStatus(
               );
             }
           }}
-          className="flex items-stretch justify-center w-fit rounded-sm bg-purple-900 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
+          className="w-full flex items-center justify-center text-purple-800 gap-2 mx-4 my-2 py-2 px-4 bg-purple-100 border-purple-800 border-1 rounded-sm shadow-md hover:bg-purple-900 hover:text-neutral-100 active:bg-purple-900 active:text-neutral-100 active:ring-2 active:ring-purple-200 md:w-fit"
         >
-          <MdOutlineLockClock size={18} />
+          <MdOutlineLockClock size={24} />
           Fixar horário
         </button>
       );
@@ -245,7 +245,7 @@ export function renderButtonByStatus(
               state: { date: dateFrom },
             });
           }}
-          className="flex items-stretch justify-center w-fit rounded-sm bg-danger-400 text-neutral-100 gap-1 text-sm p-2 px-2 mt-4 mx-2"
+          className="w-full flex items-center justify-center text-red-800 gap-2 mx-4 my-2 py-2 px-4 bg-red-100 border-red-800 border-1 rounded-sm shadow-md hover:bg-red-700 hover:text-neutral-100 active:bg-red-700 active:text-neutral-100 active:ring-2 active:ring-red-200 md:w-fit"
         >
           <MdNotInterested size={18} />
           Inativar

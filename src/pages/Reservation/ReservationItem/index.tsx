@@ -27,12 +27,12 @@ function ReservationItem({
     case ReservationStatusEnum.FIXED:
       return (
         <li
-          className={`hover:brightness-110 px-2 border-b-4 border-b-purple-800 bg-neutral-900 md:rounded-sm relative ${
+          className={`md:w-3/5 md:mx-auto hover:brightness-110 px-2 border-b-4 border-b-purple-800 bg-neutral-800 md:rounded-sm relative ${
             isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
           <div className="absolute left-0 bg-purple-800 h-full p-1 rounded-tr-sm">
-            <MdOutlineLockClock size={14} className="text-neutral-100" />
+            <MdOutlineLockClock size={16} className="text-neutral-100" />
           </div>
           <Link
             className="flex items-start py-3   justify-between"
@@ -43,7 +43,7 @@ function ReservationItem({
               className="flex items-center w-6/12 ms-6"
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
-              {time} - {court}
+              {time} - Q.{court}
               {isNeedsNetting && <VoleyNetIcon className="ms-1" />}
               {isBarbecueIncluded && (
                 <div className="bg-warning-600 p-1 rounded-sm ms-2">
@@ -52,7 +52,9 @@ function ReservationItem({
               )}
             </span>
             <div className="flex w-4/12">
-              <span className="w-5/12">{customerName}</span>
+              {customerName && customerName?.length > 10
+                ? customerName?.slice(0, 10) + "..."
+                : customerName}
             </div>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
@@ -61,7 +63,7 @@ function ReservationItem({
     case ReservationStatusEnum.INACTIVE:
       return (
         <li
-          className={`hover:brightness-110 px-2 border-b-4 border-b-danger-400 bg-neutral-900 relative md:rounded-sm  ${
+          className={`md:w-3/5 md:mx-auto hover:brightness-110 px-2 border-b-4 border-b-danger-400 bg-neutral-800 relative md:rounded-sm  ${
             isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
@@ -77,7 +79,7 @@ function ReservationItem({
               className="w-5/12 ms-6"
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
-              {time} - {court}
+              {time} - Q.{court}
             </span>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />
           </Link>
@@ -87,7 +89,7 @@ function ReservationItem({
     case ReservationStatusEnum.PREPAID:
       return (
         <li
-          className={`hover:brightness-110 px-2 border-b-4 border-b-secondary-600 bg-neutral-900 relative md:rounded-sm  ${
+          className={`md:w-3/5 md:mx-auto hover:brightness-110 px-2 border-b-4 border-b-secondary-600 bg-neutral-800 relative md:rounded-sm  ${
             isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
@@ -103,16 +105,18 @@ function ReservationItem({
               className="flex items-center w-6/12 ms-6"
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
-              {time} - {court}
+              {time} - Q.{court}
               {isNeedsNetting && <VoleyNetIcon className="ms-1" />}
               {isBarbecueIncluded && (
-                <div className="bg-warning-600 p-1 rounded-sm ms-1">
-                  <MdOutlineRestaurant className="text-neutral-800" />
+                <div className="bg-primary-700 p-1 rounded-sm ms-1">
+                  <MdOutlineRestaurant className="text-neutral-100" />
                 </div>
               )}
             </span>
             <div className="flex items-center gap-2 w-4/12">
-              <span>{customerName}</span>
+              {customerName && customerName?.length > 10
+                ? customerName?.slice(0, 10) + "..."
+                : customerName}
               {status === ReservationStatusEnum.PREPAID && (
                 <div className="bg-warning-500 p-1 rounded-sm">
                   <BsCashCoin size={14} className="text-neutral-800" />
@@ -126,7 +130,7 @@ function ReservationItem({
     case ReservationStatusEnum.AVAILABLE:
       return (
         <li
-          className={`hover:brightness-110 px-2 border-b-4 border-b-tertiary-700 bg-neutral-900 relative md:rounded-sm ${
+          className={`md:w-3/5 md:mx-auto hover:brightness-110 px-2 border-b-4 border-b-tertiary-700 bg-neutral-800 relative md:rounded-sm ${
             isPastDate ? "opacity-50 pointer-events-none" : ""
           }`}
         >
@@ -142,7 +146,7 @@ function ReservationItem({
               className="w-5/12 ms-6"
               aria-label={`Data: ${date}, Hora: ${time}, Quadra: ${court}`}
             >
-              {time} - {court}
+              {time} - Q.{court}
             </span>
             <div className="flex items-center gap-2 w-4/12"></div>
             <BsChevronRight size={24} className="w-1/12 text-neutral-100" />

@@ -8,27 +8,26 @@ import CustomDatepicker from "../../components/Datepicker";
 import { HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
-import { MdOutlineFilterList } from "react-icons/md";
 import Cookies from "js-cookie";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
 ): string => {
-  if (!status) return "border-2 border-neutral-900";
+  if (!status) return "border-1 border-neutral-800";
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "border-2 border-purple-800";
+      return "border-2 bg-neutral-900 border-purple-800";
     case ReservationStatusEnum.INACTIVE:
-      return "border-2 border-danger-400";
+      return "border-2 bg-neutral-900 border-danger-400";
     case ReservationStatusEnum.RESERVED:
-      return "border-2 border-secondary-600";
+      return "border-2 bg-neutral-900 border-secondary-600";
     case ReservationStatusEnum.PREPAID:
-      return "border-2 border-warning-500";
+      return "border-2 bg-neutral-900 border-warning-500";
     case ReservationStatusEnum.AVAILABLE:
-      return "border-2 border-tertiary-700";
+      return "border-2 bg-neutral-900 border-tertiary-700";
     default:
-      return "border-2 border-gray-400";
+      return "border-2 bg-neutral-900 border-gray-400";
   }
 };
 
@@ -129,7 +128,7 @@ function Reservation() {
     <>
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-        <div className="flex items-center justify-center my-2 py-2">
+        <div className="bg-neutral-800 flex items-center justify-around md:justify-center py-2 mb-4 mt-2 mx-2 rounded-sm">
           <div className="flex items-center gap-1 justify-center px-2">
             <button onClick={() => handleSubtractOneDay(date)}>
               <BsChevronLeft size={24} cursor="pointer" />
@@ -152,7 +151,7 @@ function Reservation() {
             <BsArrowRepeat size={24} />
           </button>
           <button
-            className={`text-neutral-200 hover:text-neutral-100 bg-neutral-900 shadow-lg py-2 px-2 flex justify-center items-center gap-1 rounded-sm ms-4 w-28 md:w-24 me-2 ${getBorderColorByStatusSelected(
+            className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm z-11 ${getBorderColorByStatusSelected(
               statusSelected
             )}`}
             onClick={() => setIsOpenFilters(!isOpenFilters)}
@@ -162,9 +161,7 @@ function Reservation() {
                 <HiX /> Fechar
               </>
             ) : (
-              <>
-                <MdOutlineFilterList /> Filtrar
-              </>
+              <>Filtrar</>
             )}
           </button>
         </div>
@@ -177,7 +174,7 @@ function Reservation() {
           isOpen={isOpenFilters}
         />
         {list.length > 0 ? (
-          <ul className="flex flex-col gap-4 overflow-y-auto bg-neutral-800 pb-4 md:w-3/4 md:mx-auto md:bg-neutral-700 md:py-4 md:px-8 md:rounded-lg">
+          <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 h-full w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg">
             {list
               .filter((elementDate) => {
                 if (!date) return elementDate;

@@ -28,7 +28,7 @@ function LegendAndFilters({
     <div
       className={`${
         isOpen
-          ? "px-2 absolute top-28 w-full h-fit shadow-lg z-10 rounded-lg md:w-1/2 md:left-100 bg-neutral-600 p-2"
+          ? "px-4 absolute top-36 w-full h-full shadow-lg z-10 md:w-1/2 md:left-100"
           : ""
       }`}
     >
@@ -43,14 +43,14 @@ function LegendAndFilters({
           </p>
         </div>
         <ul
-          className={`bg-neutral-900 flex p-2 items-center gap-2 md:gap-8 justify-start flex-wrap md:justify-center ${
+          className={`bg-neutral-900 flex p-4 items-center gap-3 md:gap-8 justify-start flex-wrap md:justify-center ${
             isOpen ? "flex" : "hidden"
           }`}
         >
           <li>
             <button
               onClick={() => setStatusSelected(null)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-neutral-700 rounded-sm py-1 px-2 hover:bg-neutral-800 hover:text-neutral-100 ${
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-1 border-neutral-200 rounded-sm py-1 px-2 bg-neutral-800 hover:text-neutral-100 ${
                 statusSelected === null ? "bg-neutral-800" : ""
               }`}
             >
@@ -60,9 +60,9 @@ function LegendAndFilters({
           <li>
             <button
               onClick={() => setStatusSelected(ReservationStatusEnum.AVAILABLE)}
-              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-tertiary-700 hover:bg-tertiary-700 rounded-sm py-1 px-2 ${
+              className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-tertiary-800 hover:bg-tertiary-800 rounded-sm py-1 px-2 ${
                 statusSelected === ReservationStatusEnum.AVAILABLE
-                  ? "bg-tertiary-700"
+                  ? "bg-tertiary-800"
                   : ""
               }`}
             >
@@ -155,7 +155,7 @@ function LegendAndFilters({
                 onChange={() => setCourtSelected(item)}
                 checked={courtSelected === item}
               />
-              {item}
+              Q.{item}
             </label>
           ))}
         </div>
