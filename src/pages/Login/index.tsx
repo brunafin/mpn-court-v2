@@ -48,7 +48,7 @@ function Login() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center">
+    <div className="h-screen flex flex-col items-center justify-center bg-neutral-100">
       <img
         src={import.meta.env.VITE_LOGO_URL}
         className="w-1/2 md:w-1/4 mb-4"

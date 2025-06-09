@@ -28,7 +28,7 @@ function LegendAndFilters({
     <div
       className={`${
         isOpen
-          ? "px-4 absolute top-36 w-full h-full shadow-lg z-10 md:w-1/2 md:left-100"
+          ? "absolute top-36 w-full shadow-lg z-10 md:w-1/2 md:left-100"
           : ""
       }`}
     >

@@ -153,7 +153,9 @@ function Reservation() {
           <button
             className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm z-11 ${getBorderColorByStatusSelected(
               statusSelected
-            )}`}
+            )} ${
+              isOpenFilters ? "bg-neutral-900 border-1 border-neutral-900" : ""
+            }`}
             onClick={() => setIsOpenFilters(!isOpenFilters)}
           >
             {isOpenFilters ? (
@@ -174,7 +176,7 @@ function Reservation() {
           isOpen={isOpenFilters}
         />
         {list.length > 0 ? (
-          <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 h-full w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg">
+          <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg">
             {list
               .filter((elementDate) => {
                 if (!date) return elementDate;
