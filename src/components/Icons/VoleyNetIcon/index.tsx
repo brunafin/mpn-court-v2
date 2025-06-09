@@ -12,7 +12,7 @@ const VoleyNetIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinejoin="round"
     {...props}
   >
-    <line x1="8" y1="10" x2="8" y2="56" />
+    <line x1="8" y1="8" x2="8" y2="56" />
     <line x1="56" y1="8" x2="56" y2="56" />
     {/* Linhas horizontais da rede (removidas as duas últimas) */}
     <line x1="8" y1="10" x2="56" y2="10" />
