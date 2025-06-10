@@ -60,8 +60,16 @@ function Textarea({
           hover:border-neutral-400
           focus:outline-none focus:ring-2 focus:ring-neutral-300
           transition-all duration-200 ease-in-out
-          ${mode === "dark" ? "bg-neutral-800 text-neutral-100" : "bg-neutral-100 text-neutral-800"}
-          ${mode === "dark" ? "placeholder-neutral-400" : "placeholder-neutral-500"}
+          ${
+            mode === "dark"
+              ? "bg-neutral-800 text-neutral-100"
+              : "bg-neutral-100 text-neutral-800"
+          }
+          ${
+            mode === "dark"
+              ? "placeholder-neutral-400"
+              : "placeholder-neutral-400"
+          }
         `}
         onChange={onChange}
         onBlur={onBlur}

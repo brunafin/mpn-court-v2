@@ -255,104 +255,111 @@ function ReservationDetails() {
                 </button>
               )}
               {court?.status === ReservationStatusEnum.AVAILABLE && (
-                <form
-                  className="bg-neutral-100"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }}
-                >
-                  <div className="mx-4 mb-16 md:w-1/3 md:mx-auto">
-                    <Select
-                      name="court-sport"
-                      title="Esporte:"
-                      value={sportSelected?.id}
-                      options={courtSports}
-                      mode="light"
-                      onChange={(e) => {
-                        const selectedId = Number(e.target.value);
-                        const selectedSport = courtSports.find(
-                          (sport) => sport.id === selectedId
-                        );
-                        setSportSelected(selectedSport || null);
-                      }}
-                      disabled={courtSports.length <= 1}
-                    />
-                    <Input
-                      name="name"
-                      title="Nome:"
-                      placeholder="Ex.: João Silva"
-                      type="text"
-                      value={customerReservationName ?? ""}
-                      onChange={(e) =>
-                        setCustomerReservationName(e.target.value)
-                      }
-                      required
-                      mode="light"
-                    />
-                    <Input
-                      name="phone"
-                      title="Telefone com DDD:"
-                      placeholder="Ex.: 51912345678"
-                      type="tel"
-                      value={customerReservationPhone ?? ""}
-                      onChange={(e) => {
-                        let phone = e.target.value.replace(/\D/g, "");
-                        if (phone.length >= 2) {
-                          const ddd = phone.slice(0, 2);
-                          let number = phone.slice(2);
-                          if (number.length > 0 && number[0] !== "9") {
-                            number = "9" + number;
-                          }
-                          phone = ddd + number;
-                        }
-                        if (phone.length > 11) {
-                          phone = phone.slice(0, 11);
-                        }
-                        setCustomerReservationPhone(phone);
-                      }}
-                      required
-                      mode="light"
-                    />
-                    <div className="flex items-center gap-1 mt-1 ms-1 mb-4">
-                      <input
-                        type="checkbox"
-                        id="barbecue-included"
-                        checked={isBarbecueIncluded}
-                        onChange={(e) => {
-                          setIsBarbecueIncluded(e.target.checked);
-                          if (court?.reservation?.publicId) {
-                            updateObservationByReservation({
-                              isBarbecueIncluded: e.target.checked,
-                            });
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor="barbecue-included"
-                        className="text-neutral-600 pt-1 ms-1"
-                      >
-                        Com Churrasqueira
-                      </label>
-                    </div>
-                    <Textarea
-                      name="observation"
-                      title="Observação:"
-                      placeholder="Ex: jogo contra, jogo arreganho, 10 pessoas, churrasqueira por 2h"
-                      value={observation}
-                      onChange={(e) => setObservation(e.target.value)}
-                      mode="light"
-                      maxLength={150}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full fixed bottom-0 flex items-start justify-center rounded-t-md bg-secondary-500 text-neutral-100 gap-1 p-4 mx-auto mt-4 font-bold"
+                <>
+                  <p className="text-neutral-800 text-center text-sm">
+                    * Campos obrigatórios.
+                  </p>
+                  <form
+                    className="bg-neutral-100"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSubmit();
+                    }}
                   >
-                    <FaRegCalendarCheck size={20} />
-                    Reservar
-                  </button>
-                </form>
+                    <div className="mx-4 mb-16 md:w-1/3 md:mx-auto">
+                      <Select
+                        name="court-sport"
+                        title="*Esporte:"
+                        required
+                        value={sportSelected?.id}
+                        options={courtSports}
+                        mode="light"
+                        onChange={(e) => {
+                          const selectedId = Number(e.target.value);
+                          const selectedSport = courtSports.find(
+                            (sport) => sport.id === selectedId
+                          );
+                          setSportSelected(selectedSport || null);
+                        }}
+                        disabled={courtSports.length <= 1}
+                      />
+                      <Input
+                        name="name"
+                        title="*Nome:"
+                        placeholder="Ex.: João Silva"
+                        type="text"
+                        value={customerReservationName ?? ""}
+                        onChange={(e) =>
+                          setCustomerReservationName(e.target.value)
+                        }
+                        required
+                        mode="light"
+                      />
+                      <Input
+                        name="phone"
+                        title="*Telefone com DDD:"
+                        placeholder="Ex.: 51912345678"
+                        type="tel"
+                        value={customerReservationPhone ?? ""}
+                        onChange={(e) => {
+                          let phone = e.target.value.replace(/\D/g, "");
+                          if (phone.length >= 2) {
+                            const ddd = phone.slice(0, 2);
+                            let number = phone.slice(2);
+                            if (number.length > 0 && number[0] !== "9") {
+                              number = "9" + number;
+                            }
+                            phone = ddd + number;
+                          }
+                          if (phone.length > 11) {
+                            phone = phone.slice(0, 11);
+                          }
+                          setCustomerReservationPhone(phone);
+                        }}
+                        required
+                        mode="light"
+                      />
+                      <div className="flex items-center gap-1 mt-1 ms-1 mb-4">
+                        <input
+                          type="checkbox"
+                          id="barbecue-included"
+                          checked={isBarbecueIncluded}
+                          onChange={(e) => {
+                            setIsBarbecueIncluded(e.target.checked);
+                            if (court?.reservation?.publicId) {
+                              updateObservationByReservation({
+                                isBarbecueIncluded: e.target.checked,
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="barbecue-included"
+                          className="text-neutral-600 pt-1 ms-1"
+                        >
+                          Com Churrasqueira
+                        </label>
+                      </div>
+                      <Textarea
+                        name="observation"
+                        title="Observação:"
+                        placeholder="Ex: jogo contra, jogo arreganho, 10 pessoas, churrasqueira por 2h"
+                        value={observation}
+                        onChange={(e) => setObservation(e.target.value)}
+                        mode="light"
+                        maxLength={150}
+                        rows={4}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full fixed bottom-0 flex items-start justify-center rounded-t-md bg-secondary-500 text-neutral-100 gap-1 p-4 mx-auto mt-4 font-bold"
+                    >
+                      <FaRegCalendarCheck size={20} />
+                      Reservar
+                    </button>
+                  </form>
+                </>
               )}
             </section>
           </>

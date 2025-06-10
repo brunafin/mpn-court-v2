@@ -182,11 +182,11 @@ function Reservation() {
               <BsChevronRight size={24} cursor="pointer" />
             </button>
           </div>
-          <button
+          {/* <button
             onClick={() => fetchData(date?.toISOString().split("T")[0] || "")}
           >
             <BsArrowRepeat size={24} />
-          </button>
+          </button> */}
           <button
             className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm  mx-2 z-11 ${getBorderColorByStatusSelected(
               statusSelected
@@ -211,6 +211,7 @@ function Reservation() {
           setCourtSelected={setCourtSelected}
           courts={courtsNameList}
           isOpen={isOpenFilters}
+          setIsOpenFilters={setIsOpenFilters}
         />
         {list
           .filter((elementDate) => {

@@ -65,7 +65,7 @@ function Select({
           ${
             mode === "dark"
               ? "placeholder-neutral-400"
-              : "placeholder-neutral-500"
+              : "placeholder-neutral-400"
           }
         `}
       >

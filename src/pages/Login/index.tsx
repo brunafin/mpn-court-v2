@@ -62,7 +62,7 @@ function Login() {
       >
         <Input
           name="username"
-          title="Usuário"
+          title="Usuário:"
           placeholder="Digite seu usuário"
           type="text"
           mode="light"
@@ -79,7 +79,7 @@ function Login() {
         />
         <Input
           name="password"
-          title="Senha"
+          title="Senha:"
           placeholder="Digite seu senha"
           type="password"
           mode="light"

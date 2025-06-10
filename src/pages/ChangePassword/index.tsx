@@ -68,44 +68,50 @@ export default function ChangePassword() {
         <span className="font-semibold">Marca Pra Nós</span>!<br />
         Para a sua segurança, crie uma nova senha para continuar.
       </h1>
-      <form
-        className="bg-neutral-200 px-4 rounded-md w-full max-w-md"
-        onSubmit={handleChangePassword}
-      >
-        <h2 className="font-bold text-center mb-2 text-neutral-700">
-          Alterar Senha
-        </h2>
-        <p className="text-center textp-sm text-neutral-800 mx-auto bg-orange-100 p-2 mb-2">
-          A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
-          minúsculas, números e caracteres especiais.
-        </p>
-        <Input
-          name="newPassword"
-          title="Nova Senha:"
-          placeholder="Digite sua nova senha"
-          type="password"
-          required
-          mode="light"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-        />
-        <Input
-          name="confirmPassword"
-          title="Confirmar Nova Senha:"
-          placeholder="Confirme sua nova senha"
-          type="password"
-          required
-          mode="light"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="w-full bg-secondary-600 text-neutral-100 py-2 rounded mt-4 hover:bg-secondary-700 transition-colors"
+      {companyPublicId ? (
+        <form
+          className="bg-neutral-200 px-4 rounded-md w-full max-w-md"
+          onSubmit={handleChangePassword}
         >
-          Alterar Senha
-        </button>
-      </form>
+          <h2 className="font-bold text-center mb-2 text-neutral-700">
+            Altere a senha
+          </h2>
+          <p className="text-center textp-sm text-neutral-800 mx-auto bg-orange-100 p-2 mb-2">
+            A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
+            minúsculas, números e caracteres especiais.
+          </p>
+          <Input
+            name="newPassword"
+            title="Nova Senha*:"
+            placeholder="Digite sua nova senha"
+            type="password"
+            required
+            mode="light"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <Input
+            name="confirmPassword"
+            title="Digite novamente a nova senha*:"
+            placeholder="Digite novamente a nova senha"
+            type="password"
+            required
+            mode="light"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="w-full bg-secondary-600 text-neutral-100 py-2 rounded mt-4 hover:bg-secondary-700 transition-colors"
+          >
+            Salvar Senha
+          </button>
+        </form>
+      ) : (
+        <p className="text-neutral-800">
+          Você ainda não possui um cadastro ativo.
+        </p>
+      )}
     </div>
   );
 }

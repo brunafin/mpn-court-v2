@@ -218,6 +218,9 @@ export function renderButtonByStatus(
         <button
           onClick={async () => {
             try {
+              alert(
+                "Atenção: A churrasqueira não será agendada para as reservas futuras."
+              );
               await fixSchedule({ court_schedule_public_id: courtScheduleId });
               navigate("/reservas", {
                 state: { date: dateFrom },

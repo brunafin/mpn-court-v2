@@ -52,7 +52,7 @@ function Input({
        transition-all duration-200 ease-in-out 
        ${mode === "dark" ? "bg-neutral-800" : "bg-neutral-100 text-neutral-800"}
        ${
-         mode === "dark" ? "placeholder-neutral-400" : "placeholder-neutral-500"
+         mode === "dark" ? "placeholder-neutral-400" : "placeholder-neutral-300"
        }`}
         onChange={onChange}
         onBlur={onBlur}

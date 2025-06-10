@@ -14,6 +14,7 @@ interface LegendProps {
   setCourtSelected: (court: string) => void;
   courts: string[];
   isOpen: boolean;
+  setIsOpenFilters: (isOpen: boolean) => void;
 }
 
 function LegendAndFilters({
@@ -23,6 +24,7 @@ function LegendAndFilters({
   setCourtSelected,
   courts,
   isOpen,
+  setIsOpenFilters,
 }: LegendProps) {
   return (
     <div
@@ -49,7 +51,10 @@ function LegendAndFilters({
         >
           <li>
             <button
-              onClick={() => setStatusSelected(null)}
+              onClick={() => {
+                setStatusSelected(null);
+                setIsOpenFilters(false);
+              }}
               className={`flex items-center justify-center gap-2 text-neutral-100 border-1 border-neutral-400 rounded-sm py-1 px-2 hover:text-neutral-100 active:bg-neutral-100 active:text-neutral-800 ${
                 statusSelected === null ? "bg-neutral-900" : ""
               }`}
@@ -59,7 +64,10 @@ function LegendAndFilters({
           </li>
           <li>
             <button
-              onClick={() => setStatusSelected(ReservationStatusEnum.AVAILABLE)}
+              onClick={() => {
+                setStatusSelected(ReservationStatusEnum.AVAILABLE);
+                setIsOpenFilters(false);
+              }}
               className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-tertiary-800 hover:bg-tertiary-800 rounded-sm py-1 px-2 ${
                 statusSelected === ReservationStatusEnum.AVAILABLE
                   ? "bg-tertiary-800"
@@ -72,7 +80,10 @@ function LegendAndFilters({
           </li>
           <li>
             <button
-              onClick={() => setStatusSelected(ReservationStatusEnum.RESERVED)}
+              onClick={() => {
+                setStatusSelected(ReservationStatusEnum.RESERVED);
+                setIsOpenFilters(false);
+              }}
               className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-secondary-500 hover:bg-secondary-500 rounded-sm py-1 px-2 ${
                 statusSelected === ReservationStatusEnum.RESERVED
                   ? "bg-secondary-500"
@@ -85,7 +96,10 @@ function LegendAndFilters({
           </li>
           <li>
             <button
-              onClick={() => setStatusSelected(ReservationStatusEnum.FIXED)}
+              onClick={() => {
+                setStatusSelected(ReservationStatusEnum.FIXED);
+                setIsOpenFilters(false);
+              }}
               className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-purple-800 rounded-sm py-1 px-2 hover:bg-purple-900 ${
                 statusSelected === ReservationStatusEnum.FIXED
                   ? "bg-purple-900 border-purple-900"
@@ -98,7 +112,10 @@ function LegendAndFilters({
           </li>
           <li>
             <button
-              onClick={() => setStatusSelected(ReservationStatusEnum.INACTIVE)}
+              onClick={() => {
+                setStatusSelected(ReservationStatusEnum.INACTIVE);
+                setIsOpenFilters(false);
+              }}
               className={`flex items-center justify-center gap-2 text-neutral-100 border-2 border-danger-400 rounded-sm py-1 px-2 hover:bg-danger-400 ${
                 statusSelected === ReservationStatusEnum.INACTIVE
                   ? "bg-danger-400"
@@ -152,7 +169,10 @@ function LegendAndFilters({
                 name="court"
                 value={item}
                 className="accent-primary-500"
-                onChange={() => setCourtSelected(item)}
+                onChange={() => {
+                  setCourtSelected(item);
+                  setIsOpenFilters(false);
+                }}
                 checked={courtSelected === item}
               />
               Q.{item}
