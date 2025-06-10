@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BsArrowRepeat, BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
