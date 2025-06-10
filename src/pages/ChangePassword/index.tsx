@@ -63,22 +63,22 @@ export default function ChangePassword() {
         src={import.meta.env.VITE_LOGO_URL}
         className="w-1/4 md:w-1/12 mb-4"
       />
-      <h1 className="text-neutral-700 text-md text-center mb-6">
+      <h1 className="text-neutral-700 text-lg md:text-xl text-center px-2 mb-4 md:mb-8">
         Bem-vindo ao sistema{" "}
         <span className="font-semibold">Marca Pra Nós</span>!<br />
         Para a sua segurança, crie uma nova senha para continuar.
       </h1>
-      <p className="md:w-1/2 text-center text-neutral-800 mx-auto bg-orange-100 px-2">
-        A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
-        minúsculas, números e caracteres especiais.
-      </p>
       <form
-        className="bg-neutral-200 p-4 rounded-md w-full max-w-md"
+        className="bg-neutral-200 px-4 rounded-md w-full max-w-md"
         onSubmit={handleChangePassword}
       >
-        <h2 className="text-2xl font-bold text-center mb-2 text-neutral-700">
+        <h2 className="font-bold text-center mb-2 text-neutral-700">
           Alterar Senha
         </h2>
+        <p className="text-center textp-sm text-neutral-800 mx-auto bg-orange-100 p-2 mb-2">
+          A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
+          minúsculas, números e caracteres especiais.
+        </p>
         <Input
           name="newPassword"
           title="Nova Senha:"
