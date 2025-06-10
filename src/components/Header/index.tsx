@@ -1,3 +1,4 @@
+import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { BsList } from "react-icons/bs";
 
@@ -8,8 +9,9 @@ function Header() {
     const match = document.cookie.match(/access_token=([^;]+)/);
     if (!match) return "";
     try {
-      const payload = JSON.parse(atob(match[1].split(".")[1]));
-      return payload.companyName || "";
+      const token = match[1];
+      const payload = jwtDecode<any>(token);
+      return payload?.companyName || "";
     } catch {
       return "";
     }
