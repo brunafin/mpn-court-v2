@@ -47,7 +47,7 @@ function ReservationDetails() {
   >([]);
 
   const fetchData = async (id: string) => {
-    withLoading(async () => {
+    await withLoading(async () => {
       const response = await getScheduleById(id);
       setCourt(response);
       setIsBarbecueIncluded(response?.reservation?.isBarbecueIncluded || false);
@@ -73,7 +73,7 @@ function ReservationDetails() {
     if (!court?.scheduleId) {
       return alert("Horário da reserva não informado");
     }
-    withLoading(async () => {
+    await withLoading(async () => {
       const response = await createReservation({
         contactName: customerReservationName,
         contactPhone: customerReservationPhone,
@@ -102,7 +102,7 @@ function ReservationDetails() {
     if (!court?.reservation?.publicId) {
       return alert("Reserva não encontrada");
     }
-    withLoading(async () => {
+    await withLoading(async () => {
       if (court.reservation?.publicId) {
         await updateObservationByPublicId(court?.reservation?.publicId, {
           ...(observation !== undefined && { observation }),
@@ -240,7 +240,7 @@ function ReservationDetails() {
               ].includes(court?.status as ReservationStatusEnum) && (
                 <button
                   onClick={async () => {
-                    withLoading(async () => {
+                    await withLoading(async () => {
                       await cancelReservation(
                         String(court?.reservation?.tokenToCancel)
                       );
@@ -267,7 +267,7 @@ function ReservationDetails() {
                       handleSubmit();
                     }}
                   >
-                    <div className="mx-4 mb-16 md:w-1/3 md:mx-auto">
+                    <div className="mx-4 pb-16 md:w-1/3 md:mx-auto">
                       <Select
                         name="court-sport"
                         title="*Esporte:"

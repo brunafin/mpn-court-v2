@@ -91,7 +91,7 @@ function Reservation() {
         return;
       }
       try {
-        withLoading(async () => {
+        await withLoading(async () => {
           const response = await getSchedulesByCompanyPublicIdAndDate({
             companyPublicId,
             date: dateInput,
@@ -294,8 +294,8 @@ function Reservation() {
         ) : (
           <div className="flex flex-col items-center justify-center m-16">
             <p>
-              Nenhum horário encontrado{""}
-              {statusSelected && "para o filtro selecionado"}.
+              Nenhum horário encontrado
+              {statusSelected && " para o filtro selecionado"}.
             </p>
           </div>
         )}

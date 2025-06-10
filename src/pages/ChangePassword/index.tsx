@@ -40,7 +40,7 @@ export default function ChangePassword() {
       return alert("As senhas não coincidem");
     }
     try {
-      withLoading(async () => {
+      await withLoading(async () => {
         await changePassword(companyPublicId, newPassword);
         alert("Senha alterada com sucesso!");
         navigate("/reservas");
