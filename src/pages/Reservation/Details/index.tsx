@@ -216,6 +216,7 @@ function ReservationDetails() {
                     mode="light"
                     maxLength={150}
                     className="w-full pt-4"
+                    rows={4}
                   />
                   <div className="flex justify-end">
                     <button
