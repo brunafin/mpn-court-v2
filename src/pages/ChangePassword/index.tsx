@@ -68,7 +68,7 @@ export default function ChangePassword() {
         <span className="font-semibold">Marca Pra Nós</span>!<br />
         Para a sua segurança, crie uma nova senha para continuar.
       </h1>
-      <p className="md:w-1/2 text-center text-neutral-800 mx-auto bg-orange-100">
+      <p className="md:w-1/2 text-center text-neutral-800 mx-auto bg-orange-100 px-2">
         A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
         minúsculas, números e caracteres especiais.
       </p>
