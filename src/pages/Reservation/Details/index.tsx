@@ -159,43 +159,44 @@ function ReservationDetails() {
                 Quadra {court?.court} -{" "}
                 {court?.price && formatCurrencyBRL(parseFloat(court?.price))}
               </h2>
-              {court.status !== ReservationStatusEnum.INACTIVE && (
-                <div className="flex items-center justify-center gap-1 mx-4 mb-2">
-                  <input
-                    type="checkbox"
-                    id="barbecue-included"
-                    checked={isBarbecueIncluded}
-                    onChange={(e) => {
-                      setIsBarbecueIncluded(e.target.checked);
-                      if (court?.reservation?.publicId) {
-                        updateObservationByReservation({
-                          isBarbecueIncluded: e.target.checked,
-                        });
-                      }
-                    }}
-                  />
-                  <label
-                    htmlFor="barbecue-included"
-                    className="text-neutral-600 pt-1 ms-1"
-                  >
-                    Com Churrasqueira
-                  </label>
-                </div>
-              )}
+              {court.status !== ReservationStatusEnum.INACTIVE &&
+                court.status !== ReservationStatusEnum.AVAILABLE && (
+                  <div className="flex items-center justify-center gap-1 mx-4 mb-2">
+                    <input
+                      type="checkbox"
+                      id="barbecue-included"
+                      checked={isBarbecueIncluded}
+                      onChange={(e) => {
+                        setIsBarbecueIncluded(e.target.checked);
+                        if (court?.reservation?.publicId) {
+                          updateObservationByReservation({
+                            isBarbecueIncluded: e.target.checked,
+                          });
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="barbecue-included"
+                      className="text-neutral-600 pt-1 ms-1"
+                    >
+                      Com Churrasqueira
+                    </label>
+                  </div>
+                )}
               <div className="bg-neutral-100 py-2 px-4 md:w-1/3 md:mx-auto">
                 {court.reservation?.isNeedsNetting && (
                   <div className="border-l-secondary-400 border-l-8 flex justify-start items-center bg-blue-50 w-full rounded-l-sm p-1 mb-1">
                     <VoleyNetIcon className="mx-2 text-neutral-800" />
-                    <p className="text-neutral-800 pt-1">Precisa de rede</p>
+                    <p className="text-neutral-700 pt-1">Precisa de rede</p>
                   </div>
                 )}
                 {isBarbecueIncluded && (
                   <div className="flex items-center justify-start border-l-primary-700 border-l-8 bg-orange-50 w-full rounded-l-sm p-1">
                     <MdOutlineRestaurant
                       size={24}
-                      className="mx-2 text-neutral-700"
+                      className="mx-2 text-neutral-600"
                     />
-                    <p className="text-neutral-800 pt-1">
+                    <p className="text-neutral-700 pt-1">
                       Churrasqueira inclusa na reserva
                     </p>
                   </div>
@@ -280,7 +281,7 @@ function ReservationDetails() {
                     <Input
                       name="name"
                       title="Nome:"
-                      placeholder="João Silva"
+                      placeholder="Ex.: João Silva"
                       type="text"
                       value={customerReservationName ?? ""}
                       onChange={(e) =>
@@ -291,21 +292,53 @@ function ReservationDetails() {
                     />
                     <Input
                       name="phone"
-                      title="Telefone:"
-                      placeholder="51989589197"
+                      title="Telefone com DDD:"
+                      placeholder="Ex.: 51912345678"
                       type="tel"
                       value={customerReservationPhone ?? ""}
                       onChange={(e) => {
-                        const phone = e.target.value.replace(/\D/g, "");
+                        let phone = e.target.value.replace(/\D/g, "");
+                        if (phone.length >= 2) {
+                          const ddd = phone.slice(0, 2);
+                          let number = phone.slice(2);
+                          if (number.length > 0 && number[0] !== "9") {
+                            number = "9" + number;
+                          }
+                          phone = ddd + number;
+                        }
+                        if (phone.length > 11) {
+                          phone = phone.slice(0, 11);
+                        }
                         setCustomerReservationPhone(phone);
                       }}
                       required
                       mode="light"
                     />
+                    <div className="flex items-center gap-1 mt-1 ms-1 mb-4">
+                      <input
+                        type="checkbox"
+                        id="barbecue-included"
+                        checked={isBarbecueIncluded}
+                        onChange={(e) => {
+                          setIsBarbecueIncluded(e.target.checked);
+                          if (court?.reservation?.publicId) {
+                            updateObservationByReservation({
+                              isBarbecueIncluded: e.target.checked,
+                            });
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor="barbecue-included"
+                        className="text-neutral-600 pt-1 ms-1"
+                      >
+                        Com Churrasqueira
+                      </label>
+                    </div>
                     <Textarea
                       name="observation"
                       title="Observação:"
-                      placeholder="Ex: jogo contra, jogo arreganho, 10 pessoas"
+                      placeholder="Ex: jogo contra, jogo arreganho, 10 pessoas, churrasqueira por 2h"
                       value={observation}
                       onChange={(e) => setObservation(e.target.value)}
                       mode="light"
