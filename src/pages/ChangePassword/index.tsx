@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { changePassword } from "../../api/auth";
 import { useNavigate } from "react-router-dom";
+import { useLoading } from "../../hooks/useLoading";
+import Loader from "../../components/Loader";
 
 export default function ChangePassword() {
+  const { loading, withLoading } = useLoading();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,9 +40,11 @@ export default function ChangePassword() {
       return alert("As senhas não coincidem");
     }
     try {
-      await changePassword(companyPublicId, newPassword);
-      alert("Senha alterada com sucesso!");
-      navigate("/reservas");
+      withLoading(async () => {
+        await changePassword(companyPublicId, newPassword);
+        alert("Senha alterada com sucesso!");
+        navigate("/reservas");
+      });
     } catch (error) {
       console.error("Erro ao alterar a senha:", error);
       alert(
@@ -48,27 +53,39 @@ export default function ChangePassword() {
     }
   };
 
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
-    <div className="flex items-center justify-center h-screen bg-neutral-900">
+    <div className="flex flex-col justify-center items-center justify-center h-screen bg-neutral-200">
+      <img
+        src={import.meta.env.VITE_LOGO_URL}
+        className="w-1/4 md:w-1/12 mb-4"
+      />
+      <h1 className="text-neutral-700 text-md text-center mb-6">
+        Bem-vindo ao sistema{" "}
+        <span className="font-semibold">Marca Pra Nós</span>!<br />
+        Para a sua segurança, crie uma nova senha para continuar.
+      </h1>
+      <p className="md:w-1/2 text-center text-neutral-800 mx-auto bg-orange-100">
+        A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
+        minúsculas, números e caracteres especiais.
+      </p>
       <form
-        className="bg-neutral-800 px-4 py-8 rounded-md w-full max-w-md"
+        className="bg-neutral-200 p-4 rounded-md w-full max-w-md"
         onSubmit={handleChangePassword}
       >
-        <h1 className="text-2xl font-bold text-center mb-6 text-neutral-100">
+        <h2 className="text-2xl font-bold text-center mb-2 text-neutral-700">
           Alterar Senha
-        </h1>
-        <p className="text-neutral-200 text-center mb-6">
-          Bem-vindo ao painel administrativo da{" "}
-          <span className="font-semibold">Marca Pra Nós</span>!<br />
-          Por favor, altere sua senha para continuar.
-        </p>
+        </h2>
         <Input
           name="newPassword"
           title="Nova Senha:"
           placeholder="Digite sua nova senha"
           type="password"
           required
-          mode="dark"
+          mode="light"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
@@ -78,7 +95,7 @@ export default function ChangePassword() {
           placeholder="Confirme sua nova senha"
           type="password"
           required
-          mode="dark"
+          mode="light"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
