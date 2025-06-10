@@ -190,17 +190,18 @@ function ReservationDetails() {
                     <p className="text-neutral-700 pt-1">Precisa de rede</p>
                   </div>
                 )}
-                {isBarbecueIncluded && (
-                  <div className="flex items-center justify-start border-l-primary-700 border-l-8 bg-orange-50 w-full rounded-l-sm p-1">
-                    <MdOutlineRestaurant
-                      size={24}
-                      className="mx-2 text-neutral-600"
-                    />
-                    <p className="text-neutral-700 pt-1">
-                      Churrasqueira inclusa na reserva
-                    </p>
-                  </div>
-                )}
+                {court.status !== ReservationStatusEnum.AVAILABLE &&
+                  isBarbecueIncluded && (
+                    <div className="flex items-center justify-start border-l-primary-700 border-l-8 bg-orange-50 w-full rounded-l-sm p-1">
+                      <MdOutlineRestaurant
+                        size={24}
+                        className="mx-2 text-neutral-600"
+                      />
+                      <p className="text-neutral-700 pt-1">
+                        Churrasqueira inclusa na reserva
+                      </p>
+                    </div>
+                  )}
               </div>
               {court.reservation?.publicId && (
                 <div className="mx-4 mt-8 border-t-1 border-neutral-400 md:w-1/3 md:mx-auto">
