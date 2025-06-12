@@ -167,7 +167,7 @@ function Reservation() {
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
         <div className="bg-neutral-800 flex items-center justify-around md:justify-center py-2 mb-4 mt-2 mx-2 rounded-sm">
           <div className="flex items-center gap-1 justify-center px-2">
-            <button onClick={() => handleSubtractOneDay(date)}>
+            <button className="px-2" onClick={() => handleSubtractOneDay(date)}>
               <BsChevronLeft size={24} cursor="pointer" />
             </button>
             <CustomDatepicker
@@ -178,7 +178,7 @@ function Reservation() {
               }}
               onFocus={() => setIsOpenFilters(false)}
             />
-            <button onClick={() => handleAddOneDay(date)}>
+            <button className="px-2" onClick={() => handleAddOneDay(date)}>
               <BsChevronRight size={24} cursor="pointer" />
             </button>
           </div>

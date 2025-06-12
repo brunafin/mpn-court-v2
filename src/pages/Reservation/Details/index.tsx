@@ -149,9 +149,11 @@ function ReservationDetails() {
                 >
                   {renderButtonByStatus(
                     court.scheduleId,
+                    court.reservation?.isBarbecueIncluded ?? false,
                     court?.status,
                     dateFrom,
-                    navigate
+                    navigate,
+                    withLoading
                   )}
                 </div>
               )}

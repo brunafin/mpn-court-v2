@@ -172,9 +172,11 @@ export function getMeanByStatus(
 
 export function renderButtonByStatus(
   courtScheduleId: string,
+  isBarbecueIncluded: boolean,
   status: ReservationStatusEnum | null,
   dateFrom: Date,
-  navigate: ReturnType<typeof useNavigate>
+  navigate: ReturnType<typeof useNavigate>,
+  withLoading: (asyncFunction: () => Promise<void>) => Promise<void>
 ) {
   if (!status) return null;
   switch (status) {
@@ -186,9 +188,13 @@ export function renderButtonByStatus(
               "Tem certeza que deseja liberar este horário fixo? Essa ação vai cancelar todas as reservas futuras para este horário/cliente."
             );
             if (!confirmed) return;
-            await unfixSchedule({ court_schedule_public_id: courtScheduleId });
-            navigate("/reservas", {
-              state: { date: dateFrom },
+            await withLoading(async () => {
+              await unfixSchedule({
+                court_schedule_public_id: courtScheduleId,
+              });
+              navigate("/reservas", {
+                state: { date: dateFrom },
+              });
             });
           }}
           className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-50 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
@@ -201,9 +207,11 @@ export function renderButtonByStatus(
       return (
         <button
           onClick={async () => {
-            await changeAvailability(courtScheduleId, true);
-            navigate("/reservas", {
-              state: { date: dateFrom },
+            await withLoading(async () => {
+              await changeAvailability(courtScheduleId, true);
+              navigate("/reservas", {
+                state: { date: dateFrom },
+              });
             });
           }}
           className="w-full flex items-center justify-center text-tertiary-900 gap-2 mx-4 my-2 py-2 px-4 bg-tertiary-50 border-tertiary-800 border-1 rounded-sm shadow-md hover:bg-tertiary-800 hover:text-neutral-100 active:bg-tertiary-800 active:text-neutral-100 active:ring-2 active:ring-tertiary-200 md:w-fit"
@@ -218,12 +226,19 @@ export function renderButtonByStatus(
         <button
           onClick={async () => {
             try {
-              alert(
-                "Atenção: A churrasqueira não será agendada para as reservas futuras."
-              );
-              await fixSchedule({ court_schedule_public_id: courtScheduleId });
-              navigate("/reservas", {
-                state: { date: dateFrom },
+              {
+                isBarbecueIncluded &&
+                  alert(
+                    "Atenção: A churrasqueira não será agendada para as reservas futuras."
+                  );
+              }
+              await withLoading(async () => {
+                await fixSchedule({
+                  court_schedule_public_id: courtScheduleId,
+                });
+                navigate("/reservas", {
+                  state: { date: dateFrom },
+                });
               });
             } catch (error: any) {
               console.log(error);
@@ -243,9 +258,11 @@ export function renderButtonByStatus(
       return (
         <button
           onClick={async () => {
-            await changeAvailability(courtScheduleId, false);
-            navigate("/reservas", {
-              state: { date: dateFrom },
+            await withLoading(async () => {
+              await changeAvailability(courtScheduleId, false);
+              navigate("/reservas", {
+                state: { date: dateFrom },
+              });
             });
           }}
           className="w-full flex items-center justify-center text-red-800 gap-2 mx-4 my-2 py-2 px-4 bg-red-100 border-red-800 border-1 rounded-sm shadow-md hover:bg-red-700 hover:text-neutral-100 active:bg-red-700 active:text-neutral-100 active:ring-2 active:ring-red-200 md:w-fit"

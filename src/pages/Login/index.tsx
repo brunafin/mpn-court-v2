@@ -41,7 +41,7 @@ function Login() {
         navigate("/alterar-senha");
       }
     } catch (error: any) {
-      alert(error.response.data.messages || "Usuário ou senha inválidos.");
+      alert(error.response?.data?.messages || "Usuário ou senha inválidos.");
     } finally {
       setLoading(false);
     }

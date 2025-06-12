@@ -45,7 +45,7 @@ function LegendAndFilters({
           </p>
         </div>
         <ul
-          className={`bg-neutral-900 flex p-4 items-center gap-3 md:gap-8 justify-start flex-wrap md:justify-center ${
+          className={`bg-neutral-900 flex p-4 items-center gap-4 justify-start flex-wrap md:justify-center ${
             isOpen ? "flex" : "hidden"
           }`}
         >
