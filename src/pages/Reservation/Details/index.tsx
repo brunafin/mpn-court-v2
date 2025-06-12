@@ -307,16 +307,13 @@ function ReservationDetails() {
                         value={customerReservationPhone ?? ""}
                         onChange={(e) => {
                           let phone = e.target.value.replace(/\D/g, "");
+                          if (phone.length > 11) {
+                            phone = phone.slice(0, 11);
+                          }
                           if (phone.length >= 2) {
                             const ddd = phone.slice(0, 2);
                             let number = phone.slice(2);
-                            if (number.length > 0 && number[0] !== "9") {
-                              number = "9" + number;
-                            }
                             phone = ddd + number;
-                          }
-                          if (phone.length > 11) {
-                            phone = phone.slice(0, 11);
                           }
                           setCustomerReservationPhone(phone);
                         }}
