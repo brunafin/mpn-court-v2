@@ -51,7 +51,7 @@ function Login() {
     <div className="h-screen flex flex-col items-center justify-center bg-neutral-100">
       <img
         src={import.meta.env.VITE_LOGO_URL}
-        className="w-1/2 md:w-1/4 mb-4"
+        className="w-1/2 md:w-1/6 mb-4"
       />
       <h1 className="text-neutral-800 text-lg mb-4">
         Entre com seu usuário e senha.
