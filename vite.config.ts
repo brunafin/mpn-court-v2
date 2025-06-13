@@ -25,7 +25,7 @@ export default defineConfig({
           'apple-touch-icon.png',
         ],
       manifest: {
-        name: 'Marca pra nós',
+        name: 'Marca Pra Nós',
         short_name: 'MPN',
         description: 'Gerenciamento de reservas de horários em quadras esportivas',
         theme_color: '#2C3043',
