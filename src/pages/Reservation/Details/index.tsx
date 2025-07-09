@@ -300,7 +300,7 @@ function ReservationDetails() {
               />
               <Input
               name="phone"
-              title="*Telefone com DDD:"
+              title="Telefone com DDD:"
               placeholder="Ex.: 51912345678"
               type="tel"
               value={customerReservationPhone ?? ""}
@@ -389,7 +389,7 @@ function ReservationDetails() {
               />
               <Input
               name="phone"
-              title="*Telefone com DDD:"
+              title="Telefone com DDD:"
               placeholder="Ex.: 51912345678"
               type="tel"
               value={court?.reservation?.contactPhone ?? ""}
