@@ -12,6 +12,7 @@ interface IInputProps {
   onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onClick?: (e: React.MouseEvent<HTMLInputElement>) => void;
   required?: boolean;
+  readOnly?: boolean;
   mode: "light" | "dark";
   className?: string;
 }
@@ -26,6 +27,7 @@ function Input({
   onChange,
   onClick,
   required,
+  readOnly = false,
   mode = "light",
   className,
 }: IInputProps) {
@@ -58,6 +60,7 @@ function Input({
         onBlur={onBlur}
         onClick={onClick}
         required={required}
+        readOnly={readOnly}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { ReservationStatusEnum } from "../enum";
 import {
   MdNotInterested,
   MdOutlineAccessTime,
+  MdOutlineEdit,
   MdOutlineLockClock,
   MdOutlineLockOpen,
 } from "react-icons/md";
@@ -66,10 +67,12 @@ export function getBackgroundColorByStatus(
 }
 
 export function getMeanByStatus(
+  setShowInfoCustomer: (value: boolean) => void,
   status?: ReservationStatusEnum | null,
   sportName?: string,
   contactName?: string,
-  contactPhone?: string
+  contactPhone?: string,
+
 ) {
   switch (status) {
     case ReservationStatusEnum.FIXED:
@@ -87,11 +90,15 @@ export function getMeanByStatus(
             <span className="text-sm">({sportName})</span>
           </div>
           {contactPhone && (
-            <div>
+            <div className="flex items-center gap-2">
+              <button type="button" title="Editar telefone" className="bg-purple-800 rounded-sm p-1 cursor-pointer active:bg-purple-700">
+                <MdOutlineEdit size={18} onClick={() => {
+                  setShowInfoCustomer(true);
+                }}/>
+              </button>
               <a
-                href={`${
-                  import.meta.env.VITE_WHATSAPP_URL_BASE
-                }${contactPhone}`}
+                href={`${import.meta.env.VITE_WHATSAPP_URL_BASE
+                  }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex gap-2 p-2 justify-center items-center"
@@ -134,11 +141,13 @@ export function getMeanByStatus(
             <span className="text-sm">({sportName})</span>
           </div>
           {contactPhone && (
-            <div>
+            <div className="flex items-center gap-2">
+              <button type="button" title="Editar telefone" className="bg-secondary-500 rounded-sm p-1 cursor-pointer active:bg-secondary-700">
+                <MdOutlineEdit size={18} onClick={() =>  setShowInfoCustomer(true)}/>
+              </button>
               <a
-                href={`${
-                  import.meta.env.VITE_WHATSAPP_URL_BASE
-                }${contactPhone}`}
+                href={`${import.meta.env.VITE_WHATSAPP_URL_BASE
+                  }${contactPhone}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex gap-2 p-2 justify-center items-center"
@@ -244,7 +253,7 @@ export function renderButtonByStatus(
               console.log(error);
               alert(
                 error?.response.data.message ||
-                  "Ocorreu um erro ao fixar o horário."
+                "Ocorreu um erro ao fixar o horário."
               );
             }
           }}

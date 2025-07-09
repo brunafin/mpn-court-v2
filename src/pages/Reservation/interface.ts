@@ -19,6 +19,7 @@ export interface IReservationDetailsItemProps {
     publicId: string;
     createdAt: string;
     isPrepaid: boolean;
+    customerId?: number;
     contactName: string;
     contactPhone: string;
     tokenToCancel: string;
