@@ -91,10 +91,10 @@ export function getMeanByStatus(
           </div>
           {contactPhone && (
             <div className="flex items-center gap-2">
-              <button type="button" title="Editar telefone" className="bg-purple-800 rounded-sm p-1 cursor-pointer active:bg-purple-700">
-                <MdOutlineEdit size={18} onClick={() => {
-                  setShowInfoCustomer(true);
-                }}/>
+              <button type="button" onClick={() => {
+                setShowInfoCustomer(true);
+              }} title="Editar telefone" className="bg-purple-800 rounded-sm p-1 cursor-pointer active:bg-purple-700">
+                <MdOutlineEdit size={18} />
               </button>
               <a
                 href={`${import.meta.env.VITE_WHATSAPP_URL_BASE
@@ -142,8 +142,8 @@ export function getMeanByStatus(
           </div>
           {contactPhone && (
             <div className="flex items-center gap-2">
-              <button type="button" title="Editar telefone" className="bg-secondary-500 rounded-sm p-1 cursor-pointer active:bg-secondary-700">
-                <MdOutlineEdit size={18} onClick={() =>  setShowInfoCustomer(true)}/>
+              <button type="button" onClick={() => setShowInfoCustomer(true)} title="Editar telefone" className="bg-secondary-500 rounded-sm p-1 cursor-pointer active:bg-secondary-700">
+                <MdOutlineEdit size={18} />
               </button>
               <a
                 href={`${import.meta.env.VITE_WHATSAPP_URL_BASE

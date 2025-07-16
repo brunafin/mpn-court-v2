@@ -56,6 +56,21 @@ export const updateObservationByPublicId = async (
   }
 }
 
+export const updatePhoneContact = async (
+  data: { contactName: string; contactPhone: string, courtSchedulePublicId: string }
+) => {
+  try {
+    const response = await api.patch<IReservationDetailsItemProps>(`/reservation/${data.courtSchedulePublicId}/contact`, {
+      contactName: data.contactName,
+      contactPhone: data.contactPhone
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao atualizar informações de contato:', error);
+    throw error;
+  }
+}
+
 export const cancelReservation = async (token: string): Promise<void> => {
   try {
     await api.post<IReservationDetailsItemProps>('/reservation/cancel', { token });
