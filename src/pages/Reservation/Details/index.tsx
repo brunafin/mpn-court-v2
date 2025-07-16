@@ -102,6 +102,11 @@ function ReservationDetails() {
         courtSchedulePublicId: court?.scheduleId,
       });
       setShowInfoCustomer(false);
+      navigate("/reservas", {
+        state: {
+          date: dateFrom,
+        },
+      });
     });
   }
 
