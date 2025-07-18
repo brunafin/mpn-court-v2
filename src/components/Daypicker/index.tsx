@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { DayPicker, getDefaultClassNames } from "react-day-picker";
 import { ptBR } from "date-fns/locale";
 import { format, addDays, subDays } from "date-fns";
-import { BsCalendar4Event, BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { BsCalendar4Event, BsChevronLeft, BsChevronRight, BsX } from "react-icons/bs";
 import "react-day-picker/dist/style.css";
 
 type Props = {
@@ -74,7 +74,7 @@ export default function Daypicker({ selectedDate, setSelectedDate }: Props) {
             locale: ptBR,
           })}, ${selectedDate.toLocaleDateString("pt-BR")}`
           : "Selecione uma data"}
-          <BsCalendar4Event className="text-neutral-100" />
+        <BsCalendar4Event className="text-neutral-100" />
       </button>
 
       <button
@@ -90,9 +90,14 @@ export default function Daypicker({ selectedDate, setSelectedDate }: Props) {
       {open && (
         <div
           ref={popoverRef}
-          className="absolute z-20 mt-48 left-1/2 transform -translate-x-1/2 bg-neutral-100 border border-neutral-300 rounded-md shadow-sm"
+          className="fixed z-20 top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-neutral-100 border border-neutral-300 rounded-md shadow-sm"
           style={{ minWidth: 280 }}
         >
+          <div className="flex justify-end m-0 p-0">
+          <button className="text-end" onClick={() => setOpen(false)}>
+            <BsX className="text-neutral-700" size={24} />
+          </button>
+          </div>
           <DayPicker
             mode="single"
             required
@@ -102,7 +107,7 @@ export default function Daypicker({ selectedDate, setSelectedDate }: Props) {
             locale={ptBR}
             weekStartsOn={1}
             classNames={{
-              root: `${defaultClassNames.root} shadow-lg p-5`,
+              root: `${defaultClassNames.root} shadow-lg px-5 pb-5`,
               chevron: "fill-neutral-600",
               today: "text-neutral-800 font-bold",
               selected: "bg-secondary-500 text-white rounded-full active:bg-secondary-400",
