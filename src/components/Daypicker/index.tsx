@@ -94,7 +94,7 @@ export default function Daypicker({ selectedDate, setSelectedDate }: Props) {
       {open && (
         <div
           ref={popoverRef}
-          className="fixed z-20 top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-neutral-100 border border-neutral-300 rounded-md shadow-sm"
+          className="fixed z-20 top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-neutral-100 border border-neutral-300 rounded-md shadow-sm"
           style={{ minWidth: 280 }}
         >
           <div className="flex justify-end m-0 p-0">
