@@ -12,6 +12,12 @@ type Props = {
   setSelectedDate: (date: Date) => void;
 }
 
+function formatAbbreviationDate(date: Date) {
+  const diasAbreviados = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+  return `${diasAbreviados[date.getDay()]}, ${format(date, "dd/MM/yyyy")}`;
+}
+
+
 export default function Daypicker({ selectedDate, setSelectedDate }: Props) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -70,9 +76,7 @@ export default function Daypicker({ selectedDate, setSelectedDate }: Props) {
         type="button"
       >
         {selectedDate
-          ? `${format(selectedDate, "EEE", {
-            locale: ptBR,
-          })}, ${selectedDate.toLocaleDateString("pt-BR")}`
+          ? formatAbbreviationDate(selectedDate)
           : "Selecione uma data"}
         <BsCalendar4Event className="text-neutral-100" />
       </button>
