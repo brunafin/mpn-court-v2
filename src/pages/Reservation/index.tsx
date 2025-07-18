@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
-import CustomDatepicker from "../../components/Datepicker";
+// import CustomDatepicker from "../../components/Datepicker";
 import { HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
@@ -13,6 +12,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../../components/Loader";
 import { useLoading } from "../../hooks/useLoading";
 import { formatDate, isToday } from "date-fns";
+import Daypicker from "../../components/Daypicker";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -40,7 +40,7 @@ function Reservation() {
   const location = useLocation();
   const dateFrom = location.state?.date;
 
-  const [date, setDate] = useState<Date | null>(
+  const [date, setDate] = useState<Date>(
     dateFrom
       ? new Date(
           Number.isNaN(Date.parse(dateFrom))
@@ -113,23 +113,23 @@ function Reservation() {
     [date, companyPublicId]
   );
 
-  function handleSubtractOneDay(date: Date | null): void {
-    setIsOpenFilters(false);
-    if (!date) return;
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() - 1);
-    setDate(newDate);
-    fetchData(newDate.toISOString().split("T")[0]);
-  }
+  // function handleSubtractOneDay(date: Date | null): void {
+  //   setIsOpenFilters(false);
+  //   if (!date) return;
+  //   const newDate = new Date(date);
+  //   newDate.setDate(newDate.getDate() - 1);
+  //   setDate(newDate);
+  //   fetchData(newDate.toISOString().split("T")[0]);
+  // }
 
-  function handleAddOneDay(date: Date | null): void {
-    setIsOpenFilters(false);
-    if (!date) return;
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + 1);
-    setDate(newDate);
-    fetchData(newDate.toISOString().split("T")[0]);
-  }
+  // function handleAddOneDay(date: Date | null): void {
+  //   setIsOpenFilters(false);
+  //   if (!date) return;
+  //   const newDate = new Date(date);
+  //   newDate.setDate(newDate.getDate() + 1);
+  //   setDate(newDate);
+  //   fetchData(newDate.toISOString().split("T")[0]);
+  // }
 
   const getResultHeaderTitleList = (): string => {
     if (!date) return "sem data";
@@ -166,13 +166,14 @@ function Reservation() {
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
         <div className="bg-neutral-800 flex items-center justify-around md:justify-center py-2 mb-4 mt-2 mx-2 rounded-sm">
-          <div className="flex items-center gap-1 justify-center px-2">
+          {/* <div className="flex items-center gap-1 justify-center px-2">
             <button className="px-2" onClick={() => handleSubtractOneDay(date)}>
               <BsChevronLeft size={24} cursor="pointer" />
             </button>
             <CustomDatepicker
               dateSelected={date}
               onChange={(event) => {
+                if(!event) return;
                 setDate(event);
                 fetchData(event?.toISOString().split("T")[0] || "");
               }}
@@ -181,7 +182,11 @@ function Reservation() {
             <button className="px-2" onClick={() => handleAddOneDay(date)}>
               <BsChevronRight size={24} cursor="pointer" />
             </button>
-          </div>
+          </div> */}
+          <Daypicker
+            selectedDate={date}
+            setSelectedDate={setDate}
+          />
           {/* <button
             onClick={() => fetchData(date?.toISOString().split("T")[0] || "")}
           >

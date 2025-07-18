@@ -35,7 +35,7 @@ function ReservationItem({
             <MdOutlineLockClock size={16} className="text-neutral-100" />
           </div>
           <Link
-            className="flex items-start py-3   justify-between"
+            className="flex items-start py-3 justify-between"
             to={`/reservas/${scheduleId}`}
             state={{ date }}
           >
