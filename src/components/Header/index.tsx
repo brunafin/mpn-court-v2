@@ -1,10 +1,13 @@
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { BsList } from "react-icons/bs";
+import { MdOutlineLogout } from "react-icons/md";
+import { Link } from "react-router-dom";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [companyName, setCompanyName] = useState("");
+
   const getCompanyNameFromCookie = () => {
     const match = document.cookie.match(/access_token=([^;]+)/);
     if (!match) return "";
@@ -16,6 +19,7 @@ function Header() {
       return "";
     }
   };
+  
   useEffect(() => {
     setCompanyName(getCompanyNameFromCookie());
   }, []);
@@ -40,18 +44,29 @@ function Header() {
           onClick={() => setMenuOpen((open) => !open)}
         />
         {menuOpen && (
-          <div className="absolute right-0 mt-2 w-32 bg-neutral-100 border rounded shadow-lg z-30">
+          <nav className="absolute right-0 mt-2 w-64 bg-neutral-800 rounded shadow-lg z-30 px-4 py-2">
+            <ul className="mb-4">
+              <li>
+                <Link
+                  className="flex items-start py-3 justify-between"
+                  to={`/minhas-infos`}
+                >
+                  Minhas informações
+                </Link>
+              </li>
+            </ul>
             <button
-              className="block w-full text-left px-4 py-2 text-neutral-800 hover:bg-neutral-100"
+              className="flex items-center gap-2 py-4 w-full text-left  text-neutral-100"
               onClick={() => {
                 document.cookie =
                   "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                 window.location.href = "/";
               }}
             >
+              <MdOutlineLogout />
               Sair
             </button>
-          </div>
+          </nav>
         )}
       </div>
     </header>
