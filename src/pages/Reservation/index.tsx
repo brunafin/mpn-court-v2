@@ -290,6 +290,7 @@ function Reservation() {
                     status={item.status}
                     time={item.time}
                     isBarbecueIncluded={item.isBarbecueIncluded}
+                    isEvent={item.isEvent}
                     isNeedsNetting={item.isNeedsNetting}
                     key={item.scheduleId}
                   />

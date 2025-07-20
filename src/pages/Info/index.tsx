@@ -7,7 +7,7 @@ import { MdShare } from "react-icons/md";
 
 function Info() {
   const navigate = useNavigate();
-  const [info, setInfo] = useState<{ link: string } | null>(null);
+  const [info, setInfo] = useState<{ link: string, companyName: string } | null>(null);
 
   useEffect(() => {
     const token = Cookies.get("access_token");
@@ -16,22 +16,21 @@ function Info() {
     }
   }, [navigate]);
 
-  const getInfosFromCookie = () => {
+  const getInfosFromCookie = (): {link: string; companyName: string} | null => {
     const match = document.cookie.match(/access_token=([^;]+)/);
-    if (!match) return "";
+    if (!match) return null;
     try {
       const token = match[1];
       const payload = jwtDecode<any>(token);
-      return payload?.link || "";
+      return {link: payload?.link || "", companyName: payload?.companyName || ''};
     } catch {
-      return "";
+      return null;
     }
   };
 
   useEffect(() => {
-    setInfo({
-      link: getInfosFromCookie()
-    });
+    const info = getInfosFromCookie();
+    setInfo(info);
   }, []);
 
 
@@ -48,11 +47,10 @@ function Info() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Reserva de Quadra',
-          text: 'Confira o link para reservar sua quadra!',
+          title: `Detalhes da quadra ${info?.companyName}`,
+          text: `Quadra ${info?.companyName}`,
           url: info?.link,
         });
-        alert('Compartilhamento realizado!');
       } catch (err) {
         alert('Compartilhamento cancelado ou falhou.');
       }
@@ -65,12 +63,10 @@ function Info() {
     <>
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-        <div className="bg-neutral-800 flex flex-col gap-4 py-2 mb-4 mt-2 mx-2 rounded-sm md:mx-auto">
-          <h2 className="text-lg">Minhas informações</h2>
-          <a target="_blank" href={info?.link} className="hover:underline active:underline">Ir para a minha página</a>
-          <button onClick={copyToClipboard} className="border-1 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
-          <button onClick={shareLink} className="flex items-center gap-2 justify-center border-1 border-neutral-100 rounded-sm py-1 px-2"><MdShare /> Compartilhar Link</button>
-        </div>
+          <h2 className="text-lg bg-neutral-900 text-center p-3">Minhas informações</h2>
+          <a target="_blank" href={info?.link} className="underline mx-auto mt-4">Ir para a minha página</a>
+          <button onClick={copyToClipboard} className="hidden md:block border-1 w-fit mx-auto mt-4 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
+          <button onClick={shareLink} className="md:hidden flex items-center w-fit mx-auto mt-4 gap-2 justify-center border-1 border-neutral-100 rounded-sm py-1 px-2"><MdShare /> Compartilhar Link</button>
       </section>
     </>
   );

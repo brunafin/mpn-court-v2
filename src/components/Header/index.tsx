@@ -48,7 +48,7 @@ function Header() {
             <ul className="mb-4">
               <li>
                 <Link
-                  className="flex items-start py-3 justify-between"
+                  className="flex items-start p-3 justify-between"
                   to={`/minhas-infos`}
                 >
                   Minhas informações
@@ -56,7 +56,7 @@ function Header() {
               </li>
             </ul>
             <button
-              className="flex items-center gap-2 py-4 w-full text-left  text-neutral-100"
+              className="flex items-center gap-2 p-3 w-full text-left text-neutral-100"
               onClick={() => {
                 document.cookie =
                   "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

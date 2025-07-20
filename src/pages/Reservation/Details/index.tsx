@@ -22,6 +22,7 @@ import Select from "../../../components/Select";
 import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 import { useLoading } from "../../../hooks/useLoading";
 import Loader from "../../../components/Loader";
+import { GiPartyPopper } from "react-icons/gi";
 
 function ReservationDetails() {
   const { loading, withLoading } = useLoading();
@@ -39,6 +40,7 @@ function ReservationDetails() {
   >(null);
   const [observation, setObservation] = useState<string>("");
   const [isBarbecueIncluded, setIsBarbecueIncluded] = useState<boolean>(false);
+  const [isEvent, setIsEvent] = useState<boolean>(false);
   const [court, setCourt] = useState<IReservationDetailsItemProps | null>(null);
   const [sportSelected, setSportSelected] = useState<{
     id: number;
@@ -53,6 +55,7 @@ function ReservationDetails() {
       const response = await getScheduleById(id);
       setCourt(response);
       setIsBarbecueIncluded(response?.reservation?.isBarbecueIncluded || false);
+      setIsEvent(response?.reservation?.isEvent || false);
       setObservation(response?.reservation?.observation || "");
       setCourtSports(response?.sports || []);
       setSportSelected(response.sports[0]);
@@ -79,6 +82,7 @@ function ReservationDetails() {
         courtSchedulePublicId: court?.scheduleId,
         observation,
         isBarbecueIncluded,
+        isEvent,
         sportId: sportSelected?.id || courtSports[0]?.id,
       });
       if (response) {
@@ -113,9 +117,11 @@ function ReservationDetails() {
   const updateObservationByReservation = async ({
     observation,
     isBarbecueIncluded,
+    isEvent,
   }: {
     observation?: string;
     isBarbecueIncluded?: boolean;
+    isEvent?: boolean;
   }): Promise<void> => {
     if (!court?.reservation?.publicId) {
       return alert("Reserva não encontrada");
@@ -125,6 +131,7 @@ function ReservationDetails() {
         await updateObservationByPublicId(court?.reservation?.publicId, {
           ...(observation !== undefined && { observation }),
           ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
+          ...(isEvent !== undefined && { isEvent }),
         });
       }
     });
@@ -182,26 +189,49 @@ function ReservationDetails() {
               </h2>
               {court.status !== ReservationStatusEnum.INACTIVE &&
                 court.status !== ReservationStatusEnum.AVAILABLE && (
-                  <div className="flex items-center justify-center gap-1 mx-4 mb-2">
-                    <input
-                      type="checkbox"
-                      id="barbecue-included"
-                      checked={isBarbecueIncluded}
-                      onChange={(e) => {
-                        setIsBarbecueIncluded(e.target.checked);
-                        if (court?.reservation?.publicId) {
-                          updateObservationByReservation({
-                            isBarbecueIncluded: e.target.checked,
-                          });
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor="barbecue-included"
-                      className="text-neutral-600 pt-1 ms-1"
-                    >
-                      Com Churrasqueira
-                    </label>
+                  <div className="flex flex-col items-start mx-auto w-fit">
+                    <div className="flex items-center justify-center gap-1 mx-4 mb-2">
+                      <input
+                        type="checkbox"
+                        id="barbecue-included"
+                        checked={isBarbecueIncluded}
+                        onChange={(e) => {
+                          setIsBarbecueIncluded(e.target.checked);
+                          if (court?.reservation?.publicId) {
+                            updateObservationByReservation({
+                              isBarbecueIncluded: e.target.checked,
+                            });
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor="barbecue-included"
+                        className="text-neutral-600 pt-1 ms-1"
+                      >
+                        Com Churrasqueira
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-center gap-1 mx-4 mb-2">
+                      <input
+                        type="checkbox"
+                        id="is-event"
+                        checked={isEvent}
+                        onChange={(e) => {
+                          setIsEvent(e.target.checked);
+                          if (court?.reservation?.publicId) {
+                            updateObservationByReservation({
+                              isEvent: e.target.checked,
+                            });
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor="is-event"
+                        className="text-neutral-600 pt-1 ms-1"
+                      >
+                        É um evento
+                      </label>
+                    </div>
                   </div>
                 )}
               <div className="bg-neutral-100 py-2 px-4 md:w-1/3 md:mx-auto">
@@ -223,6 +253,17 @@ function ReservationDetails() {
                       </p>
                     </div>
                   )}
+                {court.status !== ReservationStatusEnum.AVAILABLE && isEvent && (
+                  <div className="flex items-center justify-start border-pink-700 border-l-8 bg-pink-50 w-full rounded-l-sm p-1">
+                    <GiPartyPopper
+                      size={24}
+                      className="mx-2 text-neutral-600"
+                    />
+                    <p className="text-neutral-700 pt-1">
+                      É um evento
+                    </p>
+                  </div>
+                )}
               </div>
               {court.reservation?.publicId && (
                 <div className="mx-4 mt-8 border-t-1 border-neutral-400 md:w-1/3 md:mx-auto">
@@ -357,6 +398,27 @@ function ReservationDetails() {
                           className="text-neutral-600 pt-1 ms-1"
                         >
                           Com Churrasqueira
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-1 mt-1 ms-1 mb-4">
+                        <input
+                          type="checkbox"
+                          id="is-event"
+                          checked={isEvent}
+                          onChange={(e) => {
+                            setIsEvent(e.target.checked);
+                            if (court?.reservation?.publicId) {
+                              updateObservationByReservation({
+                                isEvent: e.target.checked,
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="is-event"
+                          className="text-neutral-600 pt-1 ms-1"
+                        >
+                          É um evento
                         </label>
                       </div>
                       <Textarea

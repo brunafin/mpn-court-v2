@@ -8,6 +8,7 @@ export interface IReservationItemProps {
   time: string;
   customerName: string | null;
   isBarbecueIncluded?: boolean;
+  isEvent?: boolean;
   isNeedsNetting?: boolean;
 }
 
@@ -25,6 +26,7 @@ export interface IReservationDetailsItemProps {
     tokenToCancel: string;
     observation: string;
     isBarbecueIncluded: boolean;
+    isEvent: boolean;
     isNeedsNetting: boolean;
     sportName: string;
   } | null;

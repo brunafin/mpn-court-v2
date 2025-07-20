@@ -27,6 +27,7 @@ interface ICreateReservation {
   courtSchedulePublicId: string;
   observation?: string;
   isBarbecueIncluded?: boolean;
+  isEvent?: boolean;
   sportId: number;
 }
 
@@ -42,12 +43,13 @@ export const createReservation = async (data: ICreateReservation) => {
 
 export const updateObservationByPublicId = async (
   publicId: string,
-  data: { observation?: string; isBarbecueIncluded?: boolean }
+  data: { observation?: string; isBarbecueIncluded?: boolean, isEvent?: boolean }
 ) => {
   try {
     const response = await api.patch<IReservationDetailsItemProps>(`/reservation/${publicId}/extra`, {
       observation: data.observation,
-      is_barbecue_included: data.isBarbecueIncluded
+      is_barbecue_included: data.isBarbecueIncluded,
+      is_event: data.isEvent
     });
     return response.data;
   } catch (error) {
