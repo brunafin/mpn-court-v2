@@ -116,7 +116,6 @@ Acesse a reserva em: ${import.meta.env.VITE_URL_BASE}/reservas/${court.scheduleI
       `SUMMARY:Marca Pra Nós`,
       `DESCRIPTION:${description}`,
       `LOCATION:${sanitizeIcsText(court.court)}`,
-      `URL:https://sistema.marcapranos.com.br/reservas/${court.scheduleId}`,  // <-- link do seu PWA
       `DTSTART:${dtStart}`,
       `DTEND:${dtEnd}`,
       "END:VEVENT",
@@ -384,6 +383,8 @@ Acesse a reserva em: ${import.meta.env.VITE_URL_BASE}/reservas/${court.scheduleI
                       type="button"
                       onClick={async () => {
                         handleCreateReminder();
+                        alert(
+                          "Lembrete criado com sucesso! Verifique sua agenda.")
                       }}
                       className="border-none shadow-none py-2 px-4 text-sm mb-16 text-secondary-400 underline"
                     >
