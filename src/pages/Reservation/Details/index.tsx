@@ -58,6 +58,8 @@ function ReservationDetails() {
   const downloadICS = () => {
     if (!court?.date || !court?.time) return;
 
+    alert('entrei no downloadICS')
+
     const [day, month, year] = court.date.split("/");
     const [hour, minute] = court.time.split(":");
 
@@ -138,9 +140,11 @@ Acesse a reserva em: ${import.meta.env.VITE_URL_BASE}/reservas/${court.scheduleI
 
   const handleCreateReminder = () => {
     if (isIOS) {
+      alert('é ios')
       // Gera e baixa arquivo .ics
       downloadICS();
     } else {
+
       // Abre Google Calendar
       const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Reserva+na+quadra&dates=20250722T130000Z/20250722T140000Z&details=Sua+reserva+está+confirmada!&location=Clube+Esportivo`;
       window.open(calendarUrl, "_blank");
@@ -382,9 +386,9 @@ Acesse a reserva em: ${import.meta.env.VITE_URL_BASE}/reservas/${court.scheduleI
                     <button
                       type="button"
                       onClick={async () => {
-                        handleCreateReminder();
                         alert(
                           "Lembrete criado com sucesso! Verifique sua agenda.")
+                        handleCreateReminder();
                       }}
                       className="border-none shadow-none py-2 px-4 text-sm mb-16 text-secondary-400 underline"
                     >
