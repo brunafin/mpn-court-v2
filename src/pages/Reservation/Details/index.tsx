@@ -31,8 +31,6 @@ function ReservationDetails() {
   const navigate = useNavigate();
   const dateFrom = location.state?.date;
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
   const [showInfoCustomer, setShowInfoCustomer] = useState<boolean>(false);
 
   const [customerReservationName, setCustomerReservationName] = useState<
