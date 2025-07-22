@@ -30,6 +30,9 @@ function ReservationDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const dateFrom = location.state?.date;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
   const [showInfoCustomer, setShowInfoCustomer] = useState<boolean>(false);
 
   const [customerReservationName, setCustomerReservationName] = useState<
@@ -49,6 +52,101 @@ function ReservationDetails() {
   const [courtSports, setCourtSports] = useState<
     { id: number; name: string }[]
   >([]);
+
+  console.log(court?.date, court?.weekday, court?.time);
+
+  const downloadICS = () => {
+    if (!court?.date || !court?.time) return;
+
+    const [day, month, year] = court.date.split("/");
+    const [hour, minute] = court.time.split(":");
+
+    const reservationDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute)
+    );
+
+    const reminderDate = new Date(reservationDate.getTime() - 24 * 60 * 60 * 1000);
+
+    const formatToICSLocal = (date: Date): string => {
+      const pad = (num: number) => num.toString().padStart(2, "0");
+      const YYYY = date.getFullYear(); // 👈 sem UTC
+      const MM = pad(date.getMonth() + 1);
+      const DD = pad(date.getDate());
+      const hh = pad(date.getHours());
+      const mm = pad(date.getMinutes());
+      const ss = pad(date.getSeconds());
+      return `${YYYY}${MM}${DD}T${hh}${mm}${ss}`; // 👈 sem "Z"
+    };
+
+    const sanitizeIcsText = (text: string): string =>
+      text
+        .replace(/\\/g, "\\\\")   // barra invertida
+        .replace(/\n/g, "\\n")    // quebra de linha
+        .replace(/;/g, "\\;")     // ponto e vírgula
+        .replace(/,/g, "\\,")     // vírgula
+        .replace(/(?<!https?):/g, "\\:"); // escapa dois-pontos que NÃO estão em URLs
+
+    const dtStart = formatToICSLocal(reminderDate);
+    const dtEnd = formatToICSLocal(new Date(reminderDate.getTime() + 30 * 60 * 1000)); // 30min
+
+    const uid = `${Date.now()}@marcapranos${court.court}${court.reservation?.contactName}${court.reservation?.contactPhone}`;
+    const dtStamp = formatToICSLocal(new Date());
+
+    const raw = `
+Lembrete de reserva para amanhã!
+${court.date} às ${court.time.split(':')[0]}h (${court.court})
+Acesse a reserva em: ${import.meta.env.VITE_URL_BASE}/reservas/${court.scheduleId}
+`;
+
+    const description = sanitizeIcsText(raw);
+
+    const event = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//MarcaPraNos//Reservas//PT-BR",
+      "BEGIN:VEVENT",
+      `UID:${uid}`,
+      `DTSTAMP:${dtStamp}`,
+      "CLASS:PUBLIC",
+      "PRIORITY:5",
+      `SUMMARY:Marca Pra Nós`,
+      `DESCRIPTION:${description}`,
+      `LOCATION:${sanitizeIcsText(court.court)}`,
+      `URL:https://sistema.marcapranos.com.br/reservas/${court.scheduleId}`,  // <-- link do seu PWA
+      `DTSTART:${dtStart}`,
+      `DTEND:${dtEnd}`,
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ].join("\r\n");
+
+
+    const blob = new Blob([event], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "lembrete_reserva.ics";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+
+  const handleCreateReminder = () => {
+    if (isIOS) {
+      // Gera e baixa arquivo .ics
+      downloadICS();
+    } else {
+      // Abre Google Calendar
+      const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Reserva+na+quadra&dates=20250722T130000Z/20250722T140000Z&details=Sua+reserva+está+confirmada!&location=Clube+Esportivo`;
+      window.open(calendarUrl, "_blank");
+    }
+  };
 
   const fetchData = async (id: string) => {
     await withLoading(async () => {
@@ -281,7 +379,16 @@ function ReservationDetails() {
                     className="w-full pt-4"
                     rows={4}
                   />
-                  <div className="flex justify-end">
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        handleCreateReminder();
+                      }}
+                      className="border-none shadow-none py-2 px-4 text-sm mb-16 text-secondary-400 underline"
+                    >
+                      Criar lembrete
+                    </button>
                     <button
                       type="button"
                       onClick={async () => {
