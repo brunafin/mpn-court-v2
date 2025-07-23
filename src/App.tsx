@@ -4,6 +4,7 @@ import Reservation from "./pages/Reservation";
 import ReservationDetails from "./pages/Reservation/Details";
 import ChangePassword from "./pages/ChangePassword";
 import Info from "./pages/Info";
+import ConfigDay from "./pages/ConfigDay";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/reservas/:id" element={<ReservationDetails />} />
         <Route path="/alterar-senha" element={<ChangePassword />} />
         <Route path="/minhas-infos" element={<Info />} />
+        <Route path="/configuracoes-horarios" element={<ConfigDay />} />
       </Routes>
     </>
   );

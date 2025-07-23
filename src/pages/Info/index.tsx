@@ -4,10 +4,17 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import { jwtDecode } from "jwt-decode";
 import { MdShare } from "react-icons/md";
+import { useLoading } from "../../hooks/useLoading";
+import Loader from "../../components/Loader";
+import { IInfo, infosByCompanyPublicId, updatePreferencesByCompanyPublicId } from "../../api/companies";
 
 function Info() {
   const navigate = useNavigate();
-  const [info, setInfo] = useState<{ link: string, companyName: string } | null>(null);
+  const { loading, withLoading } = useLoading();
+  const [publicId, setPublicId] = useState<string>('');
+  const [isHiddenInactiveHours, setIsHiddenInactiveHours] = useState<boolean>(false);
+  const [info, setInfo] = useState<IInfo | null>(null);
+
 
   useEffect(() => {
     const token = Cookies.get("access_token");
@@ -16,13 +23,13 @@ function Info() {
     }
   }, [navigate]);
 
-  const getInfosFromCookie = (): {link: string; companyName: string} | null => {
+  const getInfosFromCookie = (): { companyName: string, companyPublicId: string } | null => {
     const match = document.cookie.match(/access_token=([^;]+)/);
     if (!match) return null;
     try {
       const token = match[1];
       const payload = jwtDecode<any>(token);
-      return {link: payload?.link || "", companyName: payload?.companyName || ''};
+      return { companyName: payload?.companyName || '', companyPublicId: payload?.companyPublicId || '' };
     } catch {
       return null;
     }
@@ -30,8 +37,21 @@ function Info() {
 
   useEffect(() => {
     const info = getInfosFromCookie();
-    setInfo(info);
+    setPublicId(info?.companyPublicId || '');
   }, []);
+
+  useEffect(() => {
+    if (!publicId) return;
+    withLoading(async () => {
+      try {
+        const response = await infosByCompanyPublicId(publicId);
+        setInfo(response);
+        setIsHiddenInactiveHours(response?.preferences?.isHiddenInactiveHours || false);
+      } catch (error) {
+        console.error('Erro ao buscar informações da empresa:', error);
+      }
+    });
+  }, [publicId]);
 
 
   const copyToClipboard = async () => {
@@ -59,14 +79,55 @@ function Info() {
     }
   };
 
+  const updatePreferences = async (isHiddenInactiveHoursInput: boolean): Promise<void> => {
+    if (!publicId) {
+      alert('Informações da empresa não disponíveis.');
+      return;
+    }
+    await withLoading(async () => {
+      await updatePreferencesByCompanyPublicId(publicId, {
+        isHiddenInactiveHours: isHiddenInactiveHoursInput,
+      });
+    });
+  };
+
+  if (loading) return <Loader />;
+
   return (
     <>
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-          <h2 className="text-lg bg-neutral-900 text-center p-3">Minhas informações</h2>
-          <a target="_blank" href={info?.link} className="underline mx-auto mt-4">Ir para a minha página</a>
-          <button onClick={copyToClipboard} className="hidden md:block border-1 w-fit mx-auto mt-4 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
-          <button onClick={shareLink} className="md:hidden flex items-center w-fit mx-auto mt-4 gap-2 justify-center border-1 border-neutral-100 rounded-sm py-1 px-2"><MdShare /> Compartilhar Link</button>
+        <h2 className="text-lg bg-neutral-900 text-center p-3">Minhas informações</h2>
+        <section className="mb-8">
+          <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Dados do site</h3>
+          <div className="p-3 flex flex-col gap-4 justify-between">
+            <a target="_blank" href={info?.link} className="underline p-3">Ir para a minha página</a>
+            <button onClick={copyToClipboard} className="hidden md:block border-1 w-fit mx-auto mt-4 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
+            <button onClick={shareLink} className="flex items-center justify-center p-1 gap-2 border-1 border-neutral-200 rounded-sm"><MdShare /> Compartilhar Link</button>
+          </div>
+        </section>
+        <section className="mb-8">
+          <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Preferências</h3>
+          <div className="flex items-center py-3 gap-1 mx-4 mb-2">
+            <input
+              type="checkbox"
+              id="is-hidden-inactive-hours"
+              checked={isHiddenInactiveHours}
+              onChange={async (e) => {
+                setIsHiddenInactiveHours(e.target.checked);
+                if (info?.companyName) {
+                  await updatePreferences(e.target.checked)
+                }
+              }}
+            />
+            <label
+              htmlFor="is-hidden-inactive-hours"
+              className="text-neutral-200 pt-1 ms-1"
+            >
+              Ocultar horários inativos
+            </label>
+          </div>
+        </section>
       </section>
     </>
   );

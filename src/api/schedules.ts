@@ -11,6 +11,11 @@ export const getSchedulesByCompanyPublicIdAndDate = async ({ companyPublicId, da
   return response.data;
 }
 
+export const getAllSchedulesByCompanyPublicIdAndDate = async ({ companyPublicId, date }: IScheduleApi) => {
+  const response = await api.get<IReservationItemProps[]>(`/companies/${companyPublicId}/all-schedules/${date}`);
+  return response.data;
+}
+
 export const getScheduleById = async (id: string) => {
   try {
     const response = await api.get<IReservationDetailsItemProps>(`/court-schedules/${id}`);

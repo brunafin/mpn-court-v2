@@ -10,6 +10,7 @@ export interface IReservationItemProps {
   isBarbecueIncluded?: boolean;
   isEvent?: boolean;
   isNeedsNetting?: boolean;
+  isHiddenInactiveHours?: boolean;
 }
 
 export interface IReservationDetailsItemProps {

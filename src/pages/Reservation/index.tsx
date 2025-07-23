@@ -3,12 +3,11 @@ import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
-// import CustomDatepicker from "../../components/Datepicker";
-import { HiX } from "react-icons/hi";
+import { HiOutlineCog, HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
 import Cookies from "js-cookie";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Loader from "../../components/Loader";
 import { useLoading } from "../../hooks/useLoading";
 import { formatDate, isToday } from "date-fns";
@@ -43,10 +42,10 @@ function Reservation() {
   const [date, setDate] = useState<Date>(
     dateFrom
       ? new Date(
-          Number.isNaN(Date.parse(dateFrom))
-            ? new Date().setHours(0, 0, 0, 0)
-            : new Date(dateFrom + "T00:00:00").setHours(0, 0, 0, 0)
-        )
+        Number.isNaN(Date.parse(dateFrom))
+          ? new Date().setHours(0, 0, 0, 0)
+          : new Date(dateFrom + "T00:00:00").setHours(0, 0, 0, 0)
+      )
       : new Date(new Date().setHours(0, 0, 0, 0))
   );
   const [statusSelected, setStatusSelected] =
@@ -113,49 +112,27 @@ function Reservation() {
     [date, companyPublicId]
   );
 
-  // function handleSubtractOneDay(date: Date | null): void {
-  //   setIsOpenFilters(false);
-  //   if (!date) return;
-  //   const newDate = new Date(date);
-  //   newDate.setDate(newDate.getDate() - 1);
-  //   setDate(newDate);
-  //   fetchData(newDate.toISOString().split("T")[0]);
-  // }
-
-  // function handleAddOneDay(date: Date | null): void {
-  //   setIsOpenFilters(false);
-  //   if (!date) return;
-  //   const newDate = new Date(date);
-  //   newDate.setDate(newDate.getDate() + 1);
-  //   setDate(newDate);
-  //   fetchData(newDate.toISOString().split("T")[0]);
-  // }
-
   const getResultHeaderTitleList = (): string => {
     if (!date) return "sem data";
     const dateFormatted = formatDate(date, "dd/MM/yyyy");
     const isTodayComparing = isToday(new Date(date));
+
     switch (statusSelected) {
       case ReservationStatusEnum.AVAILABLE:
-        return `Exibindos somente os horários disponíveis do dia ${
-          isTodayComparing ? "hoje" : dateFormatted
-        }.`;
+        return `Exibindos somente os horários disponíveis do dia ${isTodayComparing ? "hoje" : dateFormatted
+          }.`;
       case ReservationStatusEnum.RESERVED:
-        return `Exibindos somente os horários reservados do dia ${
-          isTodayComparing ? "hoje" : dateFormatted
-        }.`;
+        return `Exibindos somente os horários reservados do dia ${isTodayComparing ? "hoje" : dateFormatted
+          }.`;
       case ReservationStatusEnum.FIXED:
-        return `Exibindos somente os horários fixos do dia ${
-          isTodayComparing ? "hoje" : dateFormatted
-        }.`;
+        return `Exibindos somente os horários fixos do dia ${isTodayComparing ? "hoje" : dateFormatted
+          }.`;
       case ReservationStatusEnum.INACTIVE:
-        return `Exibindos somente os horários inativos do dia ${
-          isTodayComparing ? "hoje" : dateFormatted
-        }.`;
+        return `Exibindos somente os horários inativos do dia ${isTodayComparing ? "hoje" : dateFormatted
+          }.`;
       default:
-        return `Exibindo todos os horários do dia ${
-          isTodayComparing ? "hoje" : dateFormatted
-        }.`;
+        return `Exibindo todos os horários do dia ${isTodayComparing ? "hoje" : dateFormatted
+          }.`;
     }
   };
 
@@ -166,38 +143,15 @@ function Reservation() {
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
         <div className="bg-neutral-800 flex items-center justify-around md:justify-center py-2 mb-4 mt-2 mx-2 rounded-sm">
-          {/* <div className="flex items-center gap-1 justify-center px-2">
-            <button className="px-2" onClick={() => handleSubtractOneDay(date)}>
-              <BsChevronLeft size={24} cursor="pointer" />
-            </button>
-            <CustomDatepicker
-              dateSelected={date}
-              onChange={(event) => {
-                if(!event) return;
-                setDate(event);
-                fetchData(event?.toISOString().split("T")[0] || "");
-              }}
-              onFocus={() => setIsOpenFilters(false)}
-            />
-            <button className="px-2" onClick={() => handleAddOneDay(date)}>
-              <BsChevronRight size={24} cursor="pointer" />
-            </button>
-          </div> */}
           <Daypicker
             selectedDate={date}
             setSelectedDate={setDate}
           />
-          {/* <button
-            onClick={() => fetchData(date?.toISOString().split("T")[0] || "")}
-          >
-            <BsArrowRepeat size={24} />
-          </button> */}
           <button
             className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm  mx-2 z-11 ${getBorderColorByStatusSelected(
               statusSelected
-            )} ${
-              isOpenFilters ? "bg-neutral-900 border-1 border-neutral-900" : ""
-            }`}
+            )} ${isOpenFilters ? "bg-neutral-900 border-1 border-neutral-900" : ""
+              }`}
             onClick={() => setIsOpenFilters(!isOpenFilters)}
           >
             {isOpenFilters ? (
@@ -248,9 +202,20 @@ function Reservation() {
             }
           }).length > 0 ? (
           <>
-            <h3 className="bg-neutral-900 py-4 text-center">
-              {getResultHeaderTitleList()}
-            </h3>
+            <div className="bg-neutral-900 py-4 px-2 flex items-start gap-4 justify-center">
+              <h3 className="text-center">
+                {getResultHeaderTitleList()}
+              </h3>
+              <Link
+                to={`/configuracoes-horarios`}
+                state={{ date: date }}
+              >
+                <HiOutlineCog
+                  size={24}
+                  className="text-neutral-200 cursor-pointer"
+                />
+              </Link>
+            </div>
             <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg h-full">
               {list
                 .filter((elementDate) => {
@@ -299,10 +264,18 @@ function Reservation() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center m-16">
-            <p>
+            <p className="text-center mb-4">
               Nenhum horário encontrado
               {statusSelected && " para o filtro selecionado"}.
             </p>
+            <Link
+              to={`/configuracoes-horarios`}
+              state={{ date: date }}
+              className="flex items-end underline gap-2"
+            >
+              <HiOutlineCog size={24}/>
+              Detalhes do dia
+            </Link>
           </div>
         )}
       </section>
