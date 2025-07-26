@@ -92,20 +92,28 @@ function ConfigDay() {
         </div>
         <ul className="p-3 border-b-1 border-neutral-700 flex flex-col gap-2">
           <li className="border-1 border-tertiary-600 p-1 rounded-sm text-center">
-            {list.filter((item) => item.status === ReservationStatusEnum.AVAILABLE).length}{' '}
-            Horários livres
+            {(() => {
+              const count = list.filter((item) => item.status === ReservationStatusEnum.AVAILABLE).length;
+              return `${count} Horário${count === 1 ? "" : "s"} livre${count === 1 ? "" : "s"}`;
+            })()}
           </li>
           <li className="border-1 border-secondary-600 p-1 rounded-sm text-center">
-            {list.filter((item) => item.status === ReservationStatusEnum.RESERVED).length}{' '}
-            Horários reservados
+            {(() => {
+              const count = list.filter((item) => item.status === ReservationStatusEnum.RESERVED).length;
+              return `${count} Horário${count === 1 ? "" : "s"} reservado${count === 1 ? "" : "s"}`;
+            })()}
           </li>
           <li className="border-1 border-purple-600 p-1 rounded-sm text-center">
-            {list.filter((item) => item.status === ReservationStatusEnum.FIXED).length}{' '}
-            Horários fixos
+            {(() => {
+              const count = list.filter((item) => item.status === ReservationStatusEnum.FIXED).length;
+              return `${count} Horário${count === 1 ? "" : "s"} fixo${count === 1 ? "" : "s"}`;
+            })()}
           </li>
           <li className="border-1 border-danger-600 p-1 rounded-sm text-center">
-            {list.filter((item) => item.status === ReservationStatusEnum.INACTIVE).length}{' '}
-            Horários inativos
+            {(() => {
+              const count = list.filter((item) => item.status === ReservationStatusEnum.INACTIVE).length;
+              return `${count} Horário${count === 1 ? "" : "s"} inativo${count === 1 ? "" : "s"}`;
+            })()}
           </li>
         </ul>
         {list.length > 0 && list[0]?.isHiddenInactiveHours && list.some((item) => item.status === ReservationStatusEnum.INACTIVE) && (
