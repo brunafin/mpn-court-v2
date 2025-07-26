@@ -100,9 +100,9 @@ function Info() {
         <h2 className="text-lg bg-neutral-900 text-center p-3">Minhas informações</h2>
         <section className="mb-8">
           <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Dados do site</h3>
-          <div className="p-3 flex flex-col gap-4 justify-between">
+          <div className="p-3 flex flex-col gap-6 md:gap-4 justify-between md:items-start">
             <a target="_blank" href={info?.link} className="underline p-3">Ir para a minha página</a>
-            <button onClick={copyToClipboard} className="hidden md:block border-1 w-fit mx-auto mt-4 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
+            <button onClick={copyToClipboard} className="hidden md:block border-1 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
             <button onClick={shareLink} className="flex items-center justify-center p-1 gap-2 border-1 border-neutral-200 rounded-sm"><MdShare /> Compartilhar Link</button>
           </div>
         </section>

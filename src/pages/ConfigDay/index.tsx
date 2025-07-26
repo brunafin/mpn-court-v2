@@ -110,7 +110,10 @@ function ConfigDay() {
         </ul>
         {list.length > 0 && list[0]?.isHiddenInactiveHours && list.some((item) => item.status === ReservationStatusEnum.INACTIVE) && (
           <>
-            <h3 className="p-3 font-bold">Horários inativos ocultos:</h3>
+            <div className="p-3 gap-2 flex items-center">
+              <h3 className="font-bold">Horários inativos ocultos:</h3>
+              {/* <BsInfoCircle className="cursor-pointer"/> */}
+            </div>
             <ul className="py-3 flex flex-col gap-3">
               {list.filter((item) => item.status === ReservationStatusEnum.INACTIVE).map((inactiveHour) => (
                 <li
@@ -126,6 +129,7 @@ function ConfigDay() {
                       {inactiveHour.time} - Q.{inactiveHour.court}
                     </li>
                     <button
+                    className="flex items-center gap-2"
                       onClick={async () => {
                         await withLoading(async () => {
                           await changeAvailability(inactiveHour.scheduleId, true);
@@ -136,7 +140,7 @@ function ConfigDay() {
                         });
                       }}
                     >
-                      <BsEye size={18} />
+                      <BsEye size={18} /> ativar
                     </button>
                   </div>
                 </li>

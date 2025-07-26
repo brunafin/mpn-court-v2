@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Reservation from "./pages/Reservation";
@@ -7,6 +8,21 @@ import Info from "./pages/Info";
 import ConfigDay from "./pages/ConfigDay";
 
 function App() {
+  useEffect(() => {
+    if (import.meta.env.VITE_ENVIRONMENT === "production") {
+      (function (c: any, l: any, a: any, r: any, i: any, t?: any, y?: any) {
+        c[a] = c[a] || function () {
+          (c[a].q = c[a].q || []).push(arguments);
+        };
+        t = l.createElement(r);
+        t.async = 1;
+        t.src = "https://www.clarity.ms/tag/" + i;
+        y = l.getElementsByTagName(r)[0];
+        y.parentNode.insertBefore(t, y);
+      })(window, document, "clarity", "script", "skzyiavfyw");
+    }
+  }, []);
+
   return (
     <>
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (
