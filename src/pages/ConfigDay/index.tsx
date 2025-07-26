@@ -97,7 +97,7 @@ function ConfigDay() {
               return `${count} Horário${count === 1 ? "" : "s"} livre${count === 1 ? "" : "s"}`;
             })()}
           </li>
-          <li className="border-1 border-secondary-600 p-1 rounded-sm text-center">
+          <li className="border-1 border-secondary-500 p-1 rounded-sm text-center">
             {(() => {
               const count = list.filter((item) => item.status === ReservationStatusEnum.RESERVED).length;
               return `${count} Horário${count === 1 ? "" : "s"} reservado${count === 1 ? "" : "s"}`;
@@ -109,7 +109,7 @@ function ConfigDay() {
               return `${count} Horário${count === 1 ? "" : "s"} fixo${count === 1 ? "" : "s"}`;
             })()}
           </li>
-          <li className="border-1 border-danger-600 p-1 rounded-sm text-center">
+          <li className="border-1 border-danger-500 p-1 rounded-sm text-center">
             {(() => {
               const count = list.filter((item) => item.status === ReservationStatusEnum.INACTIVE).length;
               return `${count} Horário${count === 1 ? "" : "s"} inativo${count === 1 ? "" : "s"}`;
