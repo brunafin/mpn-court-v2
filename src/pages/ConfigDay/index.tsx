@@ -90,7 +90,7 @@ function ConfigDay() {
           </button>
           <h2 className="text-lg bg-neutral-900 text-center">Detalhes do dia {format(date, "dd/MM/yyyy")} </h2>
         </div>
-        <ul className="p-3 border-b-1 border-neutral-700 flex flex-col gap-2">
+        <ul className="p-3 border-b-1 border-neutral-700 flex flex-col gap-2 md:w-1/2 md:mx-auto">
           <li className="border-1 border-tertiary-600 p-1 rounded-sm text-center">
             {(() => {
               const count = list.filter((item) => item.status === ReservationStatusEnum.AVAILABLE).length;
@@ -118,7 +118,7 @@ function ConfigDay() {
         </ul>
         {list.length > 0 && list[0]?.isHiddenInactiveHours && list.some((item) => item.status === ReservationStatusEnum.INACTIVE) && (
           <>
-            <div className="p-3 gap-2 flex items-center">
+            <div className="p-3 gap-2 flex items-center md:justify-center">
               <h3 className="font-bold">Horários inativos ocultos:</h3>
               {/* <BsInfoCircle className="cursor-pointer"/> */}
             </div>
@@ -137,7 +137,7 @@ function ConfigDay() {
                       {inactiveHour.time} - Q.{inactiveHour.court}
                     </li>
                     <button
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 underline"
                       onClick={async () => {
                         await withLoading(async () => {
                           await changeAvailability(inactiveHour.scheduleId, true);
