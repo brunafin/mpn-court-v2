@@ -80,10 +80,10 @@ button:hover {
   button:active:not(li > button) {
     border: 2px solid var(--color-neutral-800);
   }
-  li:active{
+  /* li:active{
     border: 2px solid var(--color-neutral-400);
     border-radius: 0.25rem;
-  }
+  } */
 }
 
 input[type="radio"] {

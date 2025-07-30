@@ -15,7 +15,7 @@ import Daypicker from "../../components/Daypicker";
 import { MdOutlinePostAdd } from "react-icons/md";
 import NewReminderModal from "../../components/NewNote";
 import { useNotification } from "../../contexts/NotificationContext";
-import { createNote } from "../../api/notes";
+import { counterNotes, createNote } from "../../api/notes";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -92,6 +92,21 @@ function Reservation() {
     if (!companyPublicId || !date) return;
     fetchData(date?.toISOString().split("T")[0]);
   }, [companyPublicId, date]);
+
+  useEffect(() => {
+    if (!companyPublicId) return;
+    const fetchCount = async () => {
+      try {
+        const response = await counterNotes(companyPublicId);
+        if (response) {
+          setUnreadCount(response);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar informações da empresa:', error);
+      }
+    };
+    fetchCount();
+  }, [companyPublicId]);
 
   const fetchData = useCallback(
     async (dateInput: string) => {
@@ -324,7 +339,6 @@ function Reservation() {
           message={message}
           setMessage={setMessage}
           is24HoursBefore={is24before}
-          setIs24HoursBefore={setIs24before}
         />
       </section>
     </>

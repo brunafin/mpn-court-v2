@@ -127,13 +127,14 @@ function Notifications() {
         {notifications && notifications.length > 0 ? (
           <ul className="flex flex-col items-center gap-4 p-4">
             {notifications.map((notification: any) => (
-              <li key={notification.id} className="bg-white text-neutral-700 p-4 rounded shadow w-full max-w-md">
+              <li key={notification.id} className="bg-white text-neutral-700 py-4 ps-4 pe-2 rounded shadow w-full max-w-md">
                 {notification.from && (
                   <span className="text-sm font-bold">{notification.from}:</span>
                 )}
                 <div className="flex justify-between items-center">
                   <p>{notification.message}</p>
                   <button
+                  className="p-2"
                     onClick={async () => handleCheckIsRead(notification.id.toString())}
 
                   >
@@ -155,7 +156,6 @@ function Notifications() {
         message={message}
         setMessage={setMessage}
         is24HoursBefore={is24before}
-        setIs24HoursBefore={setIs24before}
       />
     </>
   );

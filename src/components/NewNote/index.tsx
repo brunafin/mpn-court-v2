@@ -24,7 +24,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
     setMessage,
     is24HoursBefore = false,
     setIs24HoursBefore,
-    showRemind24HoursBefore = true,
+    showRemind24HoursBefore = false,
 }) => {
 
     if (!isOpen) return null;
