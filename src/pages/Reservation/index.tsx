@@ -12,6 +12,10 @@ import Loader from "../../components/Loader";
 import { useLoading } from "../../hooks/useLoading";
 import { formatDate, isToday } from "date-fns";
 import Daypicker from "../../components/Daypicker";
+import { MdOutlinePostAdd } from "react-icons/md";
+import NewReminderModal from "../../components/NewNote";
+import { useNotification } from "../../contexts/NotificationContext";
+import { createNote } from "../../api/notes";
 
 const getBorderColorByStatusSelected = (
   status: ReservationStatusEnum | null
@@ -35,6 +39,11 @@ const getBorderColorByStatusSelected = (
 
 function Reservation() {
   const { loading, withLoading } = useLoading();
+  const { unreadCount, setUnreadCount } = useNotification();
+
+  const [showNewReminderModal, setShowNewReminderModal] = useState(false);
+  const [message, setMessage] = useState<string>('');
+  const [is24before, setIs24before] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
   const dateFrom = location.state?.date;
@@ -111,6 +120,24 @@ function Reservation() {
     },
     [date, companyPublicId]
   );
+
+  const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
+    event?.preventDefault?.();
+    await withLoading(async () => {
+      await createNote({
+        companyPublicId: companyPublicId || '',
+        date: date.toISOString().split('T')[0],
+        message,
+        is24HoursBefore: is24before,
+      });
+      setShowNewReminderModal(false);
+      setMessage('');
+      setIs24before(false);
+      if (date.toDateString() === new Date().toDateString()) {
+        setUnreadCount(unreadCount + 1);
+      }
+    });
+  };
 
   const getResultHeaderTitleList = (): string => {
     if (!date) return "sem data";
@@ -206,15 +233,26 @@ function Reservation() {
               <h3 className="text-center">
                 {getResultHeaderTitleList()}
               </h3>
-              <Link
-                to={`/configuracoes-horarios`}
-                state={{ date: date }}
-              >
-                <HiOutlineCog
-                  size={24}
+              <div className="flex gap-2 items-center">
+                <Link
+                  to={`/configuracoes-horarios`}
+                  state={{ date: date }}
+                >
+                  <HiOutlineCog
+                    size={24}
+                    className="text-neutral-200 cursor-pointer"
+                  />
+                </Link>
+                <button
+                  onClick={() => setShowNewReminderModal(true)}
                   className="text-neutral-200 cursor-pointer"
-                />
-              </Link>
+                >
+                  <MdOutlinePostAdd
+                    size={24}
+                    className="text-neutral-200 cursor-pointer"
+                  />
+                </button>
+              </div>
             </div>
             <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg h-full">
               {list
@@ -273,11 +311,21 @@ function Reservation() {
               state={{ date: date }}
               className="flex items-end underline gap-2"
             >
-              <HiOutlineCog size={24}/>
+              <HiOutlineCog size={24} />
               Detalhes do dia
             </Link>
           </div>
         )}
+        <NewReminderModal
+          isOpen={showNewReminderModal}
+          onClose={() => setShowNewReminderModal(false)}
+          handleSubmit={handleCreateNote}
+          date={date.toLocaleString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+          message={message}
+          setMessage={setMessage}
+          is24HoursBefore={is24before}
+          setIs24HoursBefore={setIs24before}
+        />
       </section>
     </>
   );

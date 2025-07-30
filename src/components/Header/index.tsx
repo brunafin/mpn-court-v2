@@ -3,25 +3,31 @@ import { useEffect, useState } from "react";
 import { BsList } from "react-icons/bs";
 import { MdOutlineLogout } from "react-icons/md";
 import { Link } from "react-router-dom";
+import Notifications from "../Notifications";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [companyName, setCompanyName] = useState("");
 
-  const getCompanyNameFromCookie = () => {
+  const getInfoFromCookie = (): { companyName: string } | undefined => {
     const match = document.cookie.match(/access_token=([^;]+)/);
-    if (!match) return "";
+    if (!match) return;
     try {
       const token = match[1];
       const payload = jwtDecode<any>(token);
-      return payload?.companyName || "";
+      return {
+        companyName: payload?.companyName || '',
+      }
     } catch {
-      return "";
+      return;
     }
   };
 
   useEffect(() => {
-    setCompanyName(getCompanyNameFromCookie());
+    const info = getInfoFromCookie();
+    if (info) {
+      setCompanyName(info.companyName);
+    }
   }, []);
 
   return (
@@ -34,13 +40,16 @@ function Header() {
           className="h-16 py-2"
         />
       </a>
-      <h1 className="font-bold text-center text-base text-neutral-800">
-        <Link
-          className="flex items-start py-3 justify-between"
-          to={`/reservas`}
-        >{companyName}
-        </Link>
-      </h1>
+      <div className="flex items-center gap-4">
+        <h1 className="font-bold text-center text-base text-neutral-800">
+          <Link
+            className="flex items-start py-3 justify-between"
+            to={`/reservas`}
+          >{companyName}
+          </Link>
+        </h1>
+        <Notifications/>
+      </div>
       <div className="relative">
         <BsList
           className="text-neutral-800 cursor-pointer"
@@ -49,20 +58,26 @@ function Header() {
         />
         {menuOpen && (
           <nav className="absolute right-0 mt-2 w-64 bg-neutral-800 rounded shadow-lg z-30 px-4 py-2">
-            <ul className="mb-4 flex flex-col gap-2">
+            <ul className="mb-4 flex flex-col gap-6 py-4">
               <li>
-              <Link
-                className="flex items-start py-3 justify-between"
-                to={`/reservas`}
-              >
+                <Link
+                  to={`/reservas`}
+                >
                   Início
-              </Link>
+                </Link>
               </li>
               <li>
                 <Link
                   to={`/minhas-infos`}
                 >
                   Minhas informações
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={`/notificacoes`}
+                >
+                  Lembretes
                 </Link>
               </li>
             </ul>

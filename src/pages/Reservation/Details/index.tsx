@@ -2,7 +2,7 @@ import { BsArrowCounterclockwise, BsX } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useLocation, useParams } from "react-router";
 import { ReservationStatusEnum } from "../enum";
-import { MdOutlineArrowBackIos, MdOutlineRestaurant } from "react-icons/md";
+import { MdOutlineArrowBackIos, MdOutlinePostAdd, MdOutlineRestaurant } from "react-icons/md";
 import { FaRegCalendarCheck } from "react-icons/fa";
 import { IReservationDetailsItemProps } from "../interface";
 import { useEffect, useState } from "react";
@@ -23,15 +23,22 @@ import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 import { useLoading } from "../../../hooks/useLoading";
 import Loader from "../../../components/Loader";
 import { GiPartyPopper } from "react-icons/gi";
+import NewReminderModal from "../../../components/NewNote";
+import { useNotification } from "../../../contexts/NotificationContext";
+import { createNote } from "../../../api/notes";
 
 function ReservationDetails() {
   const { loading, withLoading } = useLoading();
+  const { unreadCount, setUnreadCount } = useNotification();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const dateFrom = location.state?.date;
 
   const [showInfoCustomer, setShowInfoCustomer] = useState<boolean>(false);
+  const [showNewReminderModal, setShowNewReminderModal] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>('');
+  const [is24before, setIs24before] = useState<boolean>(false);
 
   const [customerReservationName, setCustomerReservationName] = useState<
     string | null
@@ -134,6 +141,39 @@ function ReservationDetails() {
           ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
           ...(isEvent !== undefined && { isEvent }),
         });
+      }
+    });
+  };
+
+  const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
+    event?.preventDefault?.();
+    let formattedDate = "";
+    if (court?.date) {
+      const [day, month, year] = court.date.split("/");
+      formattedDate = `${year}-${month}-${day}`;
+    } else {
+      const now = new Date();
+      formattedDate = now.toISOString().slice(0, 10); // yyyy-mm-dd
+    }
+    await withLoading(async () => {
+      await createNote({
+        companyPublicId: court?.companyPublicId || '',
+        date: formattedDate,
+        message: message || `Reserva para o dia ${court?.date} - ${court?.time} - ${court?.reservation?.contactName}`,
+        is24HoursBefore: is24before,
+      });
+      setShowNewReminderModal(false);
+      setMessage('');
+      setIs24before(false);
+      if (court?.date) {
+        const [day, month, year] = court.date.split("/");
+        const courtDate = new Date(Number(year), Number(month) - 1, Number(day));
+        const today = new Date();
+        courtDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        if (courtDate.getTime() === today.getTime()) {
+          setUnreadCount(unreadCount + 1);
+        }
       }
     });
   };
@@ -282,7 +322,17 @@ function ReservationDetails() {
                     className="w-full pt-4"
                     rows={4}
                   />
-                  <div className="flex justify-end">
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setShowNewReminderModal(true);
+                      }}
+                      className="py-2 px-4 ro text-sm mb-16 text-neutral-600 underline flex items-center gap-1"
+                    >
+                      <MdOutlinePostAdd size={20} />
+                      Criar lembrete
+                    </button>
                     <button
                       type="button"
                       onClick={async () => {
@@ -506,6 +556,18 @@ function ReservationDetails() {
           </div>
         </div>
       )}
+      <NewReminderModal
+        isOpen={showNewReminderModal}
+        onClose={() => setShowNewReminderModal(false)}
+        handleSubmit={handleCreateNote}
+        date={court?.date || ""}
+        message={message}
+        setMessage={setMessage}
+        is24HoursBefore={is24before}
+        setIs24HoursBefore={setIs24before}
+        showRemind24HoursBefore={true}
+        defaultMessage={`Reserva para o dia ${court?.date} - ${court?.time} - ${court?.reservation?.contactName}`}
+      />
     </div>
   );
 }

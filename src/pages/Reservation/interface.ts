@@ -39,4 +39,5 @@ export interface IReservationDetailsItemProps {
   time: string;
   price: string;
   weekday: string;
+  companyPublicId: string;
 }
