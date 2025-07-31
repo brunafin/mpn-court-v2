@@ -11,13 +11,15 @@ import NewReminderModal from "../../components/NewNote";
 import { checkIsRead, createNote, INote, notesByDate } from "../../api/notes";
 import { useNotification } from "../../contexts/NotificationContext";
 
+const defaultDate = new Date(new Date().setHours(0, 0, 0, 0));  
+
 function Notifications() {
   const navigate = useNavigate();
   const { unreadCount, setUnreadCount } = useNotification();
   const { loading, withLoading } = useLoading();
   const [companyPublicId, setCompanyPublicId] = useState<string>('');
   const [showNewReminderModal, setShowNewReminderModal] = useState(false);
-  const [date, setDate] = useState<Date>(new Date(new Date().setHours(0, 0, 0, 0)));
+  const [date, setDate] = useState<Date>(defaultDate);
   const [notifications, setNotifications] = useState<INote[]>([]);
   const [message, setMessage] = useState<string>('');
   const [is24before, setIs24before] = useState<boolean>(false);
@@ -107,7 +109,13 @@ function Notifications() {
       <Header />
       <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
         <div className="bg-neutral-900 flex justify-center gap-2 p-3">
-          <h2 className="text-lg">Lembretes</h2>
+            <h2
+            className="text-lg cursor-pointer"
+            onClick={() => setDate(defaultDate)}
+            title="Voltar para hoje"
+            >
+            Lembretes
+            </h2>
           <button
             onClick={() => setShowNewReminderModal(true)}
             className="text-neutral-200 cursor-pointer"
@@ -128,13 +136,17 @@ function Notifications() {
           <ul className="flex flex-col items-center gap-4 p-4">
             {notifications.map((notification: any) => (
               <li key={notification.id} className="bg-white text-neutral-700 py-4 ps-4 pe-2 rounded shadow w-full max-w-md">
-                {notification.from && (
-                  <span className="text-sm font-bold">{notification.from}:</span>
+                {notification.sender && (
+                  <span className="text-sm font-bold text-neutral-800 block mb-1">{notification.sender}:
+                    {notification.title && (
+                      <span className="font-normal text-neutral-600">{' '}({notification.title})</span>
+                    )}
+                  </span>
                 )}
                 <div className="flex justify-between items-center">
                   <p>{notification.message}</p>
                   <button
-                  className="p-2"
+                    className="p-2 active:border-2 active:border-neutral-800 active:rounded-sm"
                     onClick={async () => handleCheckIsRead(notification.id.toString())}
 
                   >
