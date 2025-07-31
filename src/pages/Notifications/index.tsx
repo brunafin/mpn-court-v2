@@ -143,10 +143,10 @@ function Notifications() {
                     )}
                   </span>
                 )}
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-stretch">
                   <p>{notification.message}</p>
                   <button
-                    className="p-2 active:border-2 active:border-neutral-800 active:rounded-sm"
+                    className="p-2 active:border-2 active:border-neutral-800 rounded-sm bg-tertiary-100"
                     onClick={async () => handleCheckIsRead(notification.id.toString())}
 
                   >
