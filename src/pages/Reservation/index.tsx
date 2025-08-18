@@ -255,7 +255,13 @@ function Reservation() {
                 >
                   <HiOutlineCog
                     size={24}
-                    className="text-neutral-200 cursor-pointer"
+                    className="
+                        text-neutral-200 cursor-pointer rounded-full 
+                        hover:border hover:border-neutral-400
+                        focus:border focus:border-neutral-400
+                        active:bg-neutral-700/30
+                        transition
+                    "
                   />
                 </Link>
                 <button
@@ -326,7 +332,15 @@ function Reservation() {
               state={{ date: date }}
               className="flex items-end underline gap-2"
             >
-              <HiOutlineCog size={24} />
+              <HiOutlineCog size={24}
+                className="
+                        text-neutral-200 cursor-pointer rounded-full 
+                        hover:border hover:border-neutral-400
+                        focus:border focus:border-neutral-400
+                        active:bg-neutral-700/30
+                        transition
+                    "
+              />
               Detalhes do dia
             </Link>
           </div>
