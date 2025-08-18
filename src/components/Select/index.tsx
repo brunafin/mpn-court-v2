@@ -110,6 +110,7 @@ function Select({
         isDisabled={disabled}
         placeholder="Selecione..."
         classNamePrefix="react-select"
+        isSearchable={false}
       />
     </div>
   );
