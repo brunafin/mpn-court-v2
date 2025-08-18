@@ -3,21 +3,25 @@ import Cookies from "js-cookie";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import { MdNotInterested, MdOutlineArrowBackIos } from "react-icons/md";
-import { BsEye } from "react-icons/bs";
+import { BsEye, BsPlus } from "react-icons/bs";
 import { useLoading } from "../../hooks/useLoading";
 import { IReservationItemProps } from "../Reservation/interface";
 import { changeAvailability, getAllSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Loader from "../../components/Loader";
 import { ReservationStatusEnum } from "../Reservation/enum";
 import { format } from "date-fns";
+import AddCourtSchedule from "./AddCourtSchedule";
+import { getCourtsByCompanyPublicId } from "../../api/companies";
 
 function ConfigDay() {
   const { loading, withLoading } = useLoading();
   const location = useLocation();
   const navigate = useNavigate();
   const dateFrom = location.state?.date;
+  const [showAddCourtSchedule, setShowAddCourtSchedule] = useState(false);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [list, setList] = useState<IReservationItemProps[]>([]);
+  const [courts, setCourts] = useState<{id: number, name: string}[]>([]);
   const [date] = useState<Date>(dateFrom);
 
   useEffect(() => {
@@ -55,11 +59,14 @@ function ConfigDay() {
       }
       try {
         await withLoading(async () => {
-          const response = await getAllSchedulesByCompanyPublicIdAndDate({
+          const schedules = await getAllSchedulesByCompanyPublicIdAndDate({
             companyPublicId,
             date: dateInput,
           });
-          setList(response);
+          setList(schedules);
+
+          const courtsResponse = await getCourtsByCompanyPublicId(companyPublicId);
+          setCourts(courtsResponse);
         });
       } catch (error: any) {
         if (error?.response?.status === 401) {
@@ -90,6 +97,26 @@ function ConfigDay() {
           </button>
           <h2 className="text-lg bg-neutral-900 text-center">Detalhes do dia {format(date, "dd/MM/yyyy")} </h2>
         </div>
+        {showAddCourtSchedule ? (
+          <AddCourtSchedule
+            show={showAddCourtSchedule}
+            date={date}
+            courts={courts}
+            onClose={() => setShowAddCourtSchedule(false)}
+          />
+        ) :
+          (
+            <div className="flex justify-end p-4">
+              <button
+                onClick={() => {
+                  setShowAddCourtSchedule(true)
+                }}
+                className="flex items-center underline text-neutral-100 px-4 py-2 rounded-sm hover:brightness-110">
+                <BsPlus size={22} />
+                Adicionar horário
+              </button>
+            </div>
+          )}
         <ul className="p-3 border-b-1 border-neutral-700 flex flex-col gap-2 md:w-1/2 md:mx-auto">
           <li className="border-1 border-tertiary-600 p-1 rounded-sm text-center">
             {(() => {
@@ -137,7 +164,7 @@ function ConfigDay() {
                       {inactiveHour.time} - Q.{inactiveHour.court}
                     </li>
                     <button
-                    className="flex items-center gap-2 underline"
+                      className="flex items-center gap-2 underline"
                       onClick={async () => {
                         await withLoading(async () => {
                           await changeAvailability(inactiveHour.scheduleId, true);

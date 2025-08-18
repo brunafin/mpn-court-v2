@@ -3,7 +3,7 @@ import api from './axios';
 export interface IInfo {
   link: string;
   companyName: string;
-  preferences:{
+  preferences: {
     isHiddenInactiveHours: boolean;
   }
 }
@@ -34,3 +34,23 @@ export const updatePreferencesByCompanyPublicId = async (
     throw error;
   }
 };
+
+export const getCourtsByCompanyPublicId = async (publicId: string): Promise<{ id: number, name: string }[]> => {
+  try {
+    const response = await api.get(`/courts/company/${publicId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar quadras da empresa:', error);
+    throw error;
+  }
+}
+
+export const createNewCourtSchedule = async (data: { start_hour: string, date: string, court_id: number }): Promise<any> => {
+  try {
+    const response = await api.post('/court-schedules/quick-create', data)
+    return response;
+  } catch (error) {
+    console.error('Erro ao criar horário para a quadra:', error);
+    throw error;
+  }
+}

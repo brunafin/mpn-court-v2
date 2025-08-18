@@ -8,14 +8,18 @@ import Info from "./pages/Info";
 import ConfigDay from "./pages/ConfigDay";
 import Notifications from "./pages/Notifications";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
+import { setAxiosErrorNotifier } from "./api/axios";
 
 function App() {
   useEffect(() => {
     if (import.meta.env.VITE_ENVIRONMENT === "production") {
       (function (c: any, l: any, a: any, r: any, i: any, t?: any, y?: any) {
-        c[a] = c[a] || function () {
-          (c[a].q = c[a].q || []).push(arguments);
-        };
+        c[a] =
+          c[a] ||
+          function () {
+            (c[a].q = c[a].q || []).push(arguments);
+          };
         t = l.createElement(r);
         t.async = 1;
         t.src = "https://www.clarity.ms/tag/" + i;
@@ -25,22 +29,35 @@ function App() {
     }
   }, []);
 
+  const InitAxiosNotifier = () => {
+    const { notifyError } = useErrors();
+
+    useEffect(() => {
+      setAxiosErrorNotifier(notifyError);
+    }, [notifyError]);
+
+    return null;
+  };
+
   return (
     <>
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (
         <p className="bg-danger-500 text-center">versão para testes</p>
       )}
-      <NotificationProvider>
-        <Routes>
-          <Route index element={<Login />} />
-          <Route path="/reservas" element={<Reservation />} />
-          <Route path="/reservas/:id" element={<ReservationDetails />} />
-          <Route path="/alterar-senha" element={<ChangePassword />} />
-          <Route path="/minhas-infos" element={<Info />} />
-          <Route path="/configuracoes-horarios" element={<ConfigDay />} />
-          <Route path="/notificacoes" element={<Notifications />} />
-        </Routes>
-      </NotificationProvider>
+      <ErrorsProvider>
+        <InitAxiosNotifier />
+        <NotificationProvider>
+          <Routes>
+            <Route index element={<Login />} />
+            <Route path="/reservas" element={<Reservation />} />
+            <Route path="/reservas/:id" element={<ReservationDetails />} />
+            <Route path="/alterar-senha" element={<ChangePassword />} />
+            <Route path="/minhas-infos" element={<Info />} />
+            <Route path="/configuracoes-horarios" element={<ConfigDay />} />
+            <Route path="/notificacoes" element={<Notifications />} />
+          </Routes>
+        </NotificationProvider>
+      </ErrorsProvider>
     </>
   );
 }

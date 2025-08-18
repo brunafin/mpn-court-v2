@@ -1,7 +1,8 @@
 import React from "react";
+import ReactSelect, { SingleValue } from "react-select";
 
 interface ISelectOption {
-  id: number;
+  id: number | string;
   name: string;
 }
 
@@ -27,54 +28,89 @@ function Select({
   onChange,
   onBlur,
   onFocus,
-  required,
   mode = "light",
   className,
   disabled = false,
 }: ISelectProps) {
+
+  const selectOptions = options.map(opt => ({
+    value: opt.id,
+    label: opt.name
+  }));
+
+  const selectedOption = selectOptions.find(opt => String(opt.value) === String(value)) || null;
+
+  const customStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      backgroundColor: mode === "dark" ? "#1f2937" : "#fbfbfb",
+      borderColor: "#d1d5db",
+      borderRadius: "0.5rem",
+      minHeight: "2.5rem",
+      padding: "2px",
+      boxShadow: "none",
+      "&:hover": { borderColor: "#9ca3af" },
+      cursor: disabled ? "not-allowed" : "pointer",
+    }),
+    singleValue: (provided: any) => ({
+      ...provided,
+      color: mode === "dark" ? "#f9fafb" : "#111827",
+    }),
+    placeholder: (provided: any) => ({
+      ...provided,
+      color: "#9ca3af",
+    }),
+    menu: (provided: any) => ({
+      ...provided,
+      backgroundColor: mode === "dark" ? "#1f2937" : "#f3f4f6",
+      borderRadius: "0.5rem",
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      backgroundColor: state.isFocused
+        ? mode === "dark" ? "#374151" : "#e5e7eb"
+        : mode === "dark" ? "#1f2937" : "#f3f4f6",
+      color: mode === "dark" ? "#f9fafb" : "#111827",
+      cursor: "pointer",
+    }),
+  };
+
+  const handleChange = (option: SingleValue<{ value: string | number; label: string }>) => {
+    if (onChange) {
+      const event = {
+        target: { name, value: option ? option.value : "" },
+      } as React.ChangeEvent<HTMLSelectElement>;
+      onChange(event);
+    }
+  };
+
+  const handleBlur = () => {
+    if (onBlur) onBlur({ target: { name, value: selectedOption?.value || "" } } as React.FocusEvent<HTMLSelectElement>);
+  };
+
+  const handleFocus = () => {
+    if (onFocus) onFocus({ target: { name, value: selectedOption?.value || "" } } as React.FocusEvent<HTMLSelectElement>);
+  };
+
   return (
     <div className={`flex flex-col ${className}`}>
       {title && (
-        <label
-          htmlFor={name}
-          className={`${
-            mode === "dark" ? "text-neutral-100" : "text-neutral-800"
-          } mb-2`}
-        >
+        <label htmlFor={name} className={`mb-2 ${mode === "dark" ? "text-neutral-100" : "text-neutral-800"}`}>
           {title}
         </label>
       )}
-      <select
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        onFocus={onFocus}
-        required={required}
-        disabled={disabled}
-        className={`w-full px-4 py-2 mb-4 border border-neutral-300 rounded-lg shadow-sm
-          hover:border-neutral-400
-          focus:outline-none focus:ring-2 focus:ring-neutral-300
-          transition-all duration-200 ease-in-out
-          ${
-            mode === "dark"
-              ? "bg-neutral-800 text-neutral-100"
-              : "bg-neutral-100 text-neutral-800"
-          }
-          ${
-            mode === "dark"
-              ? "placeholder-neutral-400"
-              : "placeholder-neutral-400"
-          }
-        `}
-      >
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.name}
-          </option>
-        ))}
-      </select>
+      <ReactSelect
+        inputId={name}
+        value={selectedOption}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
+        options={selectOptions}
+        styles={customStyles}
+        isDisabled={disabled}
+        placeholder="Selecione..."
+        classNamePrefix="react-select"
+      />
     </div>
   );
 }
