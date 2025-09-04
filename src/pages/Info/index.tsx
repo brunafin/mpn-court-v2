@@ -3,10 +3,11 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import { jwtDecode } from "jwt-decode";
-import { MdShare } from "react-icons/md";
+import { MdCheck, MdOutlineInfo, MdOutlineSchedule, MdShare } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import Loader from "../../components/Loader";
 import { IInfo, infosByCompanyPublicId, updatePreferencesByCompanyPublicId } from "../../api/companies";
+import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 
 function Info() {
   const navigate = useNavigate();
@@ -103,12 +104,12 @@ function Info() {
           <div className="p-3 flex flex-col gap-6 md:gap-4 justify-between md:items-start">
             <a target="_blank" href={info?.link} className="underline p-3">Ir para a minha página</a>
             <button onClick={copyToClipboard} className="hidden md:block border-1 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
-            <button onClick={shareLink} className="flex items-center justify-center p-1 gap-2 border-1 border-neutral-200 rounded-sm"><MdShare /> Compartilhar Link</button>
+            <button onClick={shareLink} className="flex items-center justify-center p-1 gap-2 border-1 border-neutral-200 rounded-sm"><MdShare /> Compartilhar link da quadra</button>
           </div>
         </section>
         <section className="mb-8">
           <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Preferências</h3>
-          <div className="flex items-center py-3 gap-1 mx-4 mb-2">
+          <div className="flex items-center pt-3 gap-1 mx-4 mb-2">
             <input
               type="checkbox"
               id="is-hidden-inactive-hours"
@@ -127,6 +128,41 @@ function Info() {
               Ocultar horários inativos
             </label>
           </div>
+          <div className="flex items-start gap-1 px-4">
+            <MdOutlineInfo size={20} />
+            <p className="text-sm text-neutral-300">
+              Mostrar na agenda somente os horários disponíveis, reservados e fixos.
+            </p>
+          </div>
+        </section>
+        <section className="mb-8">
+          <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Plano</h3>
+          <p className="text-neutral-300 py-1 px-2 font-bold">{info?.plan.name}</p>
+          <p className="text-neutral-300 py-1 px-2">
+            Valor: {info?.plan.price != null ? `R$ ${Number(info.plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}/mês
+          </p>
+          {info?.plan.day_due && (
+            <p className="text-neutral-300 py-1 px-2">
+              Vencimento: dia {info?.plan.day_due} de cada mês.
+            </p>
+          )}
+          {info?.plan && info.plan.history.length > 0 && (
+            <>
+              <h4 className="text-neutral-300 font-bold mt-2 py-2 px-2 bg-neutral-700">Histórico de pagamento</h4>
+              <ul className="flex flex-col gap-2 py-2">
+                {info?.plan.history.map((item) => (
+                  <li className={`text-neutral-300 px-2 flex items-center gap-2 border-b border-neutral-100 border-b-1 w-full border-l-3 ${item.paied ? 'border-l-tertiary-500' : 'border-l-secondary-400'}`}>
+                    {item.paied ? (
+                      <MdCheck />
+                    ) : (
+                      <MdOutlineSchedule />
+                    )}
+                    {formatDateToDDMMYYYY(item.date)} - R$ {Number(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - {item.form_of_payment}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
       </section>
     </>

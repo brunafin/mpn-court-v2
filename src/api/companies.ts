@@ -6,6 +6,17 @@ export interface IInfo {
   preferences: {
     isHiddenInactiveHours: boolean;
   }
+  plan:{
+    name: string;
+    price: number;
+    day_due: number | null;
+    history: {
+      date: string;
+      value: number;
+      form_of_payment: string;
+      paied: boolean;
+    }[]
+  }
 }
 
 export const infosByCompanyPublicId = async (
