@@ -127,13 +127,18 @@ function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProp
           />
           <Input
             name="price"
-            title="Preço*:"
+            title="*Preço:"
             placeholder="Digite o valor do horário"
             type="number"
             required
             mode="light"
             value={price?.toString()}
-            onChange={(e) => setPrice(e.target.value === "" ? null : Number(e.target.value))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (/^\d*$/.test(val)) {
+                setPrice(val === "" ? null : Number(val));
+              }
+            }}
           />
           {error && <p className="text-red-600 font-semibold text-sm">{error}</p>}
 
