@@ -5,6 +5,7 @@ import Select from "../../../components/Select";
 import { createNewCourtSchedule } from "../../../api/companies";
 import { useLoading } from "../../../hooks/useLoading";
 import Loader from "../../../components/Loader";
+import Input from "../../../components/Input";
 
 interface IAddCourtScheduleProps {
   show: boolean;
@@ -21,6 +22,7 @@ function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProp
   const [selectedCourt, setSelectedCourt] = useState<{ id: number; name: string } | null>(null);
   const [selectedHour, setSelectedHour] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string>("");
+  const [price, setPrice] = useState<number | null>(null);
 
   useEffect(() => {
     if (show && modalRef.current) {
@@ -47,6 +49,7 @@ function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProp
       start_hour: selectedHour.id,
       date: format(date, "yyyy-MM-dd"),
       court_id: selectedCourt?.id ?? courtOptions[0].id,
+      price: price ?? 0
     };
 
     await withLoading(async () => {
@@ -121,6 +124,16 @@ function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProp
               );
               setSelectedHour(selectedHour || null);
             }}
+          />
+          <Input
+            name="price"
+            title="Preço*:"
+            placeholder="Digite o valor do horário"
+            type="number"
+            required
+            mode="light"
+            value={price?.toString()}
+            onChange={(e) => setPrice(e.target.value === "" ? null : Number(e.target.value))}
           />
           {error && <p className="text-red-600 font-semibold text-sm">{error}</p>}
 
