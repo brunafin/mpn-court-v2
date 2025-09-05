@@ -15,6 +15,7 @@ interface IInputProps {
   readOnly?: boolean;
   mode: "light" | "dark";
   className?: string;
+  inputMode?: "text" | "numeric" | "decimal" | "tel" | "search" | "email" | "url";
 }
 
 function Input({
@@ -29,6 +30,7 @@ function Input({
   required,
   readOnly = false,
   mode = "light",
+  inputMode,
   className,
 }: IInputProps) {
   return (
@@ -47,6 +49,7 @@ function Input({
         id={name}
         value={value}
         placeholder={placeholder}
+        inputMode={inputMode}
         type={type}
         className={`w-full px-4 py-2 mb-4 border border-neutral-300 rounded-lg shadow-sm
        hover:border-neutral-400

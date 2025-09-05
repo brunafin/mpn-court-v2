@@ -128,18 +128,23 @@ function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProp
           <Input
             name="price"
             title="*Preço:"
-            placeholder="Digite o valor do horário"
-            type="number"
+            placeholder="Digite o valor"
+            type="text"
+            inputMode="numeric"
             required
             mode="light"
-            value={price?.toString()}
+            value={price ? price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : ""}
             onChange={(e) => {
-              const val = e.target.value;
-              if (/^\d*$/.test(val)) {
-                setPrice(val === "" ? null : Number(val));
+              let val = e.target.value.replace(/\D/g, ""); // só números
+              if (val === "") {
+                setPrice(null);
+                return;
               }
+              const numberValue = Number(val) / 100;
+              setPrice(numberValue);
             }}
           />
+
           {error && <p className="text-red-600 font-semibold text-sm">{error}</p>}
 
           <div className="flex gap-4 justify-between mt-4">
