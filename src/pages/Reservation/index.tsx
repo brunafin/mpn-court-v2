@@ -208,9 +208,6 @@ function Reservation() {
         <LegendAndFilters
           statusSelected={statusSelected}
           setStatusSelected={setStatusSelected}
-          courtSelected={courtSelected}
-          setCourtSelected={setCourtSelected}
-          courts={courtsNameList}
           isOpen={isOpenFilters}
           setIsOpenFilters={setIsOpenFilters}
         />
@@ -275,7 +272,29 @@ function Reservation() {
                 </button>
               </div>
             </div>
-            <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-4 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg h-full">
+            {courtsNameList.length > 1 && (
+              <ul className="flex py-3 gap-2 bg-neutral-900 justify-center">
+                <li key='all'>
+                  <button
+                    className={`cursor-pointer text-sm bg-neutral-200 py-2 px-4 flex justify-center items-center rounded-md text-neutral-800 ${courtSelected === 'all' ? 'border-2 border-gray-500 bg-neutral-100 font-bold' : ''}`}
+                    onClick={() => setCourtSelected('all')}
+                  >
+                    Todas
+                  </button>
+                </li>
+                {courtsNameList.map((court) => (
+                  <li key={court}>
+                    <button
+                      className={`cursor-pointer text-sm bg-neutral-200 py-2 px-4 flex justify-center items-center rounded-md text-neutral-800 ${courtSelected === court ? 'border-2 border-gray-500 bg-neutral-100 font-bold' : ''}`}
+                      onClick={() => setCourtSelected(court)}
+                    >
+                      {court}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-2 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg h-full">
               {list
                 .filter((elementDate) => {
                   if (!date) return elementDate;

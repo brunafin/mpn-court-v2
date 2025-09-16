@@ -10,9 +10,6 @@ import { ReservationStatusEnum } from "../enum";
 interface LegendProps {
   statusSelected: ReservationStatusEnum | null;
   setStatusSelected: (status: ReservationStatusEnum | null) => void;
-  courtSelected: string;
-  setCourtSelected: (court: string) => void;
-  courts: string[];
   isOpen: boolean;
   setIsOpenFilters: (isOpen: boolean) => void;
 }
@@ -20,9 +17,6 @@ interface LegendProps {
 function LegendAndFilters({
   setStatusSelected,
   statusSelected,
-  courtSelected,
-  setCourtSelected,
-  courts,
   isOpen,
   setIsOpenFilters,
 }: LegendProps) {
@@ -140,45 +134,6 @@ function LegendAndFilters({
             </button>
           </li> */}
         </ul>
-      </div>
-      <div
-        className={`${
-          isOpen ? "p-2 rounded-b-lg" : "hidden"
-        } flex flex-col md:items-center gap-4 py-4 px-2 bg-neutral-900`}
-      >
-        <p className="text-lg">Selecione a quadra para filtrar:</p>
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-neutral-100">
-            <input
-              type="radio"
-              name="court"
-              value="all"
-              className="accent-primary-500"
-              onChange={() => setCourtSelected("all")}
-              checked={courtSelected === "all"}
-            />
-            Todas
-          </label>
-          {courts?.map((item) => (
-            <label
-              className="flex items-center gap-2 text-neutral-100"
-              key={item}
-            >
-              <input
-                type="radio"
-                name="court"
-                value={item}
-                className="accent-primary-500"
-                onChange={() => {
-                  setCourtSelected(item);
-                  setIsOpenFilters(false);
-                }}
-                checked={courtSelected === item}
-              />
-              Q.{item}
-            </label>
-          ))}
-        </div>
       </div>
     </div>
   );
