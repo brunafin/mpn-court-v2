@@ -3,11 +3,10 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import { jwtDecode } from "jwt-decode";
-import { MdCheck, MdOutlineInfo, MdOutlineSchedule, MdShare } from "react-icons/md";
+import { MdOutlineInfo, MdShare } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import Loader from "../../components/Loader";
 import { IInfo, infosByCompanyPublicId, updatePreferencesByCompanyPublicId } from "../../api/companies";
-import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 
 function Info() {
   const navigate = useNavigate();
@@ -146,7 +145,7 @@ function Info() {
               Vencimento: dia {info?.plan.day_due} de cada mês.
             </p>
           )}
-          {info?.plan && info.plan.history.length > 0 && (
+          {/* {info?.plan && info.plan.history.length > 0 && (
             <>
               <h4 className="text-neutral-300 font-bold mt-2 py-2 px-2 bg-neutral-700">Histórico de pagamento</h4>
               <ul className="flex flex-col gap-2 py-2">
@@ -162,7 +161,7 @@ function Info() {
                 ))}
               </ul>
             </>
-          )}
+          )} */}
         </section>
       </section>
     </>
