@@ -61,34 +61,34 @@ export function getStatusAccent(status?: ReservationStatusEnum | null) {
   switch (status) {
     case ReservationStatusEnum.FIXED:
       return {
-        surface: "bg-accent-purple/25",
+        surface: "bg-accent-purple/35",
         text: "text-accent-purple-soft",
-        iconBg: "bg-accent-purple/40",
+        iconBg: "bg-accent-purple text-white",
       };
     case ReservationStatusEnum.INACTIVE:
       return {
-        surface: "bg-danger-400/20",
+        surface: "bg-danger-400/25",
         text: "text-danger-soft",
-        iconBg: "bg-danger-400/35",
+        iconBg: "bg-danger-400 text-white",
       };
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return {
-        surface: "bg-accent-blue/25",
+        surface: "bg-accent-blue/35",
         text: "text-accent-blue-soft",
-        iconBg: "bg-accent-blue/40",
+        iconBg: "bg-accent-blue text-white",
       };
     case ReservationStatusEnum.AVAILABLE:
       return {
         surface: "bg-accent-green/25",
         text: "text-accent-green",
-        iconBg: "bg-accent-green/40",
+        iconBg: "bg-accent-green/40 text-accent-green",
       };
     default:
       return {
         surface: "bg-master-light",
         text: "text-text-light",
-        iconBg: "bg-text-light/15",
+        iconBg: "bg-text-light/15 text-text-light",
       };
   }
 }
@@ -254,7 +254,7 @@ export function getMeanByStatus(
           className={`flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 ${accent.surface}`}
         >
           <div
-            className={`flex size-11 shrink-0 items-center justify-center rounded-full ${accent.iconBg} ${accent.text}`}
+            className={`flex size-11 shrink-0 items-center justify-center rounded-full ${accent.iconBg}`}
             aria-hidden
           >
             {getReservationIcon(status, 22)}
@@ -309,7 +309,7 @@ export function getMeanByStatus(
       >
         <div className="flex items-start gap-3">
           <div
-            className={`flex size-12 shrink-0 items-center justify-center rounded-full ${accent.iconBg} ${accent.text}`}
+            className={`flex size-12 shrink-0 items-center justify-center rounded-full ${accent.iconBg}`}
             aria-hidden
           >
             {getReservationIcon(status, 24)}
