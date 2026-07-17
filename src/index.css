@@ -49,11 +49,14 @@
   --color-master-light: #0C1728;
   --color-accent-blue: #3D6FB8;
   --color-accent-blue-soft: #7BA3D9;
+  --color-accent-blue-bright: #6B9BE0;
   --color-accent-purple: #7048A8;
   --color-accent-purple-soft: #A78BDB;
+  --color-accent-purple-bright: #A084E0;
   --color-accent-green: #34D399;
   --color-accent-green-bar: #047857;
   --color-danger-soft: #F87171;
+  --color-danger-bright: #FCA5A5;
   --color-text-light: #D7E3FF;
   --breakpoint-xs: 300px;
 }

@@ -58,31 +58,32 @@ export function getReservationIcon(
 }
 
 export function getStatusAccent(status?: ReservationStatusEnum | null) {
+  // Tint leve (/20) + título saturado + ícone sólido — vivo e legível (WCAG AA+)
   switch (status) {
     case ReservationStatusEnum.FIXED:
       return {
-        surface: "bg-accent-purple/35",
-        text: "text-accent-purple-soft",
+        surface: "bg-accent-purple/20",
+        text: "text-accent-purple-bright",
         iconBg: "bg-accent-purple text-white",
       };
     case ReservationStatusEnum.INACTIVE:
       return {
-        surface: "bg-danger-400/25",
-        text: "text-danger-soft",
+        surface: "bg-danger-400/20",
+        text: "text-danger-bright",
         iconBg: "bg-danger-400 text-white",
       };
     case ReservationStatusEnum.RESERVED:
     case ReservationStatusEnum.PREPAID:
       return {
-        surface: "bg-accent-blue/35",
-        text: "text-accent-blue-soft",
+        surface: "bg-accent-blue/20",
+        text: "text-accent-blue-bright",
         iconBg: "bg-accent-blue text-white",
       };
     case ReservationStatusEnum.AVAILABLE:
       return {
-        surface: "bg-accent-green/25",
+        surface: "bg-accent-green/20",
         text: "text-accent-green",
-        iconBg: "bg-accent-green/40 text-accent-green",
+        iconBg: "bg-accent-green text-master",
       };
     default:
       return {
@@ -92,6 +93,12 @@ export function getStatusAccent(status?: ReservationStatusEnum | null) {
       };
   }
 }
+
+/** Meta dos cards: opacidade cheia para leitura confortável em qualquer público */
+const statusCardMetaClass =
+  "mt-0.5 text-base font-medium leading-snug text-text-light";
+const statusCardDescriptionClass =
+  "mt-1.5 text-base leading-6 text-text-light";
 
 export function getStatusLabel(status?: ReservationStatusEnum | null) {
   switch (status) {
@@ -143,11 +150,11 @@ function ContactCard({
           {contactName || "Sem nome"}
         </p>
         {contactPhone ? (
-          <p className="mt-0.5 truncate text-base font-medium leading-snug text-text-light/85">
+          <p className="mt-0.5 truncate text-base font-medium leading-snug text-text-light">
             {formatPhoneMask(contactPhone)}
           </p>
         ) : (
-          <p className="mt-0.5 text-base font-medium leading-snug text-text-light/70">
+          <p className="mt-0.5 text-base font-medium leading-snug text-text-light/80">
             Sem telefone
           </p>
         )}
@@ -266,10 +273,7 @@ export function getMeanByStatus(
               {statusLabel}
             </p>
             {metaLine && (
-              <p
-                className="mt-0.5 text-base font-medium leading-snug text-text-light/90"
-                title={metaLine}
-              >
+              <p className={statusCardMetaClass} title={metaLine}>
                 <span className="line-clamp-2 break-words">{metaLine}</span>
               </p>
             )}
@@ -279,8 +283,8 @@ export function getMeanByStatus(
 
         {isNeedsNetting && (
           <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master-light px-4 py-3">
-            <VoleyNetIcon className="size-5 shrink-0 text-text-light/90" />
-            <p className="text-base font-medium leading-snug text-text-light/90">
+            <VoleyNetIcon className="size-5 shrink-0 text-text-light" />
+            <p className="text-base font-medium leading-snug text-text-light">
               Precisa de rede
             </p>
           </div>
@@ -321,14 +325,11 @@ export function getMeanByStatus(
               {statusLabel}
             </p>
             {metaLine && (
-              <p
-                className="mt-1 text-base font-medium leading-snug text-text-light/90"
-                title={metaLine}
-              >
+              <p className={`${statusCardMetaClass} mt-1`} title={metaLine}>
                 <span className="line-clamp-2 break-words">{metaLine}</span>
               </p>
             )}
-            <p className="mt-1.5 text-base leading-6 text-text-light/80">
+            <p className={statusCardDescriptionClass}>
               {getStatusDescription(status)}
             </p>
           </div>
@@ -337,8 +338,8 @@ export function getMeanByStatus(
 
       {isNeedsNetting && (
         <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master-light px-4 py-3">
-          <VoleyNetIcon className="size-5 shrink-0 text-text-light/90" />
-          <p className="text-base font-medium leading-snug text-text-light/90">
+          <VoleyNetIcon className="size-5 shrink-0 text-text-light" />
+          <p className="text-base font-medium leading-snug text-text-light">
             Precisa de rede
           </p>
         </div>
