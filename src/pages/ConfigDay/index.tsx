@@ -171,7 +171,7 @@ function ConfigDay() {
             })
           }
           aria-label="Voltar para reservas"
-          className="flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
         >
           <MdOutlineArrowBackIos size={20} aria-hidden />
         </button>

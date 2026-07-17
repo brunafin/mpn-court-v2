@@ -24,17 +24,17 @@ const sizeClass: Record<ButtonSize, string> = {
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent-blue text-white hover:brightness-105 focus-visible:outline-white enabled:active:brightness-95",
+    "bg-accent-blue text-white hover:brightness-105 focus-visible:outline-white enabled:active:brightness-90",
   secondary:
-    "border border-accent-blue-soft bg-master text-accent-blue-soft hover:bg-accent-blue/10 focus-visible:outline-accent-blue",
+    "border border-accent-blue-soft bg-master text-accent-blue-soft hover:bg-accent-blue/10 focus-visible:outline-accent-blue enabled:active:bg-accent-blue/20",
   danger:
-    "bg-danger-400 text-white hover:brightness-110 focus-visible:outline-danger-400 enabled:active:brightness-95",
+    "bg-danger-400 text-white hover:brightness-110 focus-visible:outline-danger-400 enabled:active:brightness-90",
   success:
-    "bg-accent-green text-master hover:brightness-110 focus-visible:outline-accent-green enabled:active:brightness-95",
+    "bg-accent-green text-master hover:brightness-110 focus-visible:outline-accent-green enabled:active:brightness-90",
   purple:
-    "bg-accent-purple text-white hover:brightness-110 focus-visible:outline-accent-purple enabled:active:brightness-95",
+    "bg-accent-purple text-white hover:brightness-110 focus-visible:outline-accent-purple enabled:active:brightness-90",
   ghost:
-    "bg-transparent text-text-light hover:bg-master-light focus-visible:outline-accent-blue",
+    "bg-transparent text-text-light hover:bg-text-light/10 focus-visible:outline-accent-blue enabled:active:bg-text-light/12",
 };
 
 /**

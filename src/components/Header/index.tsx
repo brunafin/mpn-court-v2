@@ -86,7 +86,7 @@ function Header() {
     `flex min-h-16 items-center gap-3 rounded-xl px-3 py-3 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
       isActive
         ? "bg-master ring-1 ring-inset ring-accent-blue/40"
-        : "bg-master/60 hover:bg-master"
+        : "bg-master/60 hover:bg-master active:bg-master"
     }`;
 
   return (
@@ -119,7 +119,7 @@ function Header() {
           aria-expanded={menuOpen}
           aria-haspopup="dialog"
           onClick={() => setMenuOpen(true)}
-          className="flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
         >
           <BsList size={26} aria-hidden />
         </button>

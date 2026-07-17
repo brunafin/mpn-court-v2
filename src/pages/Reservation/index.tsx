@@ -230,7 +230,7 @@ function Reservation() {
   const showUnreadBadge = dayUnreadCount > 0;
 
   const actionRowClass =
-    "flex min-h-14 w-full items-center gap-3 rounded-2xl bg-master px-4 text-left text-base font-semibold text-text-light transition hover:bg-master/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
+    "flex min-h-14 w-full items-center gap-3 rounded-2xl bg-master px-4 text-left text-base font-semibold text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
 
   const listContent = showListLoading ? (
     <ul
@@ -308,7 +308,7 @@ function Reservation() {
               aria-haspopup="dialog"
               aria-expanded={actionsOpen}
               aria-label="Ações do dia"
-              className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-base font-semibold text-text-light/85 transition hover:bg-master hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              className="mpn-tap flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-base font-semibold text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
             >
               <span>Ações</span>
               {showUnreadBadge && <ReminderBadge count={dayUnreadCount} />}
@@ -359,7 +359,7 @@ function Reservation() {
                   type="button"
                   onClick={() => setActionsOpen(false)}
                   aria-label="Fechar"
-                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light/80 transition active:bg-master/80"
+                  className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light/80"
                 >
                   <BsX size={24} aria-hidden />
                 </button>

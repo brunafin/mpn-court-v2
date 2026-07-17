@@ -425,7 +425,7 @@ function ReservationDetails() {
               navigate(`/reservas`, { state: { date: dateFrom } })
             }
             aria-label="Voltar para lista de reservas"
-            className="absolute left-0 flex size-11 items-center justify-center rounded-xl text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue active:bg-master-light"
+            className="mpn-tap absolute left-0 flex size-11 items-center justify-center rounded-xl text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
             <MdOutlineArrowBackIos size={20} aria-hidden />
           </button>
@@ -881,7 +881,7 @@ function ReservationDetails() {
                 type="button"
                 onClick={() => setShowInfoCustomer(false)}
                 aria-label="Fechar"
-                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
               >
                 <BsX size={24} aria-hidden />
               </button>

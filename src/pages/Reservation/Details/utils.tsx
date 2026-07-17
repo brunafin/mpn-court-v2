@@ -167,7 +167,7 @@ function ContactCard({
             onClick={onEditContact}
             title="Editar contato"
             aria-label="Editar contato"
-            className="flex size-12 items-center justify-center rounded-xl bg-master text-text-light transition hover:bg-master/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="flex size-12 items-center justify-center rounded-xl bg-master text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
             <MdOutlineEdit size={22} aria-hidden />
           </button>
@@ -234,7 +234,7 @@ export function getMeanByStatus(
       onClick={onCreateReminder}
       title="Criar lembrete"
       aria-label="Criar lembrete"
-      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-master/55 text-text-light transition hover:bg-master/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-master/55 text-text-light transition hover:bg-master/80 active:bg-master focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
     >
       <MdOutlinePostAdd size={22} aria-hidden />
     </button>

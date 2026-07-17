@@ -58,10 +58,10 @@ function DateStrip({
               aria-pressed={selected}
               className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
                 selected
-                  ? "bg-accent-blue text-white"
+                  ? "bg-accent-blue text-white active:brightness-95"
                   : isPast
-                    ? "text-text-light/55"
-                    : "text-text-light hover:bg-text-light/10"
+                    ? "mpn-tap text-text-light/55 hover:bg-text-light/10"
+                    : "mpn-tap text-text-light hover:bg-text-light/10"
               }`}
             >
               <span className="text-xs font-semibold tracking-wide uppercase">

@@ -186,7 +186,7 @@ function ReservationItem({
           to={`/reservas/${scheduleId}`}
           state={{ date }}
           aria-label={ariaLabel}
-          className={`${rowClassName} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent-blue`}
+          className={`${rowClassName} transition-colors active:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent-blue`}
         >
           {rowBody}
         </Link>

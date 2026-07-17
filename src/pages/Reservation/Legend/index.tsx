@@ -55,7 +55,7 @@ const STATUS_OPTIONS: {
 ];
 
 const optionRowClass =
-  "flex min-h-14 w-full items-center gap-3 rounded-2xl bg-master px-4 text-left text-base font-semibold text-text-light transition hover:bg-master/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
+  "flex min-h-14 w-full items-center gap-3 rounded-2xl bg-master px-4 text-left text-base font-semibold text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
 
 function statusLabel(status: ReservationStatusEnum | null) {
   return (
@@ -111,10 +111,10 @@ function LegendAndFilters({
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-expanded={open}
-          className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 text-left text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+          className={`mpn-tap flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 text-left text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
             hasActiveFilter
               ? "bg-accent-blue/15 text-text-light ring-1 ring-inset ring-accent-blue/40"
-              : "text-text-light/85 hover:bg-master"
+              : "text-text-light/85 hover:bg-text-light/10"
           }`}
         >
           <MdFilterList size={22} className="shrink-0" aria-hidden />
@@ -134,7 +134,7 @@ function LegendAndFilters({
           <button
             type="button"
             onClick={clearFilters}
-            className="flex min-h-11 shrink-0 items-center rounded-xl px-3 text-base font-semibold text-accent-blue transition hover:bg-master focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap flex min-h-11 shrink-0 items-center rounded-xl px-3 text-base font-semibold text-accent-blue transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
             Limpar
           </button>
@@ -169,7 +169,7 @@ function LegendAndFilters({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Fechar"
-                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light/80 transition active:bg-master/80"
+                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light/80"
               >
                 <BsX size={24} aria-hidden />
               </button>

@@ -116,21 +116,55 @@ body {
 
 button {
   cursor: pointer;
-  transition: background-color 0.25s;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    filter 0.12s ease,
+    transform 0.12s ease,
+    opacity 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-button:hover {
-  filter: brightness(1.1);
+/* Hover só em ponteiro fino — no touch o :hover “gruda” e esconde o feedback */
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:active) {
+    filter: brightness(1.06);
+  }
 }
 
-@media (max-width: 768px) {
-  li > button:active {
-    border: none;
-  }
+/*
+  Feedback de toque sutil (ghost no chrome).
+  Overlay leve — sem scale agressivo, alinhado ao tom da marca.
+*/
+.mpn-tap {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.12s ease,
+    filter 0.12s ease;
+}
+.mpn-tap:active:not(:disabled) {
+  background-color: color-mix(
+    in srgb,
+    var(--color-text-light) 12%,
+    transparent
+  ) !important;
+  filter: none !important;
+}
 
-  button:active:not(li > button) {
-    filter: brightness(0.95);
-  }
+/* Botões já escuros (fechar X) — clareia levemente no press */
+.mpn-tap-solid {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.12s ease,
+    filter 0.12s ease;
+}
+.mpn-tap-solid:active:not(:disabled) {
+  background-color: color-mix(
+    in srgb,
+    var(--color-text-light) 14%,
+    var(--color-master)
+  ) !important;
+  filter: none !important;
 }
 
 input[type="radio"] {
