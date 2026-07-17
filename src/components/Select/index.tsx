@@ -1,5 +1,4 @@
-import React from "react";
-import ReactSelect, { SingleValue } from "react-select";
+import { MdKeyboardArrowDown } from "react-icons/md";
 
 interface ISelectOption {
   id: number | string;
@@ -18,6 +17,7 @@ interface ISelectProps {
   mode: "light" | "dark";
   className?: string;
   disabled?: boolean;
+  placeholder?: string;
 }
 
 function Select({
@@ -28,90 +28,74 @@ function Select({
   onChange,
   onBlur,
   onFocus,
+  required,
   mode = "light",
   className,
   disabled = false,
+  placeholder = "Selecione...",
 }: ISelectProps) {
-
-  const selectOptions = options.map(opt => ({
-    value: opt.id,
-    label: opt.name
-  }));
-
-  const selectedOption = selectOptions.find(opt => String(opt.value) === String(value)) || null;
-
-  const customStyles = {
-    control: (provided: any) => ({
-      ...provided,
-      backgroundColor: mode === "dark" ? "#1f2937" : "#fbfbfb",
-      borderColor: "#d1d5db",
-      borderRadius: "0.5rem",
-      minHeight: "2.5rem",
-      padding: "2px",
-      boxShadow: "none",
-      "&:hover": { borderColor: "#9ca3af" },
-      cursor: disabled ? "not-allowed" : "pointer",
-    }),
-    singleValue: (provided: any) => ({
-      ...provided,
-      color: mode === "dark" ? "#f9fafb" : "#111827",
-    }),
-    placeholder: (provided: any) => ({
-      ...provided,
-      color: "#9ca3af",
-    }),
-    menu: (provided: any) => ({
-      ...provided,
-      backgroundColor: mode === "dark" ? "#1f2937" : "#f3f4f6",
-      borderRadius: "0.5rem",
-    }),
-    option: (provided: any, state: any) => ({
-      ...provided,
-      backgroundColor: state.isFocused
-        ? mode === "dark" ? "#374151" : "#e5e7eb"
-        : mode === "dark" ? "#1f2937" : "#f3f4f6",
-      color: mode === "dark" ? "#f9fafb" : "#111827",
-      cursor: "pointer",
-    }),
-  };
-
-  const handleChange = (option: SingleValue<{ value: string | number; label: string }>) => {
-    if (onChange) {
-      const event = {
-        target: { name, value: option ? option.value : "" },
-      } as React.ChangeEvent<HTMLSelectElement>;
-      onChange(event);
-    }
-  };
-
-  const handleBlur = () => {
-    if (onBlur) onBlur({ target: { name, value: selectedOption?.value || "" } } as React.FocusEvent<HTMLSelectElement>);
-  };
-
-  const handleFocus = () => {
-    if (onFocus) onFocus({ target: { name, value: selectedOption?.value || "" } } as React.FocusEvent<HTMLSelectElement>);
-  };
+  const isDark = mode === "dark";
+  const hasValue = value !== undefined && value !== null && value !== "";
 
   return (
-    <div className={`flex flex-col ${className}`}>
+    <div className={`mb-3 flex flex-col ${className ?? ""}`}>
       {title && (
-        <label htmlFor={name} className={`mb-2 ${mode === "dark" ? "text-neutral-100" : "text-neutral-800"}`}>
+        <label
+          htmlFor={name}
+          className={`mb-2 text-base font-semibold leading-6 ${
+            isDark ? "text-text-light" : "text-neutral-800"
+          }`}
+        >
           {title}
+          {required && (
+            <span className="font-semibold text-accent-blue" aria-hidden="true">
+              {" "}
+              *
+            </span>
+          )}
         </label>
       )}
-      <ReactSelect
-        inputId={name}
-        value={selectedOption}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        options={selectOptions}
-        styles={customStyles}
-        isDisabled={disabled}
-        placeholder="Selecione..."
-        classNamePrefix="react-select"
-        isSearchable={false}
-      />
+
+      <div className="relative">
+        <select
+          id={name}
+          name={name}
+          value={hasValue ? String(value) : ""}
+          onChange={onChange}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          required={required}
+          disabled={disabled}
+          aria-required={required || undefined}
+          className={`w-full min-h-14 appearance-none rounded-xl px-4 py-3.5 pr-12 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+            disabled:cursor-not-allowed disabled:opacity-60
+            ${
+              isDark
+                ? "mpn-field-dark border-0 bg-master text-text-light focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light"
+                : "border border-neutral-300 bg-neutral-100 text-neutral-800 hover:border-neutral-400 focus-visible:ring-neutral-400 focus-visible:ring-offset-neutral-100"
+            }
+            ${!hasValue ? (isDark ? "font-normal text-text-light/40" : "font-normal text-neutral-400") : ""}
+          `}
+        >
+          <option value="" disabled={required}>
+            {placeholder}
+          </option>
+          {options.map((opt) => (
+            <option key={String(opt.id)} value={String(opt.id)}>
+              {opt.name}
+            </option>
+          ))}
+        </select>
+
+        <MdKeyboardArrowDown
+          size={28}
+          aria-hidden
+          className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 ${
+            isDark ? "text-text-light" : "text-neutral-600"
+          } ${disabled ? "opacity-50" : ""}`}
+        />
+      </div>
     </div>
   );
 }

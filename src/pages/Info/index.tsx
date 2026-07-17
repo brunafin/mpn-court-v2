@@ -1,43 +1,50 @@
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
-import { jwtDecode } from "jwt-decode";
-import { MdOutlineInfo, MdShare } from "react-icons/md";
+import {
+  MdContentCopy,
+  MdOutlineInfo,
+  MdOpenInNew,
+  MdShare,
+} from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
-import Loader from "../../components/Loader";
-import { IInfo, infosByCompanyPublicId, updatePreferencesByCompanyPublicId } from "../../api/companies";
+import {
+  IInfo,
+  infosByCompanyPublicId,
+  updatePreferencesByCompanyPublicId,
+} from "../../api/companies";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { useErrors } from "../../contexts/ErrorsContext";
+import {
+  getAccessToken,
+  getAccessTokenPayload,
+} from "../../utils/authCookie";
+import { buttonClassName } from "../../components/Button";
+import { PageEyebrow } from "../../components/PageTitle";
 
 function Info() {
   const navigate = useNavigate();
   const { loading, withLoading } = useLoading();
-  const [publicId, setPublicId] = useState<string>('');
-  const [isHiddenInactiveHours, setIsHiddenInactiveHours] = useState<boolean>(false);
+  const { notifyError } = useErrors();
+  const [publicId, setPublicId] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [isHiddenInactiveHours, setIsHiddenInactiveHours] = useState(false);
   const [info, setInfo] = useState<IInfo | null>(null);
-
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
   useEffect(() => {
-    const token = Cookies.get("access_token");
-    if (!token) {
+    if (!getAccessToken()) {
       navigate("/");
     }
   }, [navigate]);
 
-  const getInfosFromCookie = (): { companyName: string, companyPublicId: string } | null => {
-    const match = document.cookie.match(/access_token=([^;]+)/);
-    if (!match) return null;
-    try {
-      const token = match[1];
-      const payload = jwtDecode<any>(token);
-      return { companyName: payload?.companyName || '', companyPublicId: payload?.companyPublicId || '' };
-    } catch {
-      return null;
-    }
-  };
-
   useEffect(() => {
-    const info = getInfosFromCookie();
-    setPublicId(info?.companyPublicId || '');
+    const payload = getAccessTokenPayload<{
+      companyName?: string;
+      companyPublicId?: string;
+    }>();
+    setPublicId(payload?.companyPublicId || "");
+    setCompanyName(payload?.companyName || "");
   }, []);
 
   useEffect(() => {
@@ -46,42 +53,58 @@ function Info() {
       try {
         const response = await infosByCompanyPublicId(publicId);
         setInfo(response);
-        setIsHiddenInactiveHours(response?.preferences?.isHiddenInactiveHours || false);
+        setIsHiddenInactiveHours(
+          response?.preferences?.isHiddenInactiveHours || false
+        );
+        if (response?.companyName) {
+          setCompanyName(response.companyName);
+        }
       } catch (error) {
-        console.error('Erro ao buscar informações da empresa:', error);
+        console.error("Erro ao buscar informações da empresa:", error);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [publicId]);
 
-
   const copyToClipboard = async () => {
+    if (!info?.link) return;
     try {
-      await navigator.clipboard.writeText(info?.link ?? '');
-      alert('Link copiado para a área de transferência!');
-    } catch (err) {
-      alert('Falha ao copiar o link.');
+      await navigator.clipboard.writeText(info.link);
+      setCopyFeedback(true);
+      window.setTimeout(() => setCopyFeedback(false), 2000);
+    } catch {
+      notifyError({
+        message: "Não foi possível copiar o link. Tente novamente.",
+        type: "error",
+      });
     }
   };
 
   const shareLink = async () => {
+    if (!info?.link) return;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Detalhes da quadra ${info?.companyName}`,
-          text: `Quadra ${info?.companyName}`,
-          url: info?.link,
+          title: companyName || "Minha quadra",
+          text: companyName ? `Confira ${companyName}` : "Confira a minha página",
+          url: info.link,
         });
-      } catch (err) {
-        alert('Compartilhamento cancelado ou falhou.');
+      } catch {
+        // Usuário cancelou — sem alerta agressivo
       }
-    } else {
-      alert('Compartilhamento não suportado neste navegador.');
+      return;
     }
+    await copyToClipboard();
   };
 
-  const updatePreferences = async (isHiddenInactiveHoursInput: boolean): Promise<void> => {
+  const updatePreferences = async (
+    isHiddenInactiveHoursInput: boolean
+  ): Promise<void> => {
     if (!publicId) {
-      alert('Informações da empresa não disponíveis.');
+      notifyError({
+        message: "Informações da empresa não disponíveis.",
+        type: "error",
+      });
       return;
     }
     await withLoading(async () => {
@@ -91,80 +114,160 @@ function Info() {
     });
   };
 
-  if (loading) return <Loader />;
+  const primaryBtnClass = buttonClassName({ variant: "primary", size: "md" });
+  const secondaryBtnClass = buttonClassName({ variant: "secondary" });
+
+  const isInitialLoading = loading && !info;
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <Header />
-      <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-        <h2 className="text-lg bg-neutral-900 text-center p-3">Minhas informações</h2>
-        <section className="mb-8">
-          <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Dados do site</h3>
-          <div className="p-3 flex flex-col gap-6 md:gap-4 justify-between md:items-start">
-            <a target="_blank" href={info?.link} className="underline p-3">Ir para a minha página</a>
-            <button onClick={copyToClipboard} className="hidden md:block border-1 border-neutral-300 py-1 px-2 rounded-sm hover:underline active:underline">Copiar Link</button>
-            <button onClick={shareLink} className="flex items-center justify-center p-1 gap-2 border-1 border-neutral-200 rounded-sm"><MdShare /> Compartilhar link da quadra</button>
+      <section
+        className={`mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto bg-master px-4 pb-10 pt-5 text-text-light transition-opacity ${
+          loading && info ? "opacity-80" : ""
+        }`}
+        aria-busy={loading}
+      >
+        <PageEyebrow className="mb-5">Minhas informações</PageEyebrow>
+
+        {isInitialLoading ? (
+          <div
+            className="animate-pulse space-y-4"
+            aria-label="Carregando informações"
+          >
+            <div className="h-28 rounded-2xl bg-master-light/70" />
+            <div className="h-40 rounded-2xl bg-master-light/70" />
+            <div className="h-36 rounded-2xl bg-master-light/70" />
+            <div className="h-32 rounded-2xl bg-master-light/70" />
           </div>
-        </section>
-        <section className="mb-8">
-          <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Preferências</h3>
-          <div className="flex items-center pt-3 gap-1 mx-4 mb-2">
-            <input
-              type="checkbox"
-              id="is-hidden-inactive-hours"
-              checked={isHiddenInactiveHours}
-              onChange={async (e) => {
-                setIsHiddenInactiveHours(e.target.checked);
-                if (info?.companyName) {
-                  await updatePreferences(e.target.checked)
-                }
-              }}
-            />
-            <label
-              htmlFor="is-hidden-inactive-hours"
-              className="text-neutral-200 pt-1 ms-1"
-            >
-              Ocultar horários inativos
-            </label>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-master-light px-4 py-5">
+              <p className="text-base font-medium text-text-light/70">
+                Empresa
+              </p>
+              <p className="mt-1 text-2xl font-bold leading-snug text-text-light">
+                {companyName || info?.companyName || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+              <p className="mb-3 text-lg font-semibold text-text-light">
+                Página pública
+              </p>
+              <p className="mb-4 break-all text-base leading-6 text-text-light/70">
+                {info?.link || "Link não disponível"}
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={shareLink}
+                  disabled={!info?.link}
+                  className={primaryBtnClass}
+                >
+                  <MdShare size={20} aria-hidden />
+                  Compartilhar link
+                </button>
+                <a
+                  href={info?.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={secondaryBtnClass}
+                  aria-disabled={!info?.link}
+                  onClick={(e) => {
+                    if (!info?.link) e.preventDefault();
+                  }}
+                >
+                  <MdOpenInNew size={20} aria-hidden />
+                  Abrir minha página
+                </a>
+                <button
+                  type="button"
+                  onClick={copyToClipboard}
+                  disabled={!info?.link}
+                  className={secondaryBtnClass}
+                >
+                  <MdContentCopy size={20} aria-hidden />
+                  {copyFeedback ? "Link copiado!" : "Copiar link"}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+              <p className="mb-3 text-lg font-semibold text-text-light">
+                Preferências
+              </p>
+              <label
+                htmlFor="is-hidden-inactive-hours"
+                className={`flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
+                  isHiddenInactiveHours
+                    ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
+                    : "bg-master"
+                }`}
+              >
+                <span className="text-lg font-medium text-text-light">
+                  Ocultar horários inativos
+                </span>
+                <input
+                  type="checkbox"
+                  id="is-hidden-inactive-hours"
+                  checked={isHiddenInactiveHours}
+                  onChange={async (e) => {
+                    const next = e.target.checked;
+                    setIsHiddenInactiveHours(next);
+                    await updatePreferences(next);
+                  }}
+                  className="size-7 shrink-0 rounded accent-accent-blue"
+                />
+              </label>
+              <div className="mt-3 flex items-start gap-2 px-1">
+                <MdOutlineInfo
+                  size={20}
+                  className="mt-0.5 shrink-0 text-text-light/55"
+                  aria-hidden
+                />
+                <p className="text-base leading-6 text-text-light/65">
+                  Na agenda, mostram só horários disponíveis, reservados e
+                  fixos.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+              <p className="mb-3 text-lg font-semibold text-text-light">
+                Plano
+              </p>
+              <p className="text-xl font-bold text-text-light">
+                {info?.plan?.name || "—"}
+              </p>
+              <dl className="mt-4 space-y-3">
+                <div>
+                  <dt className="text-base font-medium text-text-light/70">
+                    Valor mensal
+                  </dt>
+                  <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                    {info?.plan?.price != null
+                      ? `${formatCurrencyBRL(Number(info.plan.price))}/mês`
+                      : "—"}
+                  </dd>
+                </div>
+                {info?.plan?.day_due != null && (
+                  <div>
+                    <dt className="text-base font-medium text-text-light/70">
+                      Vencimento
+                    </dt>
+                    <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                      Dia {info.plan.day_due} de cada mês
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
           </div>
-          <div className="flex items-start gap-1 px-4">
-            <MdOutlineInfo size={20} />
-            <p className="text-sm text-neutral-300">
-              Mostrar na agenda somente os horários disponíveis, reservados e fixos.
-            </p>
-          </div>
-        </section>
-        <section className="mb-8">
-          <h3 className="text-neutral-300 bg-neutral-700 py-1 px-2">Plano</h3>
-          <p className="text-neutral-300 py-1 px-2 font-bold">{info?.plan.name}</p>
-          <p className="text-neutral-300 py-1 px-2">
-            Valor: {info?.plan.price != null ? `R$ ${Number(info.plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}/mês
-          </p>
-          {info?.plan.day_due && (
-            <p className="text-neutral-300 py-1 px-2">
-              Vencimento: dia {info?.plan.day_due} de cada mês.
-            </p>
-          )}
-          {/* {info?.plan && info.plan.history.length > 0 && (
-            <>
-              <h4 className="text-neutral-300 font-bold mt-2 py-2 px-2 bg-neutral-700">Histórico de pagamento</h4>
-              <ul className="flex flex-col gap-2 py-2">
-                {info?.plan.history.map((item) => (
-                  <li className={`text-neutral-300 px-2 flex items-center gap-2 border-b border-neutral-100 border-b-1 w-full border-l-3 ${item.paied ? 'border-l-tertiary-500' : 'border-l-secondary-400'}`}>
-                    {item.paied ? (
-                      <MdCheck />
-                    ) : (
-                      <MdOutlineSchedule />
-                    )}
-                    {formatDateToDDMMYYYY(item.date)} - R$ {Number(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - {item.form_of_payment}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )} */}
-        </section>
+        )}
       </section>
-    </>
+    </div>
   );
 }
+
 export default Info;

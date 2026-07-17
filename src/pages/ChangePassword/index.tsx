@@ -1,117 +1,201 @@
 import Input from "../../components/Input";
-import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useEffect, useMemo, useState } from "react";
 import { changePassword } from "../../api/auth";
 import { useNavigate } from "react-router-dom";
 import { useLoading } from "../../hooks/useLoading";
-import Loader from "../../components/Loader";
+import { MdOutlineInfo } from "react-icons/md";
+import { useErrors } from "../../contexts/ErrorsContext";
+import {
+  getAccessToken,
+  getAccessTokenPayload,
+} from "../../utils/authCookie";
+import { buttonClassName } from "../../components/Button";
+
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+const PASSWORD_HINT =
+  "Use no mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial.";
 
 export default function ChangePassword() {
   const { loading, withLoading } = useLoading();
+  const { notifyError } = useErrors();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [companyPublicId, setCompanyPublicId] = useState("");
+  const [touchedNew, setTouchedNew] = useState(false);
+  const [touchedConfirm, setTouchedConfirm] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
-    const accessToken = Cookies.get("access_token") || "";
-    if (accessToken) {
-      try {
-        const payload = JSON.parse(atob(accessToken.split(".")[1]));
-        setCompanyPublicId(payload.companyPublicId || "");
-      } catch (e) {
-        setCompanyPublicId("");
-      }
+    if (!getAccessToken()) {
+      navigate("/");
+      return;
     }
-  }, []);
+    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
+    setCompanyPublicId(payload?.companyPublicId || "");
+  }, [navigate]);
+
+  const newPasswordError = useMemo(() => {
+    if (!touchedNew || !newPassword) return undefined;
+    if (!PASSWORD_REGEX.test(newPassword)) return PASSWORD_HINT;
+    return undefined;
+  }, [newPassword, touchedNew]);
+
+  const confirmPasswordError = useMemo(() => {
+    if (!touchedConfirm || !confirmPassword) return undefined;
+    if (newPassword !== confirmPassword) return "As senhas não coincidem.";
+    return undefined;
+  }, [confirmPassword, newPassword, touchedConfirm]);
+
+  const passwordValid = PASSWORD_REGEX.test(newPassword);
+  const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
 
   const handleChangePassword = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-    if (!newPassword || !passwordRegex.test(newPassword)) {
-      return alert(
-        "A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais."
-      );
+    setSubmitError("");
+    setTouchedNew(true);
+    setTouchedConfirm(true);
+
+    if (!passwordValid) {
+      setSubmitError(PASSWORD_HINT);
+      return;
     }
-    if (newPassword !== confirmPassword) {
-      return alert("As senhas não coincidem");
+    if (!passwordsMatch) {
+      setSubmitError("As senhas não coincidem.");
+      return;
     }
     try {
       await withLoading(async () => {
         await changePassword(companyPublicId, newPassword);
-        alert("Senha alterada com sucesso!");
+        notifyError({
+          message: "Senha alterada com sucesso!",
+          type: "success",
+        });
         navigate("/reservas");
       });
     } catch (error) {
       console.error("Erro ao alterar a senha:", error);
-      alert(
-        "Ocorreu um erro ao alterar a senha. Tente novamente ou entre em contato com a equipe da Marca pra nósI."
-      );
+      const message =
+        "Não foi possível alterar a senha. Tente novamente ou fale com a equipe da Marca Pra Nós.";
+      setSubmitError(message);
+      notifyError({ message, type: "error" });
     }
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  const canSubmit =
+    Boolean(companyPublicId) &&
+    passwordValid &&
+    passwordsMatch &&
+    !loading;
 
   return (
-    <div className="flex flex-col justify-center items-center justify-center h-screen bg-neutral-200">
-      <img
-        src={import.meta.env.VITE_LOGO_URL}
-        className="w-1/4 md:w-1/12 mb-4"
-      />
-      <h1 className="text-neutral-700 text-lg md:text-xl text-center px-2 mb-4 md:mb-8">
-        Bem-vindo ao sistema{" "}
-        <span className="font-semibold">Marca Pra Nós</span>!<br />
-        Para a sua segurança, crie uma nova senha para continuar.
-      </h1>
-      {companyPublicId ? (
-        <form
-          className="bg-neutral-200 px-4 rounded-md w-full max-w-md"
-          onSubmit={handleChangePassword}
-        >
-          <h2 className="font-bold text-center mb-2 text-neutral-700">
-            Altere a senha
-          </h2>
-          <p className="text-center textp-sm text-neutral-800 mx-auto bg-orange-100 p-2 mb-2">
-            A senha deve ter pelo menos 8 caracteres, incluindo maiúsculas,
-            minúsculas, números e caracteres especiais.
+    <div className="flex min-h-screen flex-col items-center justify-center bg-master px-4 py-10 text-text-light">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(61,111,184,0.18),_transparent_55%)]" />
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="mb-6 flex size-28 items-center justify-center overflow-hidden rounded-2xl bg-neutral-100 p-3 sm:size-32">
+            <img
+              src={import.meta.env.VITE_LOGO_URL}
+              alt="Marca Pra Nós"
+              className="size-full object-contain"
+            />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-text-light">
+            Criar nova senha
+          </h1>
+          <p className="mt-2 text-base leading-6 text-text-light/70">
+            Por segurança, defina uma nova senha para continuar.
           </p>
-          <Input
-            name="newPassword"
-            title="Nova Senha*:"
-            placeholder="Digite sua nova senha"
-            type="password"
-            required
-            mode="light"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <Input
-            name="confirmPassword"
-            title="Digite novamente a nova senha*:"
-            placeholder="Digite novamente a nova senha"
-            type="password"
-            required
-            mode="light"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="w-full bg-secondary-600 text-neutral-100 py-2 rounded mt-4 hover:bg-secondary-700 transition-colors"
+        </div>
+
+        {companyPublicId ? (
+          <form
+            onSubmit={handleChangePassword}
+            className={`rounded-2xl bg-master-light p-5 sm:p-6 transition-opacity ${
+              loading ? "opacity-80" : ""
+            }`}
+            noValidate
+            aria-busy={loading}
           >
-            Salvar Senha
-          </button>
-        </form>
-      ) : (
-        <p className="text-neutral-800">
-          Você ainda não possui um cadastro ativo.
-        </p>
-      )}
+            <div className="mb-5 flex items-start gap-2 rounded-xl bg-master px-3 py-3">
+              <MdOutlineInfo
+                size={20}
+                className="mt-0.5 shrink-0 text-text-light/55"
+                aria-hidden
+              />
+              <p className="text-base leading-6 text-text-light/70">
+                {PASSWORD_HINT}
+              </p>
+            </div>
+
+            <Input
+              name="newPassword"
+              title="Nova senha"
+              placeholder="Digite a nova senha"
+              type="password"
+              required
+              mode="dark"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                if (submitError) setSubmitError("");
+              }}
+              onBlur={() => setTouchedNew(true)}
+              autoComplete="new-password"
+              enterKeyHint="next"
+              error={newPasswordError}
+            />
+            <Input
+              name="confirmPassword"
+              title="Confirmar senha"
+              placeholder="Digite a senha novamente"
+              type="password"
+              required
+              mode="dark"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (submitError) setSubmitError("");
+              }}
+              onBlur={() => setTouchedConfirm(true)}
+              autoComplete="new-password"
+              enterKeyHint="go"
+              className="mt-4"
+              error={confirmPasswordError || submitError || undefined}
+            />
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className={buttonClassName({
+                variant: "primary",
+                className: "mt-6",
+              })}
+            >
+              {loading ? "Salvando…" : "Salvar senha"}
+            </button>
+          </form>
+        ) : (
+          <div className="rounded-2xl bg-master-light px-5 py-8 text-center">
+            <p className="text-lg text-text-light/80">
+              Não foi possível identificar sua conta.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className={buttonClassName({
+                variant: "secondary",
+                size: "md",
+                className: "mt-5",
+              })}
+            >
+              Voltar ao login
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

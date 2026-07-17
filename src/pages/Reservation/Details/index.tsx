@@ -1,44 +1,77 @@
-import { BsArrowCounterclockwise, BsX } from "react-icons/bs";
+import { BsX } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useLocation, useParams } from "react-router";
 import { ReservationStatusEnum } from "../enum";
-import { MdOutlineArrowBackIos, MdOutlinePostAdd, MdOutlineRestaurant } from "react-icons/md";
-import { FaRegCalendarCheck } from "react-icons/fa";
+import {
+  MdOutlineArrowBackIos,
+  MdOutlineRestaurant,
+} from "react-icons/md";
 import { IReservationDetailsItemProps } from "../interface";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Input from "../../../components/Input";
 import {
   cancelReservation,
+  changeAvailability,
   createReservation,
+  fixSchedule,
   getScheduleById,
+  unfixSchedule,
   updateObservationByPublicId,
   updatePhoneContact,
 } from "../../../api/schedules";
-import { formatCurrencyBRL } from "../../../utils/formatCurrency";
-import Header from "../../../components/Header";
-import { getMeanByStatus, renderButtonByStatus } from "./utils";
+import {
+  formatPhoneMask,
+  onlyPhoneDigits,
+  PHONE_MASK_PLACEHOLDER,
+} from "../../../utils/formatPhone";
+import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
 import Textarea from "../../../components/Textarea";
 import Select from "../../../components/Select";
-import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 import { useLoading } from "../../../hooks/useLoading";
-import Loader from "../../../components/Loader";
-import { GiPartyPopper } from "react-icons/gi";
 import NewReminderModal from "../../../components/NewNote";
+import ConfirmSheet, {
+  ConfirmTone,
+} from "../../../components/ConfirmSheet";
 import { useNotification } from "../../../contexts/NotificationContext";
+import { useErrors } from "../../../contexts/ErrorsContext";
 import { createNote } from "../../../api/notes";
+import { LuPartyPopper } from "react-icons/lu";
+import { StatusIcons } from "../statusIcons";
+import { buttonClassName } from "../../../components/Button";
+import EmptyState from "../../../components/EmptyState";
+import { PageTitle } from "../../../components/PageTitle";
+
+type ConfirmAction = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  tone: ConfirmTone;
+  run: () => Promise<void>;
+};
 
 function ReservationDetails() {
   const { loading, withLoading } = useLoading();
-  const { unreadCount, setUnreadCount } = useNotification();
+  const { refreshUnreadCount } = useNotification();
+  const { notifyError } = useErrors();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const dateFrom = location.state?.date;
 
   const [showInfoCustomer, setShowInfoCustomer] = useState<boolean>(false);
-  const [showNewReminderModal, setShowNewReminderModal] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('');
+  const contactTitleId = useId();
+  const [showNewReminderModal, setShowNewReminderModal] =
+    useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
   const [is24before, setIs24before] = useState<boolean>(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
+    null
+  );
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savingObservation, setSavingObservation] = useState(false);
+  const [creatingNote, setCreatingNote] = useState(false);
 
   const [customerReservationName, setCustomerReservationName] = useState<
     string | null
@@ -46,10 +79,21 @@ function ReservationDetails() {
   const [customerReservationPhone, setCustomerReservationPhone] = useState<
     string | null
   >(null);
+  const [nameError, setNameError] = useState<string>("");
   const [observation, setObservation] = useState<string>("");
   const [isBarbecueIncluded, setIsBarbecueIncluded] = useState<boolean>(false);
   const [isEvent, setIsEvent] = useState<boolean>(false);
   const [court, setCourt] = useState<IReservationDetailsItemProps | null>(null);
+
+  const isPastSchedule = (() => {
+    if (!court?.date || !court?.time) return false;
+    const [day, month, year] = court.date.split("/");
+    if (!day || !month || !year) return false;
+    return (
+      new Date(`${year}-${month}-${day}T${court.time}`) <
+      new Date(new Date().setSeconds(0, 0))
+    );
+  })();
   const [sportSelected, setSportSelected] = useState<{
     id: number;
     name: string;
@@ -58,9 +102,9 @@ function ReservationDetails() {
     { id: number; name: string }[]
   >([]);
 
-  const fetchData = async (id: string) => {
+  const fetchData = async (scheduleId: string) => {
     await withLoading(async () => {
-      const response = await getScheduleById(id);
+      const response = await getScheduleById(scheduleId);
       setCourt(response);
       setIsBarbecueIncluded(response?.reservation?.isBarbecueIncluded || false);
       setIsEvent(response?.reservation?.isEvent || false);
@@ -74,19 +118,62 @@ function ReservationDetails() {
     if (id) {
       fetchData(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [id]);
 
+  useEffect(() => {
+    if (!showInfoCustomer) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setShowInfoCustomer(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [showInfoCustomer]);
+
   const handleSubmit = async (): Promise<void> => {
-    if (!customerReservationName) {
-      return alert("Nome do cliente é obrigatório");
+    if (isPastSchedule) {
+      notifyError({
+        message: "Este horário já passou e não pode ser reservado.",
+        type: "error",
+      });
+      return;
     }
+    if (!customerReservationName?.trim()) {
+      setNameError("Informe o nome do cliente");
+      window.requestAnimationFrame(() => {
+        document.getElementById("name")?.focus();
+      });
+      return;
+    }
+    setNameError("");
     if (!court?.scheduleId) {
-      return alert("Horário da reserva não informado");
+      notifyError({
+        message: "Horário da reserva não informado",
+        type: "error",
+      });
+      return;
     }
-    await withLoading(async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
       const response = await createReservation({
         contactName: customerReservationName,
-        contactPhone: customerReservationPhone && customerReservationPhone.trim().length > 0 ? customerReservationPhone : '',
+        contactPhone:
+          customerReservationPhone && customerReservationPhone.trim().length > 0
+            ? customerReservationPhone
+            : "",
         courtSchedulePublicId: court?.scheduleId,
         observation,
         isBarbecueIncluded,
@@ -100,27 +187,57 @@ function ReservationDetails() {
           },
         });
       }
-    });
+    } catch (error) {
+      console.error(error);
+      notifyError({
+        message: "Não foi possível reservar o horário. Tente novamente.",
+        type: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdatePhoneContact = async () => {
-    if (!customerReservationPhone || !court?.reservation?.contactName || !court?.scheduleId) {
+    const contactName =
+      customerReservationName?.trim() ||
+      court?.reservation?.contactName ||
+      "";
+    const contactPhone =
+      customerReservationPhone || court?.reservation?.contactPhone || "";
+
+    if (!contactName || !contactPhone || !court?.scheduleId || !id) {
       return;
     }
     await withLoading(async () => {
       await updatePhoneContact({
-        contactName: String(court.reservation?.contactName),
-        contactPhone: customerReservationPhone,
-        courtSchedulePublicId: court?.scheduleId,
+        contactName,
+        contactPhone,
+        courtSchedulePublicId: court.scheduleId,
       });
+      setCourt((prev) =>
+        prev?.reservation
+          ? {
+              ...prev,
+              reservation: {
+                ...prev.reservation,
+                contactName,
+                contactPhone,
+              },
+            }
+          : prev
+      );
+      setCustomerReservationName(contactName);
+      setCustomerReservationPhone(contactPhone);
       setShowInfoCustomer(false);
-      navigate("/reservas", {
-        state: {
-          date: dateFrom,
-        },
-      });
     });
-  }
+  };
+
+  const openEditContact = () => {
+    setCustomerReservationName(court?.reservation?.contactName || "");
+    setCustomerReservationPhone(court?.reservation?.contactPhone || null);
+    setShowInfoCustomer(true);
+  };
 
   const updateObservationByReservation = async ({
     observation,
@@ -132,443 +249,735 @@ function ReservationDetails() {
     isEvent?: boolean;
   }): Promise<void> => {
     if (!court?.reservation?.publicId) {
-      return alert("Reserva não encontrada");
+      notifyError({
+        message: "Reserva não encontrada",
+        type: "error",
+      });
+      return;
     }
-    await withLoading(async () => {
-      if (court.reservation?.publicId) {
-        await updateObservationByPublicId(court?.reservation?.publicId, {
-          ...(observation !== undefined && { observation }),
-          ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
-          ...(isEvent !== undefined && { isEvent }),
-        });
-      }
+    await updateObservationByPublicId(court.reservation.publicId, {
+      ...(observation !== undefined && { observation }),
+      ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
+      ...(isEvent !== undefined && { isEvent }),
     });
   };
 
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
+    if (creatingNote) return;
     let formattedDate = "";
     if (court?.date) {
       const [day, month, year] = court.date.split("/");
       formattedDate = `${year}-${month}-${day}`;
     } else {
       const now = new Date();
-      formattedDate = now.toISOString().slice(0, 10); // yyyy-mm-dd
+      formattedDate = now.toISOString().slice(0, 10);
     }
-    await withLoading(async () => {
+    setCreatingNote(true);
+    try {
       await createNote({
-        companyPublicId: court?.companyPublicId || '',
+        companyPublicId: court?.companyPublicId || "",
         date: formattedDate,
-        message: message || `Reserva para o dia ${court?.date} - ${court?.time} - ${court?.reservation?.contactName}`,
+        message:
+          message ||
+          [
+            court?.date && `Reserva para o dia ${court.date}`,
+            court?.time,
+            court?.reservation?.contactName,
+          ]
+            .filter(Boolean)
+            .join(" - "),
         is24HoursBefore: is24before,
       });
       setShowNewReminderModal(false);
-      setMessage('');
+      setMessage("");
       setIs24before(false);
-      if (court?.date) {
-        const [day, month, year] = court.date.split("/");
-        const courtDate = new Date(Number(year), Number(month) - 1, Number(day));
-        const today = new Date();
-        courtDate.setHours(0, 0, 0, 0);
-        today.setHours(0, 0, 0, 0);
-        if (courtDate.getTime() === today.getTime()) {
-          setUnreadCount(unreadCount + 1);
-        }
-      }
+      await refreshUnreadCount();
+    } finally {
+      setCreatingNote(false);
+    }
+  };
+
+  const goBackToList = () => {
+    navigate("/reservas", { state: { date: dateFrom } });
+  };
+
+  const statusActionHandlers = {
+    onLiberarFixo: () => {
+      setConfirmAction({
+        title: "Liberar horário fixo?",
+        description:
+          "Isso cancela todas as reservas futuras deste horário e cliente.",
+        confirmLabel: "Liberar fixo",
+        tone: "success",
+        run: async () => {
+          await unfixSchedule({
+            court_schedule_public_id: court?.scheduleId || "",
+          });
+          goBackToList();
+        },
+      });
+    },
+    onReativar: () => {
+      setConfirmAction({
+        title: "Reativar horário?",
+        description: "O horário volta a aparecer como disponível para reserva.",
+        confirmLabel: "Reativar",
+        tone: "success",
+        run: async () => {
+          await changeAvailability(court?.scheduleId || "", true);
+          goBackToList();
+        },
+      });
+    },
+    onFixar: () => {
+      const barbecueNote = isBarbecueIncluded
+        ? " A churrasqueira não será agendada nas reservas futuras."
+        : "";
+      setConfirmAction({
+        title: "Fixar horário?",
+        description: `O cliente fica com este horário de forma recorrente.${barbecueNote}`,
+        confirmLabel: "Fixar horário",
+        tone: "neutral",
+        run: async () => {
+          await fixSchedule({
+            court_schedule_public_id: court?.scheduleId || "",
+          });
+          goBackToList();
+        },
+      });
+    },
+    onInativar: () => {
+      setConfirmAction({
+        title: "Inativar horário?",
+        description:
+          "O horário deixa de aparecer como disponível na agenda do dia.",
+        confirmLabel: "Inativar",
+        tone: "danger",
+        run: async () => {
+          await changeAvailability(court?.scheduleId || "", false);
+          goBackToList();
+        },
+      });
+    },
+  };
+
+  const askCancelReservation = () => {
+    setConfirmAction({
+      title: "Cancelar reserva?",
+      description:
+        "A reserva deste horário será cancelada. Essa ação não pode ser desfeita.",
+      confirmLabel: "Cancelar reserva",
+      tone: "danger",
+      run: async () => {
+        await cancelReservation(String(court?.reservation?.tokenToCancel));
+        goBackToList();
+      },
     });
   };
 
-  if (loading) return <Loader />;
+  const handleConfirmAction = async () => {
+    if (!confirmAction || confirmLoading) return;
+    setConfirmLoading(true);
+    try {
+      await withLoading(async () => {
+        await confirmAction.run();
+      });
+      setConfirmAction(null);
+    } catch (error: any) {
+      notifyError({
+        message:
+          error?.response?.data?.message ||
+          "Não foi possível concluir a ação. Tente novamente.",
+        type: "error",
+      });
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
+  const pageTitle = court
+    ? formatSchedulePageTitle(court.date, court.weekday, court.time)
+    : "Carregando…";
+
+  const isInitialLoading = loading && !court;
+  const secondaryBtnClass = buttonClassName({ variant: "secondary" });
+  const primaryBtnClass = buttonClassName({ variant: "primary", size: "md" });
+
+  const isBookedStatus =
+    court?.status === ReservationStatusEnum.FIXED ||
+    court?.status === ReservationStatusEnum.RESERVED ||
+    court?.status === ReservationStatusEnum.PREPAID;
+  const isPastConsultation = Boolean(isPastSchedule && isBookedStatus);
+  const showCancelSticky = Boolean(isBookedStatus && !isPastSchedule);
+  const showCreateSticky = Boolean(
+    court?.status === ReservationStatusEnum.AVAILABLE && !isPastSchedule
+  );
+  const showStickyFooter = showCancelSticky || showCreateSticky;
 
   return (
-    <div className="h-screen">
-      <Header />
-      <section className="bg-neutral-800 h-full overflow-y-auto">
-        {court ? (
+    <div className="min-h-screen bg-master text-text-light">
+      <header className="sticky top-0 z-20 bg-master px-4 py-3">
+        <div className="relative flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/reservas`, { state: { date: dateFrom } })
+            }
+            aria-label="Voltar para lista de reservas"
+            className="absolute left-0 flex size-11 items-center justify-center rounded-xl text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue active:bg-master-light"
+          >
+            <MdOutlineArrowBackIos size={20} aria-hidden />
+          </button>
+          <PageTitle align="center" className="max-w-[min(70%,18rem)] text-lg sm:max-w-[75%] sm:text-xl">
+            {isInitialLoading ? "Carregando…" : pageTitle}
+          </PageTitle>
+        </div>
+      </header>
+
+      <section
+        className={`mx-auto w-full max-w-lg px-4 pt-5 transition-opacity ${
+          showStickyFooter ? "pb-28" : "pb-8"
+        } ${loading && court ? "opacity-80" : ""}`}
+        aria-busy={loading}
+      >
+        {isInitialLoading ? (
+          <div className="animate-pulse space-y-4" aria-label="Carregando formulário">
+            <div className="h-24 rounded-2xl bg-master-light/70" />
+            <div className="h-28 rounded-2xl bg-master-light/70" />
+            <div className="h-40 rounded-2xl bg-master-light/70" />
+            <div className="h-52 rounded-2xl bg-master-light/70" />
+          </div>
+        ) : court ? (
           <>
-            <header className="border-2flex flex-col sticky top-0 z-10">
-              <div className="flex w-full justify-around md:justify-between py-2 bg-neutral-700">
-                <button
-                  onClick={() =>
-                    navigate(`/reservas`, { state: { date: dateFrom } })
-                  }
-                >
-                  <MdOutlineArrowBackIos size={22} />
-                </button>
-                <div className="flex align-center w-full justify-center gap-2 bg-neutral-700">
-                  <p className="mt-1">
-                    {court?.date} ({court?.weekday}) - {court?.time}
+            {isPastConsultation && (
+              <p className="mb-4 text-base font-medium text-text-light/65">
+                Somente consulta
+              </p>
+            )}
+
+            {getMeanByStatus(
+              isPastConsultation ? undefined : openEditContact,
+              court?.status,
+              {
+              sportName: court?.reservation?.sportName,
+              contactName: court?.reservation?.contactName,
+              contactPhone: court?.reservation?.contactPhone,
+              courtName: court?.court,
+              price: court?.price,
+              isNeedsNetting: court?.reservation?.isNeedsNetting,
+              onCreateReminder:
+                !isPastConsultation &&
+                court.reservation?.publicId &&
+                (court.status === ReservationStatusEnum.FIXED ||
+                  court.status === ReservationStatusEnum.RESERVED ||
+                  court.status === ReservationStatusEnum.PREPAID)
+                  ? () => setShowNewReminderModal(true)
+                  : undefined,
+            })}
+
+            {(court.status === ReservationStatusEnum.INACTIVE ||
+              (court.status === ReservationStatusEnum.AVAILABLE &&
+                !isPastSchedule)) &&
+              renderButtonByStatus(court?.status, statusActionHandlers)}
+
+            {court.status !== ReservationStatusEnum.INACTIVE &&
+              court.status !== ReservationStatusEnum.AVAILABLE &&
+              court.reservation?.publicId &&
+              (isPastConsultation ? (
+                <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
+                  <p className="mb-4 text-lg font-semibold text-text-light">
+                    Informações adicionais
                   </p>
-                </div>
-              </div>
-              {getMeanByStatus(
-                setShowInfoCustomer,
-                court?.status,
-                court?.reservation?.sportName,
-                court?.reservation?.contactName,
-                court?.reservation?.contactPhone
-              )}
-            </header>
-            <section className="bg-neutral-100 h-full md:mx-auto">
-              {court && (
-                <div
-                  className={`flex justify-between md:justify-center items-baseline`}
-                >
-                  {renderButtonByStatus(
-                    court.scheduleId,
-                    court.reservation?.isBarbecueIncluded ?? false,
-                    court?.status,
-                    dateFrom,
-                    navigate,
-                    withLoading
-                  )}
-                </div>
-              )}
-              <h2 className="flex justify-center text-lg md:text-xl text-neutral-600 mt-4 mb-2 font-bold">
-                Quadra {court?.court} -{" "}
-                {court?.price && formatCurrencyBRL(parseFloat(court?.price))}
-              </h2>
-              {court.status !== ReservationStatusEnum.INACTIVE &&
-                court.status !== ReservationStatusEnum.AVAILABLE && (
-                  <div className="flex flex-col items-start mx-auto w-fit">
-                    <div className="flex items-center justify-center gap-1 mx-4 mb-2">
-                      <input
-                        type="checkbox"
-                        id="barbecue-included"
-                        checked={isBarbecueIncluded}
-                        onChange={(e) => {
-                          setIsBarbecueIncluded(e.target.checked);
-                          if (court?.reservation?.publicId) {
-                            updateObservationByReservation({
-                              isBarbecueIncluded: e.target.checked,
-                            });
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor="barbecue-included"
-                        className="text-neutral-600 pt-1 ms-1"
-                      >
-                        Com Churrasqueira
-                      </label>
-                    </div>
-                    <div className="flex items-center justify-center gap-1 mx-4 mb-2">
-                      <input
-                        type="checkbox"
-                        id="is-event"
-                        checked={isEvent}
-                        onChange={(e) => {
-                          setIsEvent(e.target.checked);
-                          if (court?.reservation?.publicId) {
-                            updateObservationByReservation({
-                              isEvent: e.target.checked,
-                            });
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor="is-event"
-                        className="text-neutral-600 pt-1 ms-1"
-                      >
-                        É um evento
-                      </label>
-                    </div>
-                  </div>
-                )}
-              <div className="bg-neutral-100 py-2 px-4 md:w-1/3 md:mx-auto">
-                {court.reservation?.isNeedsNetting && (
-                  <div className="border-l-secondary-400 border-l-8 flex justify-start items-center bg-blue-50 w-full rounded-l-sm p-1 mb-1">
-                    <VoleyNetIcon className="mx-2 text-neutral-800" />
-                    <p className="text-neutral-700 pt-1">Precisa de rede</p>
-                  </div>
-                )}
-                {court.status !== ReservationStatusEnum.AVAILABLE &&
-                  isBarbecueIncluded && (
-                    <div className="flex items-center justify-start border-l-primary-700 border-l-8 bg-orange-50 w-full rounded-l-sm p-1">
+
+                  <div
+                    className="space-y-2"
+                    role="group"
+                    aria-label="Opções da reserva"
+                  >
+                    <div
+                      className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 ${
+                        isBarbecueIncluded
+                          ? "bg-accent-blue/10"
+                          : "bg-master/50"
+                      }`}
+                    >
                       <MdOutlineRestaurant
-                        size={24}
-                        className="mx-2 text-neutral-600"
+                        size={20}
+                        className={`shrink-0 ${
+                          isBarbecueIncluded
+                            ? "text-text-light"
+                            : "text-text-light/40"
+                        }`}
+                        aria-hidden
                       />
-                      <p className="text-neutral-700 pt-1">
-                        Churrasqueira inclusa na reserva
-                      </p>
+                      <span
+                        className={`text-base font-medium ${
+                          isBarbecueIncluded
+                            ? "text-text-light"
+                            : "text-text-light/45"
+                        }`}
+                      >
+                        {isBarbecueIncluded
+                          ? "Com churrasqueira"
+                          : "Sem churrasqueira"}
+                      </span>
                     </div>
-                  )}
-                {court.status !== ReservationStatusEnum.AVAILABLE && isEvent && (
-                  <div className="flex items-center justify-start border-pink-700 border-l-8 bg-pink-50 w-full rounded-l-sm p-1">
-                    <GiPartyPopper
-                      size={24}
-                      className="mx-2 text-neutral-600"
-                    />
-                    <p className="text-neutral-700 pt-1">
-                      É um evento
+                    <div
+                      className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 ${
+                        isEvent ? "bg-accent-blue/10" : "bg-master/50"
+                      }`}
+                    >
+                      <LuPartyPopper
+                        size={20}
+                        className={`shrink-0 ${
+                          isEvent ? "text-text-light" : "text-text-light/40"
+                        }`}
+                        aria-hidden
+                      />
+                      <span
+                        className={`text-base font-medium ${
+                          isEvent ? "text-text-light" : "text-text-light/45"
+                        }`}
+                      >
+                        {isEvent ? "É um evento" : "Não é um evento"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <p className="text-base font-semibold text-text-light">
+                      Observação
+                    </p>
+                    <p
+                      className={`mt-2 text-base leading-6 whitespace-pre-wrap ${
+                        observation?.trim()
+                          ? "text-text-light/85"
+                          : "text-text-light/45"
+                      }`}
+                    >
+                      {observation?.trim()
+                        ? observation
+                        : "Nenhuma observação registrada"}
                     </p>
                   </div>
-                )}
-              </div>
-              {court.reservation?.publicId && (
-                <div className="mx-4 mt-8 border-t-1 border-neutral-400 md:w-1/3 md:mx-auto">
-                  <Textarea
-                    title="Observação:"
-                    placeholder="Churrasco para 10 pessoas"
-                    name="observation-edit"
-                    value={observation}
-                    onChange={async (e) => {
-                      const newObservation = e.target.value;
-                      setObservation(newObservation);
-                    }}
-                    mode="light"
-                    maxLength={150}
-                    className="w-full pt-4"
-                    rows={4}
-                  />
-                  <div className="flex justify-between">
+                </div>
+              ) : (
+                <>
+                  <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
+                    <div
+                      className="mb-4 space-y-1"
+                      role="group"
+                      aria-label="Opções da reserva"
+                    >
+                      <label
+                        className={`flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-3 transition focus-within:ring-2 focus-within:ring-accent-blue/60 ${
+                          isBarbecueIncluded
+                            ? "bg-accent-blue/10"
+                            : "hover:bg-master/80"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3 text-base font-medium text-text-light">
+                          <MdOutlineRestaurant
+                            size={20}
+                            className="shrink-0 text-text-light/70"
+                            aria-hidden
+                          />
+                          Com churrasqueira
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={isBarbecueIncluded}
+                          onChange={(e) => {
+                            setIsBarbecueIncluded(e.target.checked);
+                          }}
+                          className="size-6 shrink-0 rounded accent-accent-blue"
+                        />
+                      </label>
+                      <label
+                        className={`flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-3 transition focus-within:ring-2 focus-within:ring-accent-blue/60 ${
+                          isEvent
+                            ? "bg-accent-blue/10"
+                            : "hover:bg-master/80"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3 text-base font-medium text-text-light">
+                          <LuPartyPopper
+                            size={20}
+                            className="shrink-0 text-text-light/70"
+                            aria-hidden
+                          />
+                          É um evento
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={isEvent}
+                          onChange={(e) => {
+                            setIsEvent(e.target.checked);
+                          }}
+                          className="size-6 shrink-0 rounded accent-accent-blue"
+                        />
+                      </label>
+                    </div>
+
+                    <Textarea
+                      title="Observação"
+                      placeholder="Jogo contra, 10 pessoas, churrasqueira por 2h"
+                      name="observation-edit"
+                      value={observation}
+                      onChange={async (e) => {
+                        const newObservation = e.target.value;
+                        setObservation(newObservation);
+                      }}
+                      mode="dark"
+                      maxLength={150}
+                      rows={3}
+                    />
                     <button
                       type="button"
+                      disabled={savingObservation}
                       onClick={async () => {
-                        setShowNewReminderModal(true);
+                        if (savingObservation) return;
+                        setSavingObservation(true);
+                        try {
+                          await updateObservationByReservation({
+                            observation,
+                            isBarbecueIncluded,
+                            isEvent,
+                          });
+                        } finally {
+                          setSavingObservation(false);
+                        }
                       }}
-                      className="py-2 px-4 ro text-sm mb-16 text-neutral-600 underline flex items-center gap-1"
+                      className={secondaryBtnClass}
                     >
-                      <MdOutlinePostAdd size={20} />
-                      Criar lembrete
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await updateObservationByReservation({
-                          observation,
-                        });
-                      }}
-                      className="border-neutral-600 border-1 py-2 px-4 rounded-sm shadow-md text-sm mb-16 text-neutral-600"
-                    >
-                      Salvar Observação
+                      {savingObservation
+                        ? "Salvando…"
+                        : "Salvar alterações"}
                     </button>
                   </div>
+
+                  {(court.status === ReservationStatusEnum.FIXED ||
+                    court.status === ReservationStatusEnum.RESERVED ||
+                    court.status === ReservationStatusEnum.PREPAID) &&
+                    renderButtonByStatus(court.status, statusActionHandlers)}
+                </>
+              ))}
+
+            {court?.status === ReservationStatusEnum.AVAILABLE &&
+              isPastSchedule && (
+                <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+                  <p className="text-lg font-semibold text-text-light">
+                    Horário encerrado
+                  </p>
+                  <p className="mt-2 text-base leading-6 text-text-light/75">
+                    Este horário já passou e não pode ser reservado.
+                  </p>
                 </div>
               )}
-              {[
-                ReservationStatusEnum.FIXED,
-                ReservationStatusEnum.RESERVED,
-                ReservationStatusEnum.PREPAID,
-              ].includes(court?.status as ReservationStatusEnum) && (
-                  <button
-                    onClick={async () => {
-                      await withLoading(async () => {
-                        await cancelReservation(
-                          String(court?.reservation?.tokenToCancel)
+
+            {court?.status === ReservationStatusEnum.AVAILABLE &&
+              !isPastSchedule && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+                noValidate
+                aria-label="Formulário de nova reserva"
+                className="space-y-4"
+              >
+                <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+                  <Input
+                    name="name"
+                    title="Nome"
+                    placeholder="João Silva"
+                    type="text"
+                    value={customerReservationName ?? ""}
+                    onChange={(e) => {
+                      setCustomerReservationName(e.target.value);
+                      if (nameError) setNameError("");
+                    }}
+                    required
+                    mode="dark"
+                    autoComplete="name"
+                    autoCapitalize="words"
+                    enterKeyHint="next"
+                    error={nameError || undefined}
+                  />
+                  <Input
+                    name="phone"
+                    title="Telefone com DDD"
+                    placeholder={PHONE_MASK_PLACEHOLDER}
+                    type="tel"
+                    inputMode="tel"
+                    value={
+                      customerReservationPhone
+                        ? formatPhoneMask(customerReservationPhone)
+                        : ""
+                    }
+                    onChange={(e) => {
+                      setCustomerReservationPhone(
+                        onlyPhoneDigits(e.target.value) || null
+                      );
+                    }}
+                    mode="dark"
+                    autoComplete="tel"
+                    enterKeyHint={courtSports.length > 1 ? "next" : "done"}
+                  />
+                  {courtSports.length > 1 && (
+                    <Select
+                      name="court-sport"
+                      title="Esporte"
+                      required
+                      value={sportSelected?.id}
+                      options={courtSports}
+                      mode="dark"
+                      onChange={(e) => {
+                        const selectedId = Number(e.target.value);
+                        const selectedSport = courtSports.find(
+                          (sport) => sport.id === selectedId
                         );
-                        navigate("/reservas", {
-                          state: { date: dateFrom },
-                        });
-                      });
-                    }}
-                    className="w-full fixed bottom-0 flex items-start justify-center rounded-t-md bg-danger-400 text-neutral-100 gap-1 p-4 mx-auto mt-4 font-bold"
-                  >
-                    <BsArrowCounterclockwise size={20} />
-                    Cancelar reserva
-                  </button>
-                )}
-              {court?.status === ReservationStatusEnum.AVAILABLE && (
-                <>
-                  <p className="text-neutral-800 text-center text-sm">
-                    * Campos obrigatórios.
-                  </p>
-                  <form
-                    className="bg-neutral-100"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSubmit();
-                    }}
-                  >
-                    <div className="mx-4 pb-16 md:w-1/3 md:mx-auto">
-                      <Select
-                        name="court-sport"
-                        title="*Esporte:"
-                        required
-                        value={sportSelected?.id}
-                        options={courtSports}
-                        mode="light"
-                        onChange={(e) => {
-                          const selectedId = Number(e.target.value);
-                          const selectedSport = courtSports.find(
-                            (sport) => sport.id === selectedId
-                          );
-                          setSportSelected(selectedSport || null);
-                        }}
-                        disabled={courtSports.length <= 1}
-                      />
-                      <Input
-                        name="name"
-                        title="*Nome:"
-                        placeholder="Ex.: João Silva"
-                        type="text"
-                        value={customerReservationName ?? ""}
-                        onChange={(e) =>
-                          setCustomerReservationName(e.target.value)
-                        }
-                        required
-                        mode="light"
-                      />
-                      <Input
-                        name="phone"
-                        title="Telefone com DDD:"
-                        placeholder="Ex.: 51912345678"
-                        type="tel"
-                        value={customerReservationPhone ?? ""}
-                        onChange={(e) => {
-                          let phone = e.target.value.replace(/\D/g, "");
-                          if (phone.length > 11) {
-                            phone = phone.slice(0, 11);
-                          }
-                          if (phone.length >= 2) {
-                            const ddd = phone.slice(0, 2);
-                            let number = phone.slice(2);
-                            phone = ddd + number;
-                          }
-                          setCustomerReservationPhone(phone);
-                        }}
-                        mode="light"
-                      />
-                      <div className="flex items-center gap-1 mt-1 ms-1 mb-4">
+                        setSportSelected(selectedSport || null);
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+                  <fieldset aria-label="Opções adicionais">
+                    <div className="mb-3 space-y-2">
+                      <label
+                        htmlFor="barbecue-included"
+                        className={`flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
+                          isBarbecueIncluded
+                            ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
+                            : "bg-master"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3 text-lg font-medium text-text-light">
+                          <MdOutlineRestaurant
+                            size={22}
+                            className="shrink-0 text-text-light"
+                            aria-hidden
+                          />
+                          Com churrasqueira
+                        </span>
                         <input
                           type="checkbox"
                           id="barbecue-included"
                           checked={isBarbecueIncluded}
-                          onChange={(e) => {
-                            setIsBarbecueIncluded(e.target.checked);
-                            if (court?.reservation?.publicId) {
-                              updateObservationByReservation({
-                                isBarbecueIncluded: e.target.checked,
-                              });
-                            }
-                          }}
+                          onChange={(e) =>
+                            setIsBarbecueIncluded(e.target.checked)
+                          }
+                          className="size-7 shrink-0 rounded accent-accent-blue"
                         />
-                        <label
-                          htmlFor="barbecue-included"
-                          className="text-neutral-600 pt-1 ms-1"
-                        >
-                          Com Churrasqueira
-                        </label>
-                      </div>
-                      <div className="flex items-center gap-1 mt-1 ms-1 mb-4">
+                      </label>
+                      <label
+                        htmlFor="is-event"
+                        className={`flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
+                          isEvent
+                            ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
+                            : "bg-master"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3 text-lg font-medium text-text-light">
+                          <LuPartyPopper
+                            size={22}
+                            className="shrink-0 text-text-light"
+                            aria-hidden
+                          />
+                          É um evento
+                        </span>
                         <input
                           type="checkbox"
                           id="is-event"
                           checked={isEvent}
-                          onChange={(e) => {
-                            setIsEvent(e.target.checked);
-                            if (court?.reservation?.publicId) {
-                              updateObservationByReservation({
-                                isEvent: e.target.checked,
-                              });
-                            }
-                          }}
+                          onChange={(e) => setIsEvent(e.target.checked)}
+                          className="size-7 shrink-0 rounded accent-accent-blue"
                         />
-                        <label
-                          htmlFor="is-event"
-                          className="text-neutral-600 pt-1 ms-1"
-                        >
-                          É um evento
-                        </label>
-                      </div>
-                      <Textarea
-                        name="observation"
-                        title="Observação:"
-                        placeholder="Ex: jogo contra, jogo arreganho, 10 pessoas, churrasqueira por 2h"
-                        value={observation}
-                        onChange={(e) => setObservation(e.target.value)}
-                        mode="light"
-                        maxLength={150}
-                        rows={4}
-                      />
+                      </label>
                     </div>
-                    <button
-                      type="submit"
-                      className="w-full fixed bottom-0 flex items-start justify-center rounded-t-md bg-secondary-500 text-neutral-100 gap-1 p-4 mx-auto mt-4 font-bold"
-                    >
-                      <FaRegCalendarCheck size={20} />
-                      Reservar
-                    </button>
-                  </form>
-                </>
-              )}
-            </section>
+                  </fieldset>
+                  <Textarea
+                    name="observation"
+                    title="Observação"
+                    placeholder="Jogo contra, 10 pessoas, churrasqueira por 2h"
+                    value={observation}
+                    onChange={(e) => setObservation(e.target.value)}
+                    mode="dark"
+                    maxLength={150}
+                    rows={3}
+                    className="mb-0"
+                  />
+                </div>
+
+                <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !customerReservationName?.trim()}
+                    className={buttonClassName({
+                      variant: "primary",
+                      className: "mx-auto max-w-lg justify-center",
+                    })}
+                  >
+                    <StatusIcons.reserved size={20} className="shrink-0" aria-hidden />
+                    {isSubmitting ? "Reservando…" : "Reservar horário"}
+                  </button>
+                </div>
+              </form>
+            )}
           </>
         ) : (
-          <div className="h-1/2 flex items-center justify-center">
-            <p>carregando...</p>
-          </div>
+          <EmptyState
+            title="Não foi possível carregar este horário."
+            description="Volte para a lista e tente novamente."
+            className="min-h-64 py-10"
+          />
         )}
       </section>
+
+      {showCancelSticky && (
+        <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
+          <button
+            type="button"
+            disabled={loading || confirmLoading}
+            onClick={askCancelReservation}
+            className={buttonClassName({
+              variant: "danger",
+              className: "mx-auto max-w-lg justify-center",
+            })}
+          >
+            Cancelar reserva
+          </button>
+        </div>
+      )}
+
       {showInfoCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-8 md:w-1/2 w-full flex flex-col items-center">
-            <button type="button" onClick={() => setShowInfoCustomer(false)} className="relative left-1/2 bottom-4 text-neutral-800 cursor-pointer" >
-              <BsX size={24} />
-            </button>
-            <h3 className="text-lg font-semibold mb-4 text-neutral-800">Informações do contato</h3>
-            <p className="text-neutral-600 mb-6 text-center">Você pode alterar o número de telefone.<br />Não esqueça de colocar o 9 na frente.</p>
-            <div className="w-full mb-4">
-              <Input
-                name="name"
-                title="Nome:"
-                placeholder="Ex.: João Silva"
-                type="text"
-                value={court?.reservation?.contactName ?? ""}
-                onChange={(e) =>
-                  setCustomerReservationName(e.target.value)
-                }
-                required
-                readOnly
-                mode="light"
-              />
-              <Input
-                name="phone"
-                title="Telefone com DDD*:"
-                placeholder="Ex.: 51912345678"
-                type="tel"
-                value={customerReservationPhone ?? court?.reservation?.contactPhone}
-                onChange={(e) => {
-                  let phone = e.target.value.replace(/\D/g, "");
-                  if (phone.length > 11) {
-                    phone = phone.slice(0, 11);
-                  }
-                  if (phone.length >= 2) {
-                    const ddd = phone.slice(0, 2);
-                    let number = phone.slice(2);
-                    phone = ddd + number;
-                  }
-                  setCustomerReservationPhone(phone);
-                }}
-                mode="light"
-              />
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+          <button
+            type="button"
+            aria-label="Fechar"
+            className="absolute inset-0 bg-black/75"
+            onClick={() => setShowInfoCustomer(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={contactTitleId}
+            className="relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 shadow-2xl sm:rounded-3xl sm:p-6"
+          >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3
+                  id={contactTitleId}
+                  className="text-xl font-semibold text-text-light"
+                >
+                  Editar contato
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInfoCustomer(false)}
+                aria-label="Fechar"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              >
+                <BsX size={24} aria-hidden />
+              </button>
             </div>
-            <button
-              className="px-4 py-2 bg-secondary-500 text-white rounded hover:bg-secondary-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => {
-                handleUpdatePhoneContact()
+            <Input
+              name="name"
+              title="Nome"
+              placeholder="João Silva"
+              type="text"
+              value={
+                customerReservationName ?? court?.reservation?.contactName ?? ""
+              }
+              onChange={(e) => setCustomerReservationName(e.target.value)}
+              required
+              mode="dark"
+              autoComplete="name"
+              autoCapitalize="words"
+            />
+            <Input
+              name="phone"
+              title="Telefone com DDD"
+              placeholder={PHONE_MASK_PLACEHOLDER}
+              type="tel"
+              inputMode="tel"
+              value={formatPhoneMask(
+                customerReservationPhone ??
+                  court?.reservation?.contactPhone ??
+                  ""
+              )}
+              onChange={(e) => {
+                setCustomerReservationPhone(
+                  onlyPhoneDigits(e.target.value) || null
+                );
               }}
-              disabled={!customerReservationPhone}
+              mode="dark"
+              required
+            />
+            <button
+              type="button"
+              className={`${primaryBtnClass} mt-2 justify-center`}
+              onClick={() => {
+                void handleUpdatePhoneContact();
+              }}
+              disabled={
+                loading ||
+                !(
+                  customerReservationName?.trim() ||
+                  court?.reservation?.contactName
+                ) ||
+                !(
+                  customerReservationPhone || court?.reservation?.contactPhone
+                )
+              }
             >
-              Salvar informações
+              {loading ? "Salvando…" : "Salvar"}
             </button>
           </div>
         </div>
       )}
+
+      <ConfirmSheet
+        isOpen={!!confirmAction}
+        title={confirmAction?.title || ""}
+        description={confirmAction?.description || ""}
+        confirmLabel={confirmAction?.confirmLabel || "Confirmar"}
+        tone={confirmAction?.tone || "primary"}
+        loading={confirmLoading}
+        onClose={() => {
+          if (!confirmLoading) setConfirmAction(null);
+        }}
+        onConfirm={handleConfirmAction}
+      />
+
       <NewReminderModal
         isOpen={showNewReminderModal}
-        onClose={() => setShowNewReminderModal(false)}
+        onClose={() => {
+          if (!creatingNote) setShowNewReminderModal(false);
+        }}
         handleSubmit={handleCreateNote}
+        isSubmitting={creatingNote}
         date={court?.date || ""}
         message={message}
         setMessage={setMessage}
         is24HoursBefore={is24before}
         setIs24HoursBefore={setIs24before}
         showRemind24HoursBefore={true}
-        defaultMessage={`Reserva para o dia ${court?.date} - ${court?.time} - ${court?.reservation?.contactName}`}
+        defaultMessage={[
+          court?.date && `Reserva para o dia ${court.date}`,
+          court?.time,
+          court?.reservation?.contactName,
+        ]
+          .filter(Boolean)
+          .join(" - ")}
       />
     </div>
   );
 }
+
 export default ReservationDetails;

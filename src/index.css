@@ -45,6 +45,16 @@
   --color-warning-500: #FFBF00;
   --color-warning-600: #F0C163;
   --color-fixed-50: #e7e3f3;
+  --color-master: #081425;
+  --color-master-light: #0C1728;
+  --color-accent-blue: #3D6FB8;
+  --color-accent-blue-soft: #7BA3D9;
+  --color-accent-purple: #7048A8;
+  --color-accent-purple-soft: #A78BDB;
+  --color-accent-green: #34D399;
+  --color-accent-green-bar: #047857;
+  --color-danger-soft: #F87171;
+  --color-text-light: #D7E3FF;
   --breakpoint-xs: 300px;
 }
 
@@ -59,8 +69,46 @@
   }
 }
 
-body{
-  background-color: var(--color-neutral-800);
+body {
+  background-color: var(--color-master);
+  color-scheme: dark;
+}
+
+/* Evita fundo claro do autofill do navegador nos campos escuros */
+@keyframes mpn-autofill-dark {
+  from,
+  to {
+    color: var(--color-text-light);
+    -webkit-text-fill-color: var(--color-text-light);
+    caret-color: var(--color-text-light);
+    background-color: var(--color-master);
+    background-image: none;
+    box-shadow: 0 0 0 1000px var(--color-master) inset;
+    -webkit-box-shadow: 0 0 0 1000px var(--color-master) inset;
+  }
+}
+
+.mpn-field-dark:-webkit-autofill,
+.mpn-field-dark:-webkit-autofill:hover,
+.mpn-field-dark:-webkit-autofill:focus,
+.mpn-field-dark:-webkit-autofill:active {
+  color: var(--color-text-light) !important;
+  -webkit-text-fill-color: var(--color-text-light) !important;
+  caret-color: var(--color-text-light) !important;
+  background-color: var(--color-master) !important;
+  background-image: none !important;
+  filter: none !important;
+  box-shadow: 0 0 0 1000px var(--color-master) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--color-master) inset !important;
+  animation: mpn-autofill-dark 0s forwards;
+  transition: background-color 99999s ease-out 0s !important;
+}
+
+/* Placeholder mais suave que o valor preenchido */
+.mpn-field-dark::placeholder {
+  color: color-mix(in srgb, var(--color-text-light) 40%, transparent);
+  font-weight: 400;
+  opacity: 1;
 }
 
 button {
@@ -78,12 +126,8 @@ button:hover {
   }
 
   button:active:not(li > button) {
-    border: 2px solid var(--color-neutral-800);
+    filter: brightness(0.95);
   }
-  /* li:active{
-    border: 2px solid var(--color-neutral-400);
-    border-radius: 0.25rem;
-  } */
 }
 
 input[type="radio"] {

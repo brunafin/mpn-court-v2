@@ -18,6 +18,8 @@ interface ITextareaProps {
   rows?: number;
   cols?: number;
   maxLength?: number;
+  describedBy?: string;
+  showCount?: boolean;
 }
 
 function Textarea({
@@ -31,24 +33,38 @@ function Textarea({
   required,
   mode = "light",
   className,
-  rows,
+  rows = 3,
   cols,
   onFocus,
   onKeyDown,
   onKeyUp,
   onKeyPress,
   maxLength,
+  describedBy,
+  showCount = true,
 }: ITextareaProps) {
+  const isDark = mode === "dark";
+  const countId = maxLength && showCount ? `${name}-count` : undefined;
+  const describedByIds =
+    [describedBy, countId].filter(Boolean).join(" ") || undefined;
+  const currentLength = value?.length ?? 0;
+
   return (
-    <div className={`flex flex-col ${className}`}>
+    <div className={`mb-3 flex flex-col ${className ?? ""}`}>
       {title && (
         <label
           htmlFor={name}
-          className={`${
-            mode === "dark" ? "text-neutral-100" : "text-neutral-800"
-          } mb-2`}
+          className={`mb-2 text-base font-semibold leading-6 ${
+            isDark ? "text-text-light" : "text-neutral-800"
+          }`}
         >
           {title}
+          {required && (
+            <span className="font-semibold text-accent-blue" aria-hidden="true">
+              {" "}
+              *
+            </span>
+          )}
         </label>
       )}
       <textarea
@@ -56,19 +72,14 @@ function Textarea({
         name={name}
         value={value}
         placeholder={placeholder}
-        className={`w-full px-4 py-2 mb-4 border border-neutral-300 rounded-lg shadow-sm
-          hover:border-neutral-400
-          focus:outline-none focus:ring-2 focus:ring-neutral-300
-          transition-all duration-200 ease-in-out
+        aria-required={required || undefined}
+        aria-describedby={describedByIds}
+        className={`w-full min-h-[6rem] resize-none rounded-xl px-4 py-3 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
           ${
-            mode === "dark"
-              ? "bg-neutral-800 text-neutral-100"
-              : "bg-neutral-100 text-neutral-800"
-          }
-          ${
-            mode === "dark"
-              ? "placeholder-neutral-400"
-              : "placeholder-neutral-400"
+            isDark
+              ? "mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/40 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light"
+              : "border border-neutral-300 bg-neutral-100 text-neutral-800 hover:border-neutral-400 focus-visible:ring-neutral-400 focus-visible:ring-offset-neutral-100 placeholder:font-normal placeholder-neutral-400"
           }
         `}
         onChange={onChange}
@@ -83,6 +94,16 @@ function Textarea({
         cols={cols}
         maxLength={maxLength}
       />
+      {maxLength && showCount && (
+        <p
+          id={countId}
+          className={`mt-1.5 text-right text-sm font-medium ${
+            isDark ? "text-text-light/70" : "text-neutral-600"
+          }`}
+        >
+          {currentLength}/{maxLength}
+        </p>
+      )}
     </div>
   );
 }

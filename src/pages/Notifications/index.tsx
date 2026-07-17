@@ -1,175 +1,255 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
-import Header from "../../components/Header";
-import Loader from "../../components/Loader";
+import { useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { format, isValid, parseISO } from "date-fns";
 import { useLoading } from "../../hooks/useLoading";
-import { MdOutlineCheck, MdOutlinePostAdd } from "react-icons/md";
-import Daypicker from "../../components/Daypicker";
+import { MdOutlineArrowBackIos, MdOutlineCheck, MdOutlinePostAdd } from "react-icons/md";
 import NewReminderModal from "../../components/NewNote";
 import { checkIsRead, createNote, INote, notesByDate } from "../../api/notes";
 import { useNotification } from "../../contexts/NotificationContext";
+import DateStrip from "../Reservation/DateStrip";
+import CalendarButton from "../Reservation/CalendarButton";
+import {
+  getAccessToken,
+  getAccessTokenPayload,
+} from "../../utils/authCookie";
+import { buttonClassName } from "../../components/Button";
+import { useErrors } from "../../contexts/ErrorsContext";
+import EmptyState from "../../components/EmptyState";
+import { PageTitle } from "../../components/PageTitle";
 
-const defaultDate = new Date(new Date().setHours(0, 0, 0, 0));  
+function parseIncomingDate(value: unknown): Date {
+  if (value instanceof Date && isValid(value)) {
+    return new Date(value.setHours(0, 0, 0, 0));
+  }
+  if (typeof value === "string" && value.trim()) {
+    const iso = value.includes("T") ? value : `${value}T00:00:00`;
+    const parsed = parseISO(iso);
+    if (isValid(parsed)) {
+      return new Date(parsed.setHours(0, 0, 0, 0));
+    }
+  }
+  return new Date(new Date().setHours(0, 0, 0, 0));
+}
 
-function Notifications() {
+function DayReminders() {
   const navigate = useNavigate();
-  const { unreadCount, setUnreadCount } = useNotification();
+  const location = useLocation();
+  const { refreshUnreadCount } = useNotification();
+  const { notifyError } = useErrors();
   const { loading, withLoading } = useLoading();
-  const [companyPublicId, setCompanyPublicId] = useState<string>('');
+  const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [showNewReminderModal, setShowNewReminderModal] = useState(false);
-  const [date, setDate] = useState<Date>(defaultDate);
+  const [date, setDate] = useState<Date>(() =>
+    parseIncomingDate(location.state?.date)
+  );
   const [notifications, setNotifications] = useState<INote[]>([]);
-  const [message, setMessage] = useState<string>('');
+  const [message, setMessage] = useState<string>("");
   const [is24before, setIs24before] = useState<boolean>(false);
-
+  const [creatingNote, setCreatingNote] = useState(false);
+  const [markingId, setMarkingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = Cookies.get("access_token");
-    if (!token) {
+    if (!getAccessToken()) {
       navigate("/");
     }
   }, [navigate]);
 
-  const getInfosFromCookie = (): { companyPublicId: string } | null => {
-    const match = document.cookie.match(/access_token=([^;]+)/);
-    if (!match) return null;
-    try {
-      const token = match[1];
-      const payload = jwtDecode<any>(token);
-      return { companyPublicId: payload?.companyPublicId || '' };
-    } catch {
-      return null;
-    }
-  };
-
   useEffect(() => {
-    const info = getInfosFromCookie();
-    setCompanyPublicId(info?.companyPublicId || '');
+    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
+    setCompanyPublicId(payload?.companyPublicId || "");
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!companyPublicId) return;
+    const dateInput = format(date, "yyyy-MM-dd");
     await withLoading(async () => {
       try {
-        const response = await notesByDate(companyPublicId, date.toISOString().split('T')[0]);
+        const response = await notesByDate(companyPublicId, dateInput);
         setNotifications(response);
         if (date.toDateString() === new Date().toDateString()) {
-          setUnreadCount(response.length);
+          await refreshUnreadCount();
         }
       } catch (error) {
-        console.error('Erro ao buscar lembretes da empresa:', error);
+        console.error("Erro ao buscar lembretes da empresa:", error);
       }
     });
-  };
+  }, [companyPublicId, date, refreshUnreadCount, withLoading]);
 
   useEffect(() => {
     fetchNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [companyPublicId, date]);
 
   const handleCheckIsRead = async (id: string) => {
+    if (markingId) return;
+    setMarkingId(id);
     try {
-      await withLoading(async () => {
-        await checkIsRead(id);
-        setNotifications((prev) => prev.filter((note) => note.id !== parseInt(id)));
-        if (date.toDateString() === new Date().toDateString()) {
-          setUnreadCount(unreadCount - 1);
-        }
-      });
+      await checkIsRead(id);
+      setNotifications((prev) =>
+        prev.filter((note) => note.id !== parseInt(id, 10))
+      );
+      await refreshUnreadCount();
     } catch (error) {
-      console.error('Erro ao marcar lembrete como lido:', error);
+      console.error("Erro ao marcar lembrete como lido:", error);
+    } finally {
+      setMarkingId(null);
     }
   };
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async (
+    event?: React.FormEvent
+  ): Promise<void> => {
+    event?.preventDefault?.();
     if (!message.trim()) {
-      return alert("Uma mensagem é necessária para criar um lembrete.");
+      notifyError({
+        message: "Uma mensagem é necessária para criar um lembrete.",
+        type: "error",
+      });
+      return;
     }
-    await withLoading(async () => {
+    if (creatingNote) return;
+    setCreatingNote(true);
+    try {
       await createNote({
         companyPublicId,
-        date: date.toISOString().split('T')[0],
+        date: format(date, "yyyy-MM-dd"),
         message,
         is24HoursBefore: is24before,
       });
       setShowNewReminderModal(false);
-      setMessage('');
+      setMessage("");
       setIs24before(false);
-      fetchNotifications();
-    });
+      await fetchNotifications();
+    } finally {
+      setCreatingNote(false);
+    }
   };
 
+  const createBtnClass = buttonClassName({
+    variant: "primary",
+    size: "md",
+    className: "justify-center",
+  });
 
-  if (loading) return <Loader />;
+  const showListLoading = loading && notifications.length === 0;
+  const dateKey = format(date, "yyyy-MM-dd");
 
   return (
-    <>
-      <Header />
-      <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-        <div className="bg-neutral-900 flex justify-center gap-2 p-3">
-            <h2
-            className="text-lg cursor-pointer"
-            onClick={() => setDate(defaultDate)}
-            title="Voltar para hoje"
-            >
-            Lembretes
-            </h2>
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
+      <header className="sticky top-0 z-10 flex items-center gap-3 bg-master px-4 py-3">
+        <button
+          type="button"
+          onClick={() =>
+            navigate("/reservas", {
+              state: { date: dateKey },
+            })
+          }
+          aria-label="Voltar para reservas"
+          className="flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+        >
+          <MdOutlineArrowBackIos size={20} aria-hidden />
+        </button>
+        <PageTitle>Lembretes</PageTitle>
+      </header>
+
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 bg-master-light px-3 pb-3 pt-2">
+          <div className="mb-2">
+            <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+          </div>
+          <div className="mb-3">
+            <DateStrip selectedDate={date} setSelectedDate={setDate} />
+          </div>
           <button
+            type="button"
             onClick={() => setShowNewReminderModal(true)}
-            className="text-neutral-200 cursor-pointer"
+            className={createBtnClass}
           >
-            <MdOutlinePostAdd
-              size={24}
-              className="text-neutral-200 cursor-pointer"
-            />
+            <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
+            Criar lembrete
           </button>
         </div>
-        <div className="flex justify-center items-center p-4">
-          <Daypicker
-            selectedDate={date}
-            setSelectedDate={setDate}
-          />
-        </div>
-        {notifications && notifications.length > 0 ? (
-          <ul className="flex flex-col items-center gap-4 p-4">
-            {notifications.map((notification: any) => (
-              <li key={notification.id} className="bg-white text-neutral-700 py-4 ps-4 pe-2 rounded shadow w-full max-w-md">
-                {notification.sender && (
-                  <span className="text-sm font-bold text-neutral-800 block mb-1">{notification.sender}:
-                    {notification.title && (
-                      <span className="font-normal text-neutral-600">{' '}({notification.title})</span>
-                    )}
-                  </span>
-                )}
-                <div className="flex justify-between items-stretch">
-                  <p>{notification.message}</p>
-                  <button
-                    className="p-2 active:border-2 active:border-neutral-800 rounded-sm bg-tertiary-100"
-                    onClick={async () => handleCheckIsRead(notification.id.toString())}
 
+        {showListLoading ? (
+          <ul
+            className="flex-1 animate-pulse space-y-3 overflow-y-auto px-4 pb-6 pt-5"
+            aria-label="Carregando lembretes"
+          >
+            {Array.from({ length: 3 }).map((_, index) => (
+              <li
+                key={index}
+                className="rounded-2xl bg-master-light/70 px-4 py-5"
+              >
+                <span className="mb-3 block h-4 w-24 rounded bg-text-light/10" />
+                <span className="block h-5 w-full rounded bg-text-light/10" />
+              </li>
+            ))}
+          </ul>
+        ) : notifications.length > 0 ? (
+          <ul className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5">
+            {notifications.map((notification) => (
+              <li
+                key={notification.id}
+                className={`rounded-2xl bg-master-light p-4 transition-opacity ${
+                  markingId === notification.id.toString() ? "opacity-60" : ""
+                }`}
+              >
+                {notification.from && (
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-text-light/55">
+                    {notification.from}
+                  </p>
+                )}
+                <div className="flex items-start justify-between gap-3">
+                  <p className="min-w-0 flex-1 text-lg leading-7 text-text-light">
+                    {notification.message}
+                  </p>
+                  <button
+                    type="button"
+                    aria-label="Marcar lembrete como lido"
+                    disabled={markingId === notification.id.toString()}
+                    onClick={() =>
+                      handleCheckIsRead(notification.id.toString())
+                    }
+                    className="flex min-h-12 shrink-0 items-center gap-1.5 rounded-xl bg-master px-3 text-base font-semibold text-accent-green transition hover:bg-accent-green/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <MdOutlineCheck />
+                    <MdOutlineCheck size={22} aria-hidden />
+                    {markingId === notification.id.toString()
+                      ? "…"
+                      : "Lido"}
                   </button>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-center text-white mt-4">Tudo em dia.</p>
+          <EmptyState
+            title="Nenhum lembrete neste dia"
+            description="Use Criar lembrete acima ou escolha outra data."
+            className="pb-16"
+          />
         )}
-      </section >
+      </section>
+
       <NewReminderModal
         isOpen={showNewReminderModal}
-        onClose={() => setShowNewReminderModal(false)}
+        onClose={() => {
+          if (!creatingNote) setShowNewReminderModal(false);
+        }}
         handleSubmit={handleSubmit}
-        date={date.toLocaleString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+        isSubmitting={creatingNote}
+        date={date.toLocaleString("pt-BR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })}
         message={message}
         setMessage={setMessage}
         is24HoursBefore={is24before}
+        setIs24HoursBefore={setIs24before}
+        showRemind24HoursBefore
       />
-    </>
+    </div>
   );
 }
-export default Notifications;
+
+export default DayReminders;

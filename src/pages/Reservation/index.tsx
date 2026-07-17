@@ -1,49 +1,54 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import ReservationItem from "./ReservationItem";
 import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
-import { HiOutlineCog, HiX } from "react-icons/hi";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import Header from "../../components/Header";
-import Cookies from "js-cookie";
+import { clearAccessToken, getAccessToken, getAccessTokenPayload } from "../../utils/authCookie";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Loader from "../../components/Loader";
 import { useLoading } from "../../hooks/useLoading";
-import { formatDate, isToday } from "date-fns";
-import Daypicker from "../../components/Daypicker";
-import { MdOutlinePostAdd } from "react-icons/md";
 import NewReminderModal from "../../components/NewNote";
 import { useNotification } from "../../contexts/NotificationContext";
-import { counterNotes, createNote } from "../../api/notes";
+import { createNote, notesByDate } from "../../api/notes";
+import ReminderBadge from "../../components/ReminderBadge";
+import DateStrip from "./DateStrip";
+import CalendarButton from "./CalendarButton";
+import { format } from "date-fns";
+import {
+  MdChevronRight,
+  MdExpandMore,
+  MdOutlineEventNote,
+  MdOutlineNotifications,
+  MdOutlinePostAdd,
+} from "react-icons/md";
+import { BsX } from "react-icons/bs";
+import { buttonClassName } from "../../components/Button";
+import EmptyState, {
+  emptyStateActionClassName,
+} from "../../components/EmptyState";
 
-const getBorderColorByStatusSelected = (
-  status: ReservationStatusEnum | null
-): string => {
-  if (!status) return "border-1 border-neutral-800";
-  switch (status) {
-    case ReservationStatusEnum.FIXED:
-      return "border-2 bg-neutral-900 border-purple-800";
-    case ReservationStatusEnum.INACTIVE:
-      return "border-2 bg-neutral-900 border-danger-400";
-    case ReservationStatusEnum.RESERVED:
-      return "border-2 bg-neutral-900 border-secondary-600";
-    case ReservationStatusEnum.PREPAID:
-      return "border-2 bg-neutral-900 border-warning-500";
-    case ReservationStatusEnum.AVAILABLE:
-      return "border-2 bg-neutral-900 border-tertiary-700";
-    default:
-      return "border-2 bg-neutral-900 border-gray-400";
-  }
+type SchedulesCache = {
+  key: string;
+  list: IReservationItemProps[];
+  courtsNameList: string[];
 };
+
+let schedulesCache: SchedulesCache | null = null;
+
+function toDateKey(value: Date) {
+  return format(value, "yyyy-MM-dd");
+}
 
 function Reservation() {
   const { loading, withLoading } = useLoading();
-  const { unreadCount, setUnreadCount } = useNotification();
+  const { refreshUnreadCount } = useNotification();
 
   const [showNewReminderModal, setShowNewReminderModal] = useState(false);
-  const [message, setMessage] = useState<string>('');
+  const [message, setMessage] = useState<string>("");
   const [is24before, setIs24before] = useState<boolean>(false);
+  const [creatingNote, setCreatingNote] = useState(false);
+  const [dayUnreadCount, setDayUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const dateFrom = location.state?.date;
@@ -51,62 +56,31 @@ function Reservation() {
   const [date, setDate] = useState<Date>(
     dateFrom
       ? new Date(
-        Number.isNaN(Date.parse(dateFrom))
-          ? new Date().setHours(0, 0, 0, 0)
-          : new Date(dateFrom + "T00:00:00").setHours(0, 0, 0, 0)
-      )
+          Number.isNaN(Date.parse(dateFrom))
+            ? new Date().setHours(0, 0, 0, 0)
+            : new Date(dateFrom + "T00:00:00").setHours(0, 0, 0, 0)
+        )
       : new Date(new Date().setHours(0, 0, 0, 0))
   );
   const [statusSelected, setStatusSelected] =
     useState<ReservationStatusEnum | null>(null);
   const [courtSelected, setCourtSelected] = useState<string>("all");
-  const [isOpenFilters, setIsOpenFilters] = useState(false);
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsTitleId = useId();
 
   useEffect(() => {
-    const token = Cookies.get("access_token");
-    if (!token) {
+    if (!getAccessToken()) {
       navigate("/");
     }
   }, [navigate]);
 
   useEffect(() => {
-    const getCompanyPublicIdFromToken = () => {
-      const match = document.cookie.match(/(?:^|;\s*)access_token=([^;]*)/);
-      if (!match) return "";
-      try {
-        const token = match[1];
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return payload.companyPublicId || "";
-      } catch {
-        return "";
-      }
-    };
-    const id = getCompanyPublicIdFromToken();
-    setCompanyPublicId(id);
+    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
+    setCompanyPublicId(payload?.companyPublicId || "");
   }, []);
-
-  useEffect(() => {
-    if (!companyPublicId || !date) return;
-    fetchData(date?.toISOString().split("T")[0]);
-  }, [companyPublicId, date]);
-
-  useEffect(() => {
-    if (!companyPublicId) return;
-    const fetchCount = async () => {
-      try {
-        const response = await counterNotes(companyPublicId);
-        if (response) {
-          setUnreadCount(response);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar informações da empresa:', error);
-      }
-    };
-    fetchCount();
-  }, [companyPublicId]);
 
   const fetchData = useCallback(
     async (dateInput: string) => {
@@ -119,262 +93,372 @@ function Reservation() {
             companyPublicId,
             date: dateInput,
           });
-          setList(response);
           const uniqueCourts = [...new Set(response.map((item) => item.court))];
+          setList(response);
           setCourtsNameList(uniqueCourts);
+          schedulesCache = {
+            key: `${companyPublicId}:${dateInput}`,
+            list: response,
+            courtsNameList: uniqueCourts,
+          };
         });
       } catch (error: any) {
         if (error?.response?.status === 401) {
-          alert("Sessão expirada. Faça login novamente.");
-          Cookies.remove("access_token");
+          clearAccessToken();
           navigate("/");
         } else {
           console.error(error);
         }
       }
     },
-    [date, companyPublicId]
+    [companyPublicId, navigate]
   );
+
+  useEffect(() => {
+    if (!companyPublicId || !date) return;
+    const dateInput = toDateKey(date);
+    const key = `${companyPublicId}:${dateInput}`;
+    if (schedulesCache?.key === key) {
+      setList(schedulesCache.list);
+      setCourtsNameList(schedulesCache.courtsNameList);
+    }
+    fetchData(dateInput);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
+  }, [companyPublicId, date]);
+
+  useEffect(() => {
+    refreshUnreadCount();
+  }, [refreshUnreadCount]);
+
+  useEffect(() => {
+    setActionsOpen(false);
+  }, [date]);
+
+  useEffect(() => {
+    if (!actionsOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setActionsOpen(false);
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [actionsOpen]);
+
+  useEffect(() => {
+    if (!companyPublicId || !date) return;
+
+    let cancelled = false;
+    const fetchDayReminders = async () => {
+      try {
+        const notes = await notesByDate(companyPublicId, toDateKey(date));
+        if (!cancelled) {
+          setDayUnreadCount(Array.isArray(notes) ? notes.length : 0);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar lembretes do dia:", error);
+        if (!cancelled) setDayUnreadCount(0);
+      }
+    };
+
+    fetchDayReminders();
+    return () => {
+      cancelled = true;
+    };
+  }, [companyPublicId, date]);
 
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
-    await withLoading(async () => {
+    if (creatingNote) return;
+    setCreatingNote(true);
+    try {
       await createNote({
-        companyPublicId: companyPublicId || '',
-        date: date.toISOString().split('T')[0],
+        companyPublicId: companyPublicId || "",
+        date: toDateKey(date),
         message,
         is24HoursBefore: is24before,
       });
       setShowNewReminderModal(false);
-      setMessage('');
+      setMessage("");
       setIs24before(false);
-      if (date.toDateString() === new Date().toDateString()) {
-        setUnreadCount(unreadCount + 1);
+      await refreshUnreadCount();
+      try {
+        const notes = await notesByDate(companyPublicId, toDateKey(date));
+        setDayUnreadCount(Array.isArray(notes) ? notes.length : 0);
+      } catch {
+        setDayUnreadCount((prev) => prev + 1);
       }
-    });
-  };
-
-  const getResultHeaderTitleList = (): string => {
-    if (!date) return "sem data";
-    const dateFormatted = formatDate(date, "dd/MM/yyyy");
-    const isTodayComparing = isToday(new Date(date));
-
-    switch (statusSelected) {
-      case ReservationStatusEnum.AVAILABLE:
-        return `Exibindos somente os horários disponíveis do dia ${isTodayComparing ? "hoje" : dateFormatted
-          }.`;
-      case ReservationStatusEnum.RESERVED:
-        return `Exibindos somente os horários reservados do dia ${isTodayComparing ? "hoje" : dateFormatted
-          }.`;
-      case ReservationStatusEnum.FIXED:
-        return `Exibindos somente os horários fixos do dia ${isTodayComparing ? "hoje" : dateFormatted
-          }.`;
-      case ReservationStatusEnum.INACTIVE:
-        return `Exibindos somente os horários inativos do dia ${isTodayComparing ? "hoje" : dateFormatted
-          }.`;
-      default:
-        return `Exibindo todos os horários do dia ${isTodayComparing ? "hoje" : dateFormatted
-          }.`;
+    } finally {
+      setCreatingNote(false);
     }
   };
 
-  if (loading) return <Loader />;
+  const filteredList = useMemo(() => {
+    return list
+      .filter((elementDate) => {
+        if (!date) return elementDate;
+        const formattedDate = new Date(
+          date.getTime() + date.getTimezoneOffset() * 60000
+        )
+          .toISOString()
+          .split("T")[0];
+        return elementDate.date === formattedDate;
+      })
+      .filter((elementStatus) => {
+        if (!statusSelected) return elementStatus;
+        if (statusSelected === ReservationStatusEnum.RESERVED) {
+          return (
+            elementStatus.status === ReservationStatusEnum.RESERVED ||
+            elementStatus.status === ReservationStatusEnum.PREPAID
+          );
+        }
+        return elementStatus.status === statusSelected;
+      })
+      .filter((elementCourt) => {
+        if (!courtSelected || courtSelected === "all") return elementCourt;
+        return elementCourt.court === courtSelected;
+      });
+  }, [list, date, statusSelected, courtSelected]);
+
+  const showListLoading = loading && list.length === 0;
+  const showUnreadBadge = dayUnreadCount > 0;
+
+  const actionRowClass =
+    "flex min-h-14 w-full items-center gap-3 rounded-2xl bg-master px-4 text-left text-base font-semibold text-text-light transition hover:bg-master/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
+
+  const listContent = showListLoading ? (
+    <ul
+      className="flex-1 animate-pulse overflow-y-auto px-0 pb-6 pt-0 sm:px-4"
+      aria-label="Carregando horários"
+    >
+      {Array.from({ length: 6 }).map((_, index) => (
+        <li
+          key={index}
+          className="flex min-h-16 items-stretch border-b border-text-light/10"
+        >
+          <span className="w-8 shrink-0 bg-text-light/10" />
+          <span className="mx-3 my-4 h-5 flex-1 rounded bg-text-light/10" />
+        </li>
+      ))}
+    </ul>
+  ) : filteredList.length > 0 ? (
+    <ul
+      className={`flex-1 overflow-y-auto px-0 pb-6 pt-0 transition-opacity sm:px-4 md:mx-auto md:w-full md:max-w-2xl ${
+        loading ? "opacity-70" : ""
+      }`}
+    >
+      {filteredList.map((item) => (
+        <ReservationItem
+          scheduleId={item.scheduleId}
+          court={item.court}
+          customerName={item.customerName}
+          date={item.date}
+          status={item.status}
+          time={item.time}
+          isBarbecueIncluded={item.isBarbecueIncluded}
+          isEvent={item.isEvent}
+          isNeedsNetting={item.isNeedsNetting}
+          key={item.scheduleId}
+        />
+      ))}
+    </ul>
+  ) : (
+    <EmptyState
+      title={`Nenhum horário encontrado${
+        statusSelected ? " para o filtro selecionado" : ""
+      }.`}
+      action={
+        statusSelected ? (
+          <button
+            type="button"
+            onClick={() => setStatusSelected(null)}
+            className={emptyStateActionClassName()}
+          >
+            Limpar filtro
+          </button>
+        ) : (
+          <Link
+            to={`/configuracoes-horarios`}
+            state={{ date: date }}
+            className={emptyStateActionClassName()}
+          >
+            Detalhes do dia
+          </Link>
+        )
+      }
+    />
+  );
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <Header />
-      <section className="bg-neutral-800 h-[calc(100vh-64px)] w-full flex flex-col">
-        <div className="bg-neutral-800 flex items-center justify-around md:justify-center py-2 mb-4 mt-2 mx-2 rounded-sm">
-          <Daypicker
-            selectedDate={date}
-            setSelectedDate={setDate}
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master text-text-light">
+        <div className="shrink-0 bg-master-light px-3 pb-4 pt-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+            <button
+              type="button"
+              onClick={() => setActionsOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={actionsOpen}
+              aria-label="Ações do dia"
+              className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 text-base font-semibold text-text-light/85 transition hover:bg-master hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            >
+              <span>Ações</span>
+              {showUnreadBadge && <ReminderBadge count={dayUnreadCount} />}
+              <MdExpandMore size={22} className="shrink-0" aria-hidden />
+            </button>
+          </div>
+
+          <div className="mb-2">
+            <DateStrip selectedDate={date} setSelectedDate={setDate} />
+          </div>
+
+          <LegendAndFilters
+            statusSelected={statusSelected}
+            setStatusSelected={setStatusSelected}
+            courtsNameList={courtsNameList}
+            courtSelected={courtSelected}
+            setCourtSelected={setCourtSelected}
           />
-          <button
-            className={`text-neutral-200 underline py-2 px-2 flex justify-center items-center rounded-sm  mx-2 z-11 ${getBorderColorByStatusSelected(
-              statusSelected
-            )} ${isOpenFilters ? "bg-neutral-900 border-1 border-neutral-900" : ""
-              }`}
-            onClick={() => setIsOpenFilters(!isOpenFilters)}
-          >
-            {isOpenFilters ? (
-              <>
-                <HiX /> Fechar
-              </>
-            ) : (
-              <>Filtrar</>
-            )}
-          </button>
         </div>
-        <LegendAndFilters
-          statusSelected={statusSelected}
-          setStatusSelected={setStatusSelected}
-          isOpen={isOpenFilters}
-          setIsOpenFilters={setIsOpenFilters}
-        />
-        {list
-          .filter((elementDate) => {
-            if (!date) return elementDate;
-            const formattedDate = new Date(
-              date.getTime() + date.getTimezoneOffset() * 60000
-            )
-              .toISOString()
-              .split("T")[0];
-            return elementDate.date === formattedDate;
-          })
-          .filter((elementStatus) => {
-            if (!statusSelected) return elementStatus;
-            if (statusSelected === ReservationStatusEnum.RESERVED) {
-              return (
-                elementStatus.status === ReservationStatusEnum.RESERVED ||
-                elementStatus.status === ReservationStatusEnum.PREPAID
-              );
-            } else {
-              return elementStatus.status === statusSelected;
-            }
-          })
-          .filter((elementCourt) => {
-            if (!courtSelected) return elementCourt;
-            if (courtSelected === "all") {
-              return elementCourt;
-            } else {
-              return elementCourt.court === courtSelected;
-            }
-          }).length > 0 ? (
-          <>
-            <div className="bg-neutral-900 py-4 px-2 flex items-start gap-4 justify-center">
-              <h3 className="text-center">
-                {getResultHeaderTitleList()}
-              </h3>
-              <div className="flex gap-2 items-center">
-                <Link
-                  to={`/configuracoes-horarios`}
-                  state={{ date: date }}
+
+        {listContent}
+
+        {actionsOpen && (
+          <div className="fixed inset-0 z-[1100] flex items-end justify-center sm:items-center sm:p-4">
+            <button
+              type="button"
+              aria-label="Fechar ações"
+              className="absolute inset-0 bg-black/75"
+              onClick={() => setActionsOpen(false)}
+            />
+
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={actionsTitleId}
+              className="relative z-10 flex w-full max-w-md flex-col rounded-t-3xl bg-master-light text-text-light shadow-2xl sm:rounded-3xl"
+            >
+              <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
+
+              <div className="flex items-start justify-between gap-3 px-5 pb-2 pt-4">
+                <h2
+                  id={actionsTitleId}
+                  className="text-xl font-semibold leading-7 text-text-light"
                 >
-                  <HiOutlineCog
-                    size={24}
-                    className="
-                        text-neutral-200 cursor-pointer rounded-full 
-                        hover:border hover:border-neutral-400
-                        focus:border focus:border-neutral-400
-                        active:bg-neutral-700/30
-                        transition
-                    "
-                  />
-                </Link>
+                  Ações do dia
+                </h2>
                 <button
-                  onClick={() => setShowNewReminderModal(true)}
-                  className="text-neutral-200 cursor-pointer"
+                  type="button"
+                  onClick={() => setActionsOpen(false)}
+                  aria-label="Fechar"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light/80 transition active:bg-master/80"
                 >
-                  <MdOutlinePostAdd
-                    size={24}
-                    className="text-neutral-200 cursor-pointer"
-                  />
+                  <BsX size={24} aria-hidden />
                 </button>
               </div>
-            </div>
-            {courtsNameList.length > 1 && (
-              <ul className="flex py-3 gap-2 bg-neutral-900 justify-center">
-                <li key='all'>
-                  <button
-                    className={`cursor-pointer text-sm bg-neutral-200 py-2 px-4 flex justify-center items-center rounded-md text-neutral-800 ${courtSelected === 'all' ? 'border-2 border-gray-500 bg-neutral-100 font-bold' : ''}`}
-                    onClick={() => setCourtSelected('all')}
-                  >
-                    Todas
-                  </button>
-                </li>
-                {courtsNameList.map((court) => (
-                  <li key={court}>
-                    <button
-                      className={`cursor-pointer text-sm bg-neutral-200 py-2 px-4 flex justify-center items-center rounded-md text-neutral-800 ${courtSelected === court ? 'border-2 border-gray-500 bg-neutral-100 font-bold' : ''}`}
-                      onClick={() => setCourtSelected(court)}
+
+              <div className="space-y-5 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                <div>
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
+                    Lembretes
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      to="/notificacoes"
+                      state={{ date: date }}
+                      onClick={() => setActionsOpen(false)}
+                      className={`${actionRowClass} ${
+                        showUnreadBadge
+                          ? "ring-1 ring-inset ring-accent-blue/50"
+                          : ""
+                      }`}
                     >
-                      {court}
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-blue/15 text-accent-blue">
+                        <MdOutlineNotifications size={22} aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">Ver lembretes</span>
+                      {showUnreadBadge && (
+                        <ReminderBadge count={dayUnreadCount} />
+                      )}
+                      <MdChevronRight
+                        size={22}
+                        className="shrink-0 text-text-light/45"
+                        aria-hidden
+                      />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActionsOpen(false);
+                        setShowNewReminderModal(true);
+                      }}
+                      className={buttonClassName({
+                        variant: "secondary",
+                        size: "md",
+                        className: "justify-center",
+                      })}
+                    >
+                      <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
+                      Criar lembrete
                     </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <ul className="flex flex-col gap-3 overflow-y-auto bg-neutral-900 py-2 w-full md:mx-auto md:bg-neutral-900 md:py-4 md:px-8 md:rounded-lg h-full">
-              {list
-                .filter((elementDate) => {
-                  if (!date) return elementDate;
-                  const formattedDate = new Date(
-                    date.getTime() + date.getTimezoneOffset() * 60000
-                  )
-                    .toISOString()
-                    .split("T")[0];
-                  return elementDate.date === formattedDate;
-                })
-                .filter((elementStatus) => {
-                  if (!statusSelected) return elementStatus;
-                  if (statusSelected === ReservationStatusEnum.RESERVED) {
-                    return (
-                      elementStatus.status === ReservationStatusEnum.RESERVED ||
-                      elementStatus.status === ReservationStatusEnum.PREPAID
-                    );
-                  } else {
-                    return elementStatus.status === statusSelected;
-                  }
-                })
-                .filter((elementCourt) => {
-                  if (!courtSelected) return elementCourt;
-                  if (courtSelected === "all") {
-                    return elementCourt;
-                  } else {
-                    return elementCourt.court === courtSelected;
-                  }
-                })
-                .map((item) => (
-                  <ReservationItem
-                    scheduleId={item.scheduleId}
-                    court={item.court}
-                    customerName={item.customerName}
-                    date={item.date}
-                    status={item.status}
-                    time={item.time}
-                    isBarbecueIncluded={item.isBarbecueIncluded}
-                    isEvent={item.isEvent}
-                    isNeedsNetting={item.isNeedsNetting}
-                    key={item.scheduleId}
-                  />
-                ))}
-            </ul>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center m-16">
-            <p className="text-center mb-4">
-              Nenhum horário encontrado
-              {statusSelected && " para o filtro selecionado"}.
-            </p>
-            <Link
-              to={`/configuracoes-horarios`}
-              state={{ date: date }}
-              className="flex items-end underline gap-2"
-            >
-              <HiOutlineCog size={24}
-                className="
-                        text-neutral-200 cursor-pointer rounded-full 
-                        hover:border hover:border-neutral-400
-                        focus:border focus:border-neutral-400
-                        active:bg-neutral-700/30
-                        transition
-                    "
-              />
-              Detalhes do dia
-            </Link>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
+                    Dia
+                  </p>
+                  <Link
+                    to={`/configuracoes-horarios`}
+                    state={{ date: date }}
+                    onClick={() => setActionsOpen(false)}
+                    className={actionRowClass}
+                  >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-text-light/10 text-text-light/80">
+                      <MdOutlineEventNote size={22} aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">Detalhes do dia</span>
+                    <MdChevronRight
+                      size={22}
+                      className="shrink-0 text-text-light/45"
+                      aria-hidden
+                    />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
         <NewReminderModal
           isOpen={showNewReminderModal}
-          onClose={() => setShowNewReminderModal(false)}
+          onClose={() => {
+            if (!creatingNote) setShowNewReminderModal(false);
+          }}
           handleSubmit={handleCreateNote}
-          date={date.toLocaleString('pt-BR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+          isSubmitting={creatingNote}
+          date={date.toLocaleString("pt-BR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          })}
           message={message}
           setMessage={setMessage}
           is24HoursBefore={is24before}
+          setIs24HoursBefore={setIs24before}
+          showRemind24HoursBefore
         />
       </section>
-    </>
+    </div>
   );
 }
+
 export default Reservation;

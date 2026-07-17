@@ -1,6 +1,6 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { IError } from '../contexts/ErrorsContext';
+import { getAccessToken } from '../utils/authCookie';
 
 let notifyError: ((error: IError) => void) | null = null;
 
@@ -18,7 +18,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('access_token');
+    const token = getAccessToken();
     if (token) {
       config.headers = config.headers || {};
       config.headers['Authorization'] = `Bearer ${token}`;

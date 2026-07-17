@@ -1,71 +1,78 @@
 import { format } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Select from "../../../components/Select";
 import { createNewCourtSchedule } from "../../../api/companies";
 import { useLoading } from "../../../hooks/useLoading";
-import Loader from "../../../components/Loader";
 import Input from "../../../components/Input";
+import { BsX } from "react-icons/bs";
+import { MdOutlineAdd } from "react-icons/md";
+import { buttonClassName } from "../../../components/Button";
 
 interface IAddCourtScheduleProps {
   show: boolean;
   onClose: () => void;
   date: Date;
   courts: { id: number; name: string }[];
+  onSuccess?: () => void;
 }
 
-function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProps) {
+function AddCourtSchedule({
+  show,
+  onClose,
+  date,
+  courts,
+  onSuccess,
+}: IAddCourtScheduleProps) {
   const { loading, withLoading } = useLoading();
   const navigate = useNavigate();
-  const modalRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const titleId = useId();
+  const descriptionId = useId();
 
-  const [selectedCourt, setSelectedCourt] = useState<{ id: number; name: string } | null>(null);
-  const [selectedHour, setSelectedHour] = useState<{ id: string; name: string } | null>(null);
+  const [selectedCourt, setSelectedCourt] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [selectedHour, setSelectedHour] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [error, setError] = useState<string>("");
   const [price, setPrice] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (show && modalRef.current) {
-      modalRef.current.focus();
-    }
-  }, [show]);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+    if (!show) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((courtOptions.length > 1 && !selectedCourt) || !selectedHour) {
-      setError('Preencha os campos obrigatórios.');
-      return;
-    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-    const obj = {
-      start_hour: selectedHour.id,
-      date: format(date, "yyyy-MM-dd"),
-      court_id: selectedCourt?.id ?? courtOptions[0].id,
-      price: price ?? 0
-    };
+    setError("");
 
-    await withLoading(async () => {
-      const response = await createNewCourtSchedule(obj);
+    const focusTimer = window.setTimeout(() => {
+      const field = dialogRef.current?.querySelector<HTMLElement>(
+        "select, input, button"
+      );
+      field?.focus();
+    }, 50);
 
-      if (response !== undefined) {
-        onClose();
-        navigate("/reservas", {
-          state: {
-            date: format(date, "yyyy-MM-dd"),
-          },
-        });
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
       }
-    });
-  };
+    };
 
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      window.clearTimeout(focusTimer);
+    };
+  }, [show]);
 
   if (!show) return null;
 
@@ -75,91 +82,194 @@ function AddCourtSchedule({ show, onClose, date, courts }: IAddCourtScheduleProp
     return { id: hourStr, name: hourStr };
   });
 
-  if (loading) return <Loader />;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+
+    const missingCourt = courtOptions.length > 1 && !selectedCourt;
+    const missingHour = !selectedHour;
+    const missingPrice = price === null;
+
+    if (missingCourt || missingHour || missingPrice) {
+      setError("Preencha os campos obrigatórios.");
+      return;
+    }
+
+    const obj = {
+      start_hour: selectedHour.id,
+      date: format(date, "yyyy-MM-dd"),
+      court_id: selectedCourt?.id ?? courtOptions[0].id,
+      price,
+    };
+
+    await withLoading(async () => {
+      const response = await createNewCourtSchedule(obj);
+
+      if (response !== undefined) {
+        onClose();
+        onSuccess?.();
+        navigate("/reservas", {
+          state: {
+            date: format(date, "yyyy-MM-dd"),
+          },
+        });
+      }
+    });
+  };
 
   return (
     <div
-      className="fixed inset-0 bg-neutral-800 bg-opacity-50 z-10 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      ref={modalRef}
-      tabIndex={-1}
+      className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4"
+      role="presentation"
     >
-      <div className="bg-neutral-200 w-full max-w-md rounded-lg p-6 relative z-20 flex flex-col">
-        <h1 className="text-center text-lg font-bold mb-2 text-neutral-800">
-          Adicionar Horário de Quadra
-        </h1>
-        <p className="mb-4 text-center text-neutral-800">{format(date, "dd/MM/yyyy")}</p>
+      <button
+        type="button"
+        aria-label="Fechar modal"
+        className="absolute inset-0 bg-black/75"
+        onClick={onClose}
+        disabled={loading}
+      />
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        aria-busy={loading}
+        className={`relative z-10 flex w-full max-h-[92dvh] flex-col rounded-t-3xl bg-master-light text-text-light shadow-2xl transition-opacity sm:max-w-md sm:rounded-3xl ${
+          loading ? "opacity-80" : ""
+        }`}
+      >
+        <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
+
+        <div className="flex items-start justify-between gap-3 px-5 pb-2 pt-4">
+          <div className="min-w-0">
+            <h2
+              id={titleId}
+              className="text-xl font-semibold leading-7 text-text-light"
+            >
+              Adicionar horário
+            </h2>
+            <p
+              id={descriptionId}
+              className="mt-1 text-base leading-6 text-text-light/75"
+            >
+              Novo horário para{" "}
+              <span className="font-semibold text-text-light">
+                {format(date, "dd/MM/yyyy")}
+              </span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            disabled={loading}
+            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
+          >
+            <BsX size={24} aria-hidden />
+          </button>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-1 flex-col overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2"
+          noValidate
+        >
           {courtOptions.length > 1 && (
             <Select
               name="court"
-              title="*Quadra:"
+              title="Quadra"
               required
               value={selectedCourt?.id}
               options={courtOptions}
-              mode="light"
+              mode="dark"
+              disabled={loading}
               onChange={(e) => {
                 const selectedId = Number(e.target.value);
-                const selectedCourt = courtOptions.find(
-                  (court) => court.id === selectedId
-                );
-                setSelectedCourt(selectedCourt || null);
+                const court = courtOptions.find((c) => c.id === selectedId);
+                setSelectedCourt(court || null);
               }}
             />
           )}
 
           <Select
             name="hour"
-            title="*Horário:"
+            title="Horário"
             required
             value={selectedHour?.id}
             options={hourOptions}
-            mode="light"
+            mode="dark"
+            disabled={loading}
             onChange={(e) => {
               const selectedValue = e.target.value;
-              const selectedHour = hourOptions.find(
-                (hour) => hour.id === selectedValue
-              );
-              setSelectedHour(selectedHour || null);
+              const hour = hourOptions.find((h) => h.id === selectedValue);
+              setSelectedHour(hour || null);
+              setError("");
             }}
           />
+
           <Input
             name="price"
-            title="*Preço:"
+            title="Preço"
             placeholder="Digite o valor"
             type="text"
             inputMode="numeric"
             required
-            mode="light"
-            value={price ? price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : ""}
+            mode="dark"
+            readOnly={loading}
+            value={
+              price !== null
+                ? price.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })
+                : ""
+            }
             onChange={(e) => {
-              let val = e.target.value.replace(/\D/g, ""); // só números
+              const val = e.target.value.replace(/\D/g, "");
               if (val === "") {
                 setPrice(null);
                 return;
               }
-              const numberValue = Number(val) / 100;
-              setPrice(numberValue);
+              setPrice(Number(val) / 100);
+              setError("");
             }}
           />
 
-          {error && <p className="text-red-600 font-semibold text-sm">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="mb-3 text-base font-semibold text-danger-400"
+            >
+              {error}
+            </p>
+          )}
 
-          <div className="flex gap-4 justify-between mt-4">
+          <div className="mt-auto flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="border-2 border-neutral-500 text-neutral-600 rounded sm py-2 px-4"
+              disabled={loading}
+              className={buttonClassName({
+                variant: "ghost",
+                fullWidth: false,
+                className: "bg-master",
+              })}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="w-full bg-secondary-600 hover:bg-secondary-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              disabled={loading}
+              className={buttonClassName({
+                variant: "primary",
+                className: "sm:flex-none sm:min-w-48",
+              })}
             >
-              Adicionar Horário
+              <MdOutlineAdd size={22} aria-hidden />
+              {loading ? "Adicionando…" : "Adicionar horário"}
             </button>
           </div>
         </form>

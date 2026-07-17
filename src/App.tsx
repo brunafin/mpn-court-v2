@@ -40,25 +40,29 @@ function App() {
   };
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col bg-master">
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (
-        <p className="bg-danger-500 text-center">versão para testes</p>
+        <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
+          Versão para testes
+        </p>
       )}
-      <ErrorsProvider>
-        <InitAxiosNotifier />
-        <NotificationProvider>
-          <Routes>
-            <Route index element={<Login />} />
-            <Route path="/reservas" element={<Reservation />} />
-            <Route path="/reservas/:id" element={<ReservationDetails />} />
-            <Route path="/alterar-senha" element={<ChangePassword />} />
-            <Route path="/minhas-infos" element={<Info />} />
-            <Route path="/configuracoes-horarios" element={<ConfigDay />} />
-            <Route path="/notificacoes" element={<Notifications />} />
-          </Routes>
-        </NotificationProvider>
-      </ErrorsProvider>
-    </>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <ErrorsProvider>
+          <InitAxiosNotifier />
+          <NotificationProvider>
+            <Routes>
+              <Route index element={<Login />} />
+              <Route path="/reservas" element={<Reservation />} />
+              <Route path="/reservas/:id" element={<ReservationDetails />} />
+              <Route path="/alterar-senha" element={<ChangePassword />} />
+              <Route path="/minhas-infos" element={<Info />} />
+              <Route path="/configuracoes-horarios" element={<ConfigDay />} />
+              <Route path="/notificacoes" element={<Notifications />} />
+            </Routes>
+          </NotificationProvider>
+        </ErrorsProvider>
+      </div>
+    </div>
   );
 }
 
