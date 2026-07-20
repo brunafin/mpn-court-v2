@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
+import AppLayout from "../../components/AppLayout";
 import {
   MdContentCopy,
   MdOutlineInfo,
@@ -120,10 +120,9 @@ function Info() {
   const isInitialLoading = loading && !info;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
-      <Header />
+    <AppLayout>
       <section
-        className={`mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto bg-master px-4 pb-10 pt-5 text-text-light transition-opacity ${
+        className={`mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto bg-master px-4 pb-10 pt-5 text-text-light transition-opacity lg:max-w-5xl lg:px-8 lg:pt-6 ${
           loading && info ? "opacity-80" : ""
         }`}
         aria-busy={loading}
@@ -132,17 +131,17 @@ function Info() {
 
         {isInitialLoading ? (
           <div
-            className="animate-pulse space-y-4"
+            className="animate-pulse space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0"
             aria-label="Carregando informações"
           >
-            <div className="h-28 rounded-2xl bg-master-light/70" />
-            <div className="h-40 rounded-2xl bg-master-light/70" />
+            <div className="h-28 rounded-2xl bg-master-light/70 lg:col-span-2" />
+            <div className="h-40 rounded-2xl bg-master-light/70 lg:col-span-2" />
             <div className="h-36 rounded-2xl bg-master-light/70" />
             <div className="h-32 rounded-2xl bg-master-light/70" />
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="rounded-2xl bg-master-light px-4 py-5">
+          <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+            <div className="rounded-2xl bg-master-light px-4 py-5 lg:col-span-2 lg:px-6">
               <p className="text-base font-medium text-text-light/70">
                 Empresa
               </p>
@@ -151,19 +150,19 @@ function Info() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">
                 Página pública
               </p>
               <p className="mb-4 break-all text-base leading-6 text-text-light/70">
                 {info?.link || "Link não disponível"}
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap">
                 <button
                   type="button"
                   onClick={shareLink}
                   disabled={!info?.link}
-                  className={primaryBtnClass}
+                  className={`${primaryBtnClass} lg:w-auto lg:min-w-[12rem]`}
                 >
                   <MdShare size={20} aria-hidden />
                   Compartilhar link
@@ -172,7 +171,7 @@ function Info() {
                   href={info?.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={secondaryBtnClass}
+                  className={`${secondaryBtnClass} lg:w-auto lg:min-w-[12rem]`}
                   aria-disabled={!info?.link}
                   onClick={(e) => {
                     if (!info?.link) e.preventDefault();
@@ -185,7 +184,7 @@ function Info() {
                   type="button"
                   onClick={copyToClipboard}
                   disabled={!info?.link}
-                  className={secondaryBtnClass}
+                  className={`${secondaryBtnClass} lg:w-auto lg:min-w-[12rem]`}
                 >
                   <MdContentCopy size={20} aria-hidden />
                   {copyFeedback ? "Link copiado!" : "Copiar link"}
@@ -193,7 +192,7 @@ function Info() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">
                 Preferências
               </p>
@@ -233,14 +232,14 @@ function Info() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">
                 Plano
               </p>
               <p className="text-xl font-bold text-text-light">
                 {info?.plan?.name || "—"}
               </p>
-              <dl className="mt-4 space-y-3">
+              <dl className="mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                 <div>
                   <dt className="text-base font-medium text-text-light/70">
                     Valor mensal
@@ -266,7 +265,7 @@ function Info() {
           </div>
         )}
       </section>
-    </div>
+    </AppLayout>
   );
 }
 

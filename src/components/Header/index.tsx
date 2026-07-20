@@ -90,7 +90,8 @@ function Header() {
     }`;
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 bg-master px-4">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
+      {/* Mobile: logo + nome + hamburger */}
       <Link
         to="/reservas"
         className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
@@ -187,7 +188,15 @@ function Header() {
               </p>
               <ul className="flex flex-col gap-2">
                 {navItems.map(
-                  ({ to, label, description, Icon, iconClass, iconBgClass, match }) => {
+                  ({
+                    to,
+                    label,
+                    description,
+                    Icon,
+                    iconClass,
+                    iconBgClass,
+                    match,
+                  }) => {
                     const isActive = match(location.pathname);
                     return (
                       <li key={to}>

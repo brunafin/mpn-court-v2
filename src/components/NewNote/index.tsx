@@ -87,6 +87,12 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
     };
   }, [isOpen, isSubmitting]);
 
+  useEffect(() => {
+    if (!showRemind24HoursBefore && is24HoursBefore) {
+      setIs24HoursBefore?.(false);
+    }
+  }, [showRemind24HoursBefore, is24HoursBefore, setIs24HoursBefore]);
+
   if (!isOpen) return null;
 
   return (

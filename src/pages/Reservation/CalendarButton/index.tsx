@@ -54,7 +54,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
         aria-label={`Selecionar data. Mês atual: ${monthLabel}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="mpn-tap flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl px-1 text-left text-base font-semibold capitalize text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+        className="mpn-tap flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl px-1 text-left text-base font-semibold capitalize text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-2xl lg:border lg:border-text-light/10 lg:bg-master lg:px-3.5 lg:py-2 lg:hover:bg-master/80"
       >
         <span className="truncate">{monthLabel}</span>
         <MdExpandMore

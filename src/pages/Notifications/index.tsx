@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { format, isValid, parseISO } from "date-fns";
+import { format, isSameDay, isValid, parseISO } from "date-fns";
 import { useLoading } from "../../hooks/useLoading";
 import { MdOutlineArrowBackIos, MdOutlineCheck, MdOutlinePostAdd } from "react-icons/md";
 import NewReminderModal from "../../components/NewNote";
@@ -114,7 +114,7 @@ function DayReminders() {
         companyPublicId,
         date: format(date, "yyyy-MM-dd"),
         message,
-        is24HoursBefore: is24before,
+        is24HoursBefore: !isSameDay(date, new Date()) && is24before,
       });
       setShowNewReminderModal(false);
       setMessage("");
@@ -136,43 +136,49 @@ function DayReminders() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
-      <header className="sticky top-0 z-10 flex items-center gap-3 bg-master px-4 py-3">
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/reservas", {
-              state: { date: dateKey },
-            })
-          }
-          aria-label="Voltar para reservas"
-          className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-        >
-          <MdOutlineArrowBackIos size={20} aria-hidden />
-        </button>
-        <PageTitle>Lembretes</PageTitle>
+      <header className="sticky top-0 z-10 bg-master px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-lg items-center gap-3 lg:max-w-5xl">
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/reservas", {
+                state: { date: dateKey },
+              })
+            }
+            aria-label="Voltar para reservas"
+            className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          >
+            <MdOutlineArrowBackIos size={20} aria-hidden />
+          </button>
+          <PageTitle>Lembretes</PageTitle>
+        </div>
       </header>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 bg-master-light px-3 pb-3 pt-2">
-          <div className="mb-2">
-            <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+        <div className="shrink-0 bg-master-light px-3 pb-3 pt-2 lg:px-6">
+          <div className="mx-auto w-full lg:max-w-5xl">
+            <div className="lg:mb-0 lg:flex lg:items-center lg:gap-4">
+              <div className="mb-2 lg:mb-0 lg:shrink-0">
+                <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+              </div>
+              <div className="mb-3 min-w-0 flex-1 lg:mb-0">
+                <DateStrip selectedDate={date} setSelectedDate={setDate} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewReminderModal(true)}
+                className={`${createBtnClass} lg:w-auto lg:min-w-[12rem] lg:shrink-0`}
+              >
+                <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
+                Criar lembrete
+              </button>
+            </div>
           </div>
-          <div className="mb-3">
-            <DateStrip selectedDate={date} setSelectedDate={setDate} />
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowNewReminderModal(true)}
-            className={createBtnClass}
-          >
-            <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
-            Criar lembrete
-          </button>
         </div>
 
         {showListLoading ? (
           <ul
-            className="flex-1 animate-pulse space-y-3 overflow-y-auto px-4 pb-6 pt-5"
+            className="mx-auto flex w-full max-w-lg flex-1 animate-pulse flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5 lg:max-w-5xl lg:px-6"
             aria-label="Carregando lembretes"
           >
             {Array.from({ length: 3 }).map((_, index) => (
@@ -186,7 +192,7 @@ function DayReminders() {
             ))}
           </ul>
         ) : notifications.length > 0 ? (
-          <ul className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5">
+          <ul className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:content-start lg:px-6">
             {notifications.map((notification) => (
               <li
                 key={notification.id}
@@ -246,7 +252,7 @@ function DayReminders() {
         setMessage={setMessage}
         is24HoursBefore={is24before}
         setIs24HoursBefore={setIs24before}
-        showRemind24HoursBefore
+        showRemind24HoursBefore={!isSameDay(date, new Date())}
       />
     </div>
   );

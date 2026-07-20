@@ -162,43 +162,55 @@ function ConfigDay() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
-      <header className="sticky top-0 z-10 flex items-center gap-3 bg-master px-4 py-3">
-        <button
-          type="button"
-          onClick={() =>
-            navigate(`/reservas`, {
-              state: { date: dateKey },
-            })
-          }
-          aria-label="Voltar para reservas"
-          className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-        >
-          <MdOutlineArrowBackIos size={20} aria-hidden />
-        </button>
-        <div className="min-w-0">
-          <PageTitle>Detalhes do dia</PageTitle>
-          <p className="truncate text-base font-medium capitalize text-text-light/70">
-            {format(date, "EEEE, dd/MM/yyyy", { locale: ptBR })}
-          </p>
+      <header className="sticky top-0 z-10 bg-master px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-lg items-center gap-3 lg:max-w-5xl">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/reservas`, {
+                state: { date: dateKey },
+              })
+            }
+            aria-label="Voltar para reservas"
+            className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          >
+            <MdOutlineArrowBackIos size={20} aria-hidden />
+          </button>
+          <div className="min-w-0">
+            <PageTitle>Detalhes do dia</PageTitle>
+            <p className="truncate text-base font-medium capitalize text-text-light/70">
+              {format(date, "EEEE, dd/MM/yyyy", { locale: ptBR })}
+            </p>
+          </div>
         </div>
       </header>
 
-      <section className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-8 pt-4">
+      <section className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-8 pt-4 lg:max-w-5xl lg:px-6">
         <div
-          className={`mb-4 rounded-2xl bg-master-light px-4 py-2 transition-opacity ${
+          className={`mb-4 rounded-2xl bg-master-light px-4 py-2 transition-opacity lg:px-5 lg:py-4 ${
             loading && list.length > 0 ? "opacity-70" : ""
           }`}
           aria-busy={loading}
         >
-            <p className="px-1 pb-2 pt-3 text-sm font-semibold uppercase tracking-wide text-text-light/60">
-              Resumo
-            </p>
+            <div className="flex items-center justify-between gap-3 px-1 pb-2 pt-3 lg:pb-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-text-light/60">
+                Resumo
+              </p>
+              {!showSummaryLoading && (
+                <p className="hidden text-base font-semibold text-text-light/70 lg:block">
+                  Total do dia:{" "}
+                  <span className="tabular-nums text-text-light">
+                    {totalHours}
+                  </span>
+                </p>
+              )}
+            </div>
             {showSummaryLoading ? (
-              <ul className="animate-pulse" aria-label="Carregando resumo">
+              <ul className="animate-pulse lg:grid lg:grid-cols-4 lg:gap-3" aria-label="Carregando resumo">
                 {summaryRows.map((row) => (
                   <li
                     key={row.key}
-                    className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0"
+                    className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0 lg:min-h-24 lg:flex-col lg:items-start lg:justify-center lg:rounded-xl lg:border-b-0 lg:bg-master lg:px-4 lg:py-3"
                   >
                     <div className="flex items-center gap-3">
                       <span className="size-10 shrink-0 rounded-full bg-text-light/10" />
@@ -207,20 +219,20 @@ function ConfigDay() {
                     <span className="h-7 w-8 rounded bg-text-light/10" />
                   </li>
                 ))}
-                <li className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1">
+                <li className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1 lg:hidden">
                   <span className="h-5 w-28 rounded bg-text-light/10" />
                   <span className="h-7 w-8 rounded bg-text-light/10" />
                 </li>
               </ul>
             ) : (
               <>
-                <ul>
+                <ul className="lg:grid lg:grid-cols-4 lg:gap-3">
                   {summaryRows.map((row) => {
                     const Icon = row.Icon;
                     return (
                       <li
                         key={row.key}
-                        className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0"
+                        className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0 lg:min-h-24 lg:flex-col lg:items-start lg:justify-center lg:gap-2 lg:rounded-xl lg:border-b-0 lg:bg-master lg:px-4 lg:py-3"
                       >
                         <div className="flex items-center gap-3">
                           <span
@@ -232,14 +244,14 @@ function ConfigDay() {
                             {row.label}
                           </span>
                         </div>
-                        <span className="text-2xl font-bold tabular-nums text-text-light">
+                        <span className="text-2xl font-bold tabular-nums text-text-light lg:pl-0.5">
                           {row.count}
                         </span>
                       </li>
                     );
                   })}
                 </ul>
-                <div className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1">
+                <div className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1 lg:hidden">
                   <span className="text-lg font-semibold text-text-light">
                     Total do dia
                   </span>
@@ -257,7 +269,7 @@ function ConfigDay() {
             disabled={loading && courts.length === 0}
             className={buttonClassName({
               variant: "primary",
-              className: "mb-6",
+              className: "mb-6 lg:w-auto lg:min-w-[16rem]",
             })}
           >
             <BsPlus size={26} aria-hidden />
@@ -280,7 +292,7 @@ function ConfigDay() {
                   disponíveis.
                 </p>
               </div>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-2 lg:grid lg:grid-cols-2">
                 {hiddenInactiveHours.map((inactiveHour) => {
                   const isPast =
                     new Date(`${dateKey}T${inactiveHour.time}`) <

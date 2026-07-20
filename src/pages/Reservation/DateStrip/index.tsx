@@ -42,8 +42,8 @@ function DateStrip({
   }, [selectedDate]);
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-master">
-      <div className="flex gap-3 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="overflow-hidden rounded-2xl bg-master lg:rounded-none lg:bg-transparent">
+      <div className="flex gap-3 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-2.5 lg:px-0 lg:py-0">
         {days.map((day) => {
           const selected = isSameDay(day, selectedDate);
           const isPast = day < today;
@@ -56,18 +56,18 @@ function DateStrip({
               onClick={() => setSelectedDate(day)}
               aria-label={`${WEEKDAYS[day.getDay()]} ${format(day, "d")}`}
               aria-pressed={selected}
-              className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+              className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:min-h-[4.25rem] lg:min-w-[3.75rem] lg:rounded-2xl ${
                 selected
-                  ? "bg-accent-blue text-white active:brightness-95"
+                  ? "bg-text-light/90 text-master active:brightness-95"
                   : isPast
-                    ? "mpn-tap text-text-light/55 hover:bg-text-light/10"
-                    : "mpn-tap text-text-light hover:bg-text-light/10"
+                    ? "mpn-tap text-text-light/55 hover:bg-text-light/10 lg:bg-master lg:text-text-light/45"
+                    : "mpn-tap text-text-light hover:bg-text-light/10 lg:bg-master lg:text-text-light/80"
               }`}
             >
               <span className="text-xs font-semibold tracking-wide uppercase">
                 {WEEKDAYS[day.getDay()]}
               </span>
-              <span className="text-lg font-bold leading-tight">
+              <span className="text-lg font-bold leading-tight lg:text-xl">
                 {format(day, "d")}
               </span>
             </button>

@@ -130,7 +130,7 @@ function ConfirmSheet({
               variant: "ghost",
               size: "lg",
               fullWidth: false,
-              className: "bg-master sm:min-w-0",
+              className: "w-full bg-master sm:w-auto",
             })}
           >
             {cancelLabel}
@@ -145,7 +145,8 @@ function ConfirmSheet({
             className={buttonClassName({
               variant: toneToVariant[tone],
               size: "lg",
-              className: "sm:flex-none sm:min-w-44",
+              fullWidth: false,
+              className: "w-full sm:w-auto sm:min-w-44",
             })}
           >
             {loading ? "Aguarde…" : confirmLabel}

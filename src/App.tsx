@@ -40,7 +40,7 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-master">
+    <div className="flex min-h-dvh flex-col bg-master lg:h-dvh lg:overflow-hidden">
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (
         <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
           Versão para testes

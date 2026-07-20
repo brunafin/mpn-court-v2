@@ -7,7 +7,8 @@ import {
   MdOutlineRestaurant,
 } from "react-icons/md";
 import { IReservationDetailsItemProps } from "../interface";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
+import { isSameDay } from "date-fns";
 import Input from "../../../components/Input";
 import {
   cancelReservation,
@@ -262,6 +263,14 @@ function ReservationDetails() {
     });
   };
 
+  const canRemindDayBefore = useMemo(() => {
+    if (!court?.date) return false;
+    const [day, month, year] = court.date.split("/");
+    const noteDate = new Date(Number(year), Number(month) - 1, Number(day));
+    if (Number.isNaN(noteDate.getTime())) return false;
+    return !isSameDay(noteDate, new Date());
+  }, [court?.date]);
+
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
     if (creatingNote) return;
@@ -287,7 +296,7 @@ function ReservationDetails() {
           ]
             .filter(Boolean)
             .join(" - "),
-        is24HoursBefore: is24before,
+        is24HoursBefore: canRemindDayBefore && is24before,
       });
       setShowNewReminderModal(false);
       setMessage("");
@@ -416,9 +425,9 @@ function ReservationDetails() {
   const showStickyFooter = showCancelSticky || showCreateSticky;
 
   return (
-    <div className="min-h-screen bg-master text-text-light">
-      <header className="sticky top-0 z-20 bg-master px-4 py-3">
-        <div className="relative flex items-center justify-center">
+    <div className="flex h-full min-h-0 max-h-dvh flex-1 flex-col bg-master text-text-light">
+      <header className="sticky top-0 z-20 shrink-0 bg-master px-4 py-3 lg:px-6">
+        <div className="relative mx-auto flex w-full max-w-lg items-center justify-center lg:max-w-3xl">
           <button
             type="button"
             onClick={() =>
@@ -436,7 +445,7 @@ function ReservationDetails() {
       </header>
 
       <section
-        className={`mx-auto w-full max-w-lg px-4 pt-5 transition-opacity ${
+        className={`mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto px-4 pt-5 transition-opacity lg:max-w-3xl lg:px-6 ${
           showStickyFooter ? "pb-28" : "pb-8"
         } ${loading && court ? "opacity-80" : ""}`}
         aria-busy={loading}
@@ -813,17 +822,19 @@ function ReservationDetails() {
                 </div>
 
                 <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !customerReservationName?.trim()}
-                    className={buttonClassName({
-                      variant: "primary",
-                      className: "mx-auto max-w-lg justify-center",
-                    })}
-                  >
-                    <StatusIcons.reserved size={20} className="shrink-0" aria-hidden />
-                    {isSubmitting ? "Reservando…" : "Reservar horário"}
-                  </button>
+                  <div className="mx-auto w-full max-w-lg lg:max-w-3xl">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !customerReservationName?.trim()}
+                      className={buttonClassName({
+                        variant: "primary",
+                        className: "justify-center",
+                      })}
+                    >
+                      <StatusIcons.reserved size={20} className="shrink-0" aria-hidden />
+                      {isSubmitting ? "Reservando…" : "Reservar horário"}
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
@@ -839,17 +850,19 @@ function ReservationDetails() {
 
       {showCancelSticky && (
         <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
-          <button
-            type="button"
-            disabled={loading || confirmLoading}
-            onClick={askCancelReservation}
-            className={buttonClassName({
-              variant: "danger",
-              className: "mx-auto max-w-lg justify-center",
-            })}
-          >
-            Cancelar reserva
-          </button>
+          <div className="mx-auto w-full max-w-lg lg:max-w-3xl">
+            <button
+              type="button"
+              disabled={loading || confirmLoading}
+              onClick={askCancelReservation}
+              className={buttonClassName({
+                variant: "danger",
+                className: "justify-center",
+              })}
+            >
+              Cancelar reserva
+            </button>
+          </div>
         </div>
       )}
 
@@ -967,7 +980,7 @@ function ReservationDetails() {
         setMessage={setMessage}
         is24HoursBefore={is24before}
         setIs24HoursBefore={setIs24before}
-        showRemind24HoursBefore={true}
+        showRemind24HoursBefore={canRemindDayBefore}
         defaultMessage={[
           court?.date && `Reserva para o dia ${court.date}`,
           court?.time,
