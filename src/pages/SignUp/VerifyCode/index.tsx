@@ -1,25 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { AxiosError } from "axios";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { buttonClassName } from "../../../components/Button";
-import { formatPhoneMask } from "../../../utils/formatPhone";
-import {
-  clearMockSession,
-  saveMockOnboarding,
-} from "../../../onboarding/mockStore";
-import {
-  clearPendingSignup,
-  getPendingSignup,
-  PendingSignup,
-  resendPendingSmsCode,
-  verifyPendingSmsCode,
-} from "../../../onboarding/signupSmsMock";
+import { resendCode, verifyEmail } from "../../../api/auth";
 import { getAccessToken } from "../../../utils/authCookie";
 
 const CODE_LENGTH = 6;
 
+function apiMessage(error: unknown, fallback: string): string {
+  return (
+    (error as AxiosError<{ message?: string }>)?.response?.data?.message ||
+    fallback
+  );
+}
+
 function SignUpVerifyCode() {
   const navigate = useNavigate();
-  const [pending, setPending] = useState<PendingSignup | null>(null);
+  const location = useLocation();
+  const [email, setEmail] = useState<string | null>(null);
   const [digits, setDigits] = useState<string[]>(
     Array.from({ length: CODE_LENGTH }, () => "")
   );
@@ -33,14 +31,14 @@ function SignUpVerifyCode() {
       navigate("/reservas");
       return;
     }
-    const current = getPendingSignup();
-    if (!current) {
+    const stateEmail = (location.state as { email?: string } | null)?.email;
+    if (!stateEmail) {
       navigate("/cadastro");
       return;
     }
-    setPending(current);
+    setEmail(stateEmail);
     window.setTimeout(() => inputsRef.current[0]?.focus(), 50);
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -53,11 +51,6 @@ function SignUpVerifyCode() {
 
   const code = digits.join("");
   const canSubmit = code.length === CODE_LENGTH && !loading;
-
-  const maskedPhone = useMemo(() => {
-    if (!pending) return "";
-    return formatPhoneMask(pending.ownerPhone);
-  }, [pending]);
 
   const applyCode = (value: string) => {
     const next = value.replace(/\D/g, "").slice(0, CODE_LENGTH).split("");
@@ -100,67 +93,42 @@ function SignUpVerifyCode() {
     applyCode(event.clipboardData.getData("text"));
   };
 
-  const handleVerify = (event: React.FormEvent) => {
+  const handleVerify = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !email) return;
     setLoading(true);
     setError("");
     try {
-      const result = verifyPendingSmsCode(code);
-      if (!result.ok || !result.pending) {
-        if (result.reason === "expired") {
-          setError("Código expirado. Reenvie um novo.");
-        } else if (result.reason === "missing") {
-          navigate("/cadastro");
-        } else {
-          setError("Código inválido. Tente de novo.");
-          setDigits(Array.from({ length: CODE_LENGTH }, () => ""));
-          inputsRef.current[0]?.focus();
-        }
-        return;
-      }
-
-      const { pending: confirmed } = result;
-      clearMockSession();
-      saveMockOnboarding({
-        email: confirmed.email,
-        ownerName: confirmed.ownerName,
-        ownerPhone: confirmed.ownerPhone,
-        password: confirmed.password,
-        arenaName: "",
-        courtCount: 1,
-        hasScheduleTemplate: false,
-        courts: [],
-        isPublished: false,
-        createdAt: new Date().toISOString(),
-      });
-      clearPendingSignup();
+      await verifyEmail(email, code);
       navigate("/", {
         state: {
           signupOk: true,
-          email: confirmed.email,
+          email,
         },
       });
+    } catch (error) {
+      setError(apiMessage(error, "Código inválido. Tente de novo."));
+      setDigits(Array.from({ length: CODE_LENGTH }, () => ""));
+      inputsRef.current[0]?.focus();
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResend = () => {
-    if (resendCooldown > 0) return;
-    const next = resendPendingSmsCode();
-    if (!next) {
-      navigate("/cadastro");
-      return;
-    }
-    setPending(next);
-    setDigits(Array.from({ length: CODE_LENGTH }, () => ""));
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !email) return;
     setError("");
-    setResendCooldown(30);
-    inputsRef.current[0]?.focus();
+    try {
+      await resendCode(email);
+      setDigits(Array.from({ length: CODE_LENGTH }, () => ""));
+      setResendCooldown(30);
+      inputsRef.current[0]?.focus();
+    } catch (error) {
+      setError(apiMessage(error, "Não foi possível reenviar o código."));
+    }
   };
 
-  if (!pending) {
+  if (!email) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-master text-text-light/70">
         Carregando…
@@ -185,13 +153,8 @@ function SignUpVerifyCode() {
             Código de confirmação
           </h1>
           <p className="mt-1 text-base text-text-light/70">
-            Enviado para {maskedPhone}
+            Enviamos um código para {email}
           </p>
-          {import.meta.env.VITE_ENVIRONMENT !== "production" && (
-            <p className="mt-2 rounded-lg bg-warning-500/15 px-3 py-1.5 text-sm font-medium text-warning-500">
-              Protótipo · código {pending.smsCode}
-            </p>
-          )}
         </div>
 
         <form

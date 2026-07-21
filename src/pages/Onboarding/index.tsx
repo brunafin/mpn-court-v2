@@ -1,38 +1,50 @@
 import { useEffect, useMemo, useState } from "react";
+import { AxiosError } from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
   MdCheckCircle,
   MdOutlineCalendarMonth,
   MdOutlineCircle,
 } from "react-icons/md";
-import { buttonClassName } from "../../components/Button";
+import Button, { buttonClassName } from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
 import OnboardingFooter from "../../components/OnboardingFooter";
 import {
   buildChecklist,
+  buildWeekTemplatePayload,
   clearMockOnboarding,
-  getMockOnboarding,
   getOnboardingProgress,
+  getOrCreateOnboardingDraft,
   isEstablishmentReady,
-  isMockSession,
   MockOnboardingState,
 } from "../../onboarding/mockStore";
+import { completeOnboarding } from "../../api/onboarding";
+import {
+  getAccessToken,
+  getAccessTokenPayload,
+  setAccessToken,
+} from "../../utils/authCookie";
 
 function OnboardingChecklist() {
   const navigate = useNavigate();
   const [state, setState] = useState<MockOnboardingState | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
-    if (!isMockSession()) {
+    if (!getAccessToken()) {
       navigate("/");
       return;
     }
-    const mock = getMockOnboarding();
-    if (!mock) {
-      navigate("/cadastro");
+    const payload = getAccessTokenPayload<{
+      companyPublicId?: string | null;
+      username?: string;
+    }>();
+    if (payload?.companyPublicId) {
+      navigate("/reservas");
       return;
     }
-    setState(mock);
+    setState(getOrCreateOnboardingDraft({ email: payload?.username }));
   }, [navigate]);
 
   const items = useMemo(
@@ -47,7 +59,37 @@ function OnboardingChecklist() {
 
   const handleReset = () => {
     clearMockOnboarding();
-    navigate("/cadastro");
+    navigate("/comecar");
+  };
+
+  const handleFinish = async () => {
+    if (!state || !state.scheduleTemplate || submitting) return;
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      const response = await completeOnboarding({
+        companyName: state.arenaName.trim(),
+        companyPhone: state.ownerPhone || undefined,
+        weekTemplate: buildWeekTemplatePayload(state.scheduleTemplate),
+        courts: state.courts.slice(0, state.courtCount).map((court) => ({
+          name: court.name,
+          type_of_court_id: court.typeOfCourtId as number,
+          sport_ids: court.sportIds,
+          floor: court.floor,
+          price: court.defaultPrice,
+        })),
+      });
+      setAccessToken(response.access_token);
+      clearMockOnboarding();
+      navigate("/reservas");
+    } catch (error) {
+      const message =
+        (error as AxiosError<{ message?: string }>)?.response?.data?.message ||
+        "Não foi possível concluir a configuração. Tente novamente.";
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!state) {
@@ -64,7 +106,7 @@ function OnboardingChecklist() {
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col">
         <p className="mb-4 rounded-lg bg-warning-500/15 px-3 py-2 text-sm font-medium text-warning-500">
-          Protótipo — progresso salvo só neste navegador
+          Progresso salvo neste navegador até você concluir a configuração
         </p>
 
         {!ready ? (
@@ -144,16 +186,24 @@ function OnboardingChecklist() {
               className="min-h-0 py-4"
               action={
                 <div className="flex w-full flex-col gap-2">
-                  <Link
-                    to="/reservas"
-                    className={buttonClassName({
-                      variant: "primary",
-                      className: "justify-center",
-                    })}
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="justify-center"
+                    disabled={submitting}
+                    onClick={handleFinish}
                   >
                     <MdOutlineCalendarMonth size={22} aria-hidden />
-                    Ir para a agenda
-                  </Link>
+                    {submitting ? "Concluindo…" : "Concluir e ir para a agenda"}
+                  </Button>
+                  {submitError && (
+                    <p
+                      className="text-center text-sm text-danger-400"
+                      role="alert"
+                    >
+                      {submitError}
+                    </p>
+                  )}
                 </div>
               }
             />

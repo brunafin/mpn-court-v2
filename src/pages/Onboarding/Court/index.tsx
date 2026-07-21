@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { MdChevronLeft } from "react-icons/md";
 import Input from "../../../components/Input";
@@ -9,30 +9,34 @@ import OnboardingFooter from "../../../components/OnboardingFooter";
 import {
   areAllCourtsCreated,
   COURT_FLOORS,
-  COURT_SPORTS,
   CourtFloor,
-  CourtSport,
-  getMockOnboarding,
+  getOrCreateOnboardingDraft,
   isArenaConfigured,
-  isMockSession,
   MockCourt,
   MockOnboardingState,
   upsertMockCourt,
 } from "../../../onboarding/mockStore";
+import {
+  getSports,
+  getTypeOfCourts,
+  Sport,
+  TypeOfCourt,
+} from "../../../api/onboarding";
+import { getAccessToken } from "../../../utils/authCookie";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 
-/**
- * Stub: lista de N vagas + nome e preço padrão por quadra.
- * Na API: ao salvar, copia template de horários × preço da quadra.
- */
 function OnboardingCourt() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<MockOnboardingState | null>(null);
+  const [sportsCatalog, setSportsCatalog] = useState<Sport[]>([]);
+  const [typesCatalog, setTypesCatalog] = useState<TypeOfCourt[]>([]);
+  const [catalogError, setCatalogError] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [courtName, setCourtName] = useState("");
   const [priceDigits, setPriceDigits] = useState("");
-  const [sports, setSports] = useState<CourtSport[]>([]);
+  const [sportIds, setSportIds] = useState<number[]>([]);
+  const [typeOfCourtId, setTypeOfCourtId] = useState<number | "">("");
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [formError, setFormError] = useState("");
 
@@ -42,7 +46,7 @@ function OnboardingCourt() {
     return cents / 100;
   }, [priceDigits]);
 
-  const openEditor = (slotIndex: number, court?: MockCourt | null) => {
+  const openEditor = useCallback((slotIndex: number, court?: MockCourt | null) => {
     setEditingIndex(slotIndex);
     setCourtName(court?.name ?? `Q${slotIndex + 1}`);
     setPriceDigits(
@@ -50,21 +54,18 @@ function OnboardingCourt() {
         ? String(Math.round(court.defaultPrice * 100))
         : ""
     );
-    setSports(court?.sports ?? []);
+    setSportIds(court?.sportIds ?? []);
+    setTypeOfCourtId(court?.typeOfCourtId ?? "");
     setFloor(court?.floor ?? "");
     setFormError("");
-  };
+  }, []);
 
   useEffect(() => {
-    if (!isMockSession()) {
+    if (!getAccessToken()) {
       navigate("/");
       return;
     }
-    const mock = getMockOnboarding();
-    if (!mock) {
-      navigate("/cadastro");
-      return;
-    }
+    const mock = getOrCreateOnboardingDraft();
     if (!isArenaConfigured(mock)) {
       navigate("/comecar/estabelecimento");
       return;
@@ -86,7 +87,23 @@ function OnboardingCourt() {
     if (!areAllCourtsCreated(mock)) {
       openEditor(mock.courts.length);
     }
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, openEditor]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getSports(), getTypeOfCourts()])
+      .then(([sports, types]) => {
+        if (!active) return;
+        setSportsCatalog(sports);
+        setTypesCatalog(types);
+      })
+      .catch(() => {
+        if (active) setCatalogError("Não foi possível carregar esportes e tipos.");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (!state) {
     return (
@@ -102,7 +119,9 @@ function OnboardingCourt() {
     (_, i) => state.courts[i] ?? null
   );
   const doneCount = Math.min(
-    state.courts.filter((c) => c.defaultPrice > 0).length,
+    state.courts.filter(
+      (c) => c.defaultPrice > 0 && c.sportIds.length > 0 && !!c.typeOfCourtId
+    ).length,
     state.courtCount
   );
 
@@ -116,7 +135,12 @@ function OnboardingCourt() {
       return;
     }
 
-    if (sports.length === 0) {
+    if (!typeOfCourtId) {
+      setFormError("Selecione o tipo de quadra.");
+      return;
+    }
+
+    if (sportIds.length === 0) {
       setFormError("Selecione ao menos um esporte.");
       return;
     }
@@ -129,14 +153,14 @@ function OnboardingCourt() {
         id: existing?.id ?? `court-${editingIndex + 1}-${Date.now()}`,
         name: courtName.trim(),
         defaultPrice: price,
-        sports,
+        sportIds,
+        typeOfCourtId,
         floor: floor || undefined,
       },
       existing ? editingIndex : undefined
     );
 
-    const next = getMockOnboarding();
-    if (!next) return;
+    const next = getOrCreateOnboardingDraft();
     setState(next);
     setEditingIndex(null);
 
@@ -162,8 +186,8 @@ function OnboardingCourt() {
             Quadras
           </h1>
         </div>
-        <p className="mt-3 rounded-lg bg-warning-500/15 px-3 py-2 text-sm font-medium text-warning-500">
-          Mock — nome + preço; API copiará a grade com este valor
+        <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+          Cada quadra tem seu preço; a grade de horários usa esse valor
         </p>
 
         {blocked ? (
@@ -195,7 +219,11 @@ function OnboardingCourt() {
               </div>
               <div className="flex gap-1.5">
                 {slots.map((court, index) => {
-                  const done = !!court && court.defaultPrice > 0;
+                  const done =
+                    !!court &&
+                    court.defaultPrice > 0 &&
+                    court.sportIds.length > 0 &&
+                    !!court.typeOfCourtId;
                   const current = editingIndex === index;
                   const clickable = index <= state.courts.length;
                   return (
@@ -224,6 +252,12 @@ function OnboardingCourt() {
                 })}
               </div>
             </div>
+
+            {catalogError && (
+              <p className="mt-4 rounded-lg bg-danger-400/15 px-3 py-2 text-sm font-medium text-danger-400">
+                {catalogError}
+              </p>
+            )}
 
             {editingIndex !== null && (
               <form
@@ -269,19 +303,34 @@ function OnboardingCourt() {
                   error={formError.includes("preço") ? formError : undefined}
                 />
 
+                <Select
+                  name="typeOfCourt"
+                  title="Tipo de quadra"
+                  mode="dark"
+                  required
+                  placeholder="Selecione o tipo"
+                  className="mt-1"
+                  value={typeOfCourtId}
+                  options={typesCatalog.map((t) => ({ id: t.id, name: t.name }))}
+                  onChange={(e) => {
+                    setTypeOfCourtId(e.target.value ? Number(e.target.value) : "");
+                    if (formError) setFormError("");
+                  }}
+                />
+
                 <CheckboxGroup
                   name="sports"
                   title="Esportes aceitos"
                   mode="dark"
                   required
-                  className="mt-4"
-                  options={COURT_SPORTS.map((s) => ({
-                    value: s.key,
-                    label: s.label,
+                  className="mt-1"
+                  options={sportsCatalog.map((s) => ({
+                    value: String(s.id),
+                    label: s.name,
                   }))}
-                  value={sports}
+                  value={sportIds.map(String)}
                   onChange={(next) => {
-                    setSports(next as CourtSport[]);
+                    setSportIds(next.map(Number));
                     if (formError) setFormError("");
                   }}
                   error={formError.includes("esporte") ? formError : undefined}
@@ -301,12 +350,21 @@ function OnboardingCourt() {
                   onChange={(e) => setFloor(e.target.value as CourtFloor | "")}
                 />
 
+                {formError && !/preço|esporte/.test(formError) && (
+                  <p className="mb-2 text-base font-medium text-danger-400" role="alert">
+                    {formError}
+                  </p>
+                )}
+
                 <div className="mt-4 flex flex-col gap-2">
                   <Button
                     type="submit"
                     variant="primary"
                     disabled={
-                      !courtName.trim() || price <= 0 || sports.length === 0
+                      !courtName.trim() ||
+                      price <= 0 ||
+                      !typeOfCourtId ||
+                      sportIds.length === 0
                     }
                   >
                     {editingIndex >= state.courtCount - 1

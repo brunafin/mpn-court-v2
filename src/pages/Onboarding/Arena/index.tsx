@@ -6,9 +6,10 @@ import { buttonClassName } from "../../../components/Button";
 import OnboardingFooter from "../../../components/OnboardingFooter";
 import {
   getMockOnboarding,
-  isMockSession,
+  getOrCreateOnboardingDraft,
   updateMockOnboarding,
 } from "../../../onboarding/mockStore";
+import { getAccessToken } from "../../../utils/authCookie";
 
 function OnboardingArena() {
   const navigate = useNavigate();
@@ -17,15 +18,11 @@ function OnboardingArena() {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    if (!isMockSession()) {
+    if (!getAccessToken()) {
       navigate("/");
       return;
     }
-    const mock = getMockOnboarding();
-    if (!mock) {
-      navigate("/cadastro");
-      return;
-    }
+    const mock = getOrCreateOnboardingDraft();
     setArenaName(mock.arenaName);
     setCourtCount(String(mock.courtCount || 1));
   }, [navigate]);

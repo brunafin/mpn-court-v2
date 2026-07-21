@@ -1,31 +1,5 @@
 const STORAGE_KEY = "mpn_onboarding_mock";
 
-/** Esportes que uma quadra pode aceitar. */
-export type CourtSport =
-  | "futsal"
-  | "fut5"
-  | "fut7"
-  | "fut11"
-  | "voleibol"
-  | "handebol"
-  | "basquete"
-  | "futevolei"
-  | "beach_tennis"
-  | "volei_praia";
-
-export const COURT_SPORTS: { key: CourtSport; label: string }[] = [
-  { key: "futsal", label: "Futsal" },
-  { key: "fut5", label: "Fut5" },
-  { key: "fut7", label: "Fut7" },
-  { key: "fut11", label: "Fut11" },
-  { key: "voleibol", label: "Voleibol" },
-  { key: "handebol", label: "Handebol" },
-  { key: "basquete", label: "Basquete" },
-  { key: "futevolei", label: "Futevôlei" },
-  { key: "beach_tennis", label: "Beach tennis" },
-  { key: "volei_praia", label: "Vôlei de praia" },
-];
-
 /** Tipos de piso mais comuns em quadras/arenas no Brasil. */
 export type CourtFloor =
   | "madeira"
@@ -46,12 +20,7 @@ export const COURT_FLOORS: { key: CourtFloor; label: string }[] = [
   { key: "saibro", label: "Saibro" },
 ];
 
-const COURT_SPORT_KEYS = COURT_SPORTS.map((s) => s.key);
 const COURT_FLOOR_KEYS = COURT_FLOORS.map((f) => f.key);
-
-export function courtSportLabel(key: CourtSport): string {
-  return COURT_SPORTS.find((s) => s.key === key)?.label ?? key;
-}
 
 export function courtFloorLabel(key: CourtFloor): string {
   return COURT_FLOORS.find((f) => f.key === key)?.label ?? key;
@@ -62,8 +31,10 @@ export type MockCourt = {
   name: string;
   /** Preço padrão R$/hora desta quadra (aplicado ao copiar a grade). */
   defaultPrice: number;
-  /** Esportes aceitos na quadra. */
-  sports: CourtSport[];
+  /** IDs dos esportes aceitos (catálogo do backend). */
+  sportIds: number[];
+  /** ID do tipo de quadra (catálogo do backend). */
+  typeOfCourtId?: number;
   /** Tipo de piso (opcional). */
   floor?: CourtFloor;
 };
@@ -90,14 +61,15 @@ export type WeekScheduleTemplate = {
   days: Record<WeekDayKey, ScheduleHourSlot[]>;
 };
 
-export const WEEK_DAYS: { key: WeekDayKey; label: string }[] = [
-  { key: "mon", label: "Segunda" },
-  { key: "tue", label: "Terça" },
-  { key: "wed", label: "Quarta" },
-  { key: "thu", label: "Quinta" },
-  { key: "fri", label: "Sexta" },
-  { key: "sat", label: "Sábado" },
-  { key: "sun", label: "Domingo" },
+/** Dia da semana + ref do backend (getDay: 0=Domingo … 6=Sábado). */
+export const WEEK_DAYS: { key: WeekDayKey; label: string; ref: number }[] = [
+  { key: "mon", label: "Segunda", ref: 1 },
+  { key: "tue", label: "Terça", ref: 2 },
+  { key: "wed", label: "Quarta", ref: 3 },
+  { key: "thu", label: "Quinta", ref: 4 },
+  { key: "fri", label: "Sexta", ref: 5 },
+  { key: "sat", label: "Sábado", ref: 6 },
+  { key: "sun", label: "Domingo", ref: 0 },
 ];
 
 /** Faixa comercial padrão (check marcado). Demais horas aparecem desmarcadas. */
@@ -187,12 +159,10 @@ function isWeekScheduleTemplate(value: unknown): value is WeekScheduleTemplate {
 }
 
 export type MockOnboardingState = {
-  /** Conta do dono */
+  /** Conta do dono (mantido para compatibilidade; e-mail vem do login). */
   email: string;
   ownerName: string;
   ownerPhone: string;
-  /** Senha do protótipo (só neste navegador). */
-  password: string;
   /**
    * Estabelecimento — preenchido depois do login, na configuração básica.
    * Vazio até configurar.
@@ -201,9 +171,9 @@ export type MockOnboardingState = {
   /** Quantas quadras cadastrar (definido na config do estabelecimento). */
   courtCount: number;
   hasScheduleTemplate: boolean;
-  /** Grade semanal salva no mock (opcional em mocks antigos). */
+  /** Grade semanal salva no rascunho (opcional em rascunhos antigos). */
   scheduleTemplate?: WeekScheduleTemplate;
-  /** Courts já criadas no mock (form completo por quadra). */
+  /** Courts já configuradas (form completo por quadra). */
   courts: MockCourt[];
   /** Ativação no portal — fora do checklist de configuração. */
   isPublished: boolean;
@@ -217,7 +187,10 @@ function isMockCourt(value: unknown): value is MockCourt {
   if (v.defaultPrice !== undefined && typeof v.defaultPrice !== "number") {
     return false;
   }
-  if (v.sports !== undefined && !Array.isArray(v.sports)) {
+  if (v.sportIds !== undefined && !Array.isArray(v.sportIds)) {
+    return false;
+  }
+  if (v.typeOfCourtId !== undefined && typeof v.typeOfCourtId !== "number") {
     return false;
   }
   if (
@@ -231,15 +204,16 @@ function isMockCourt(value: unknown): value is MockCourt {
 }
 
 function normalizeMockCourt(court: MockCourt): MockCourt {
-  const sports = Array.isArray(court.sports)
-    ? court.sports.filter((s): s is CourtSport =>
-        COURT_SPORT_KEYS.includes(s as CourtSport)
-      )
+  const sportIds = Array.isArray(court.sportIds)
+    ? court.sportIds.filter((id): id is number => Number.isInteger(id))
     : [];
   const floor =
     court.floor && COURT_FLOOR_KEYS.includes(court.floor)
       ? court.floor
       : undefined;
+  const typeOfCourtId = Number.isInteger(court.typeOfCourtId)
+    ? court.typeOfCourtId
+    : undefined;
   return {
     id: court.id,
     name: court.name,
@@ -247,7 +221,8 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
       Number.isFinite(court.defaultPrice) && court.defaultPrice > 0
         ? court.defaultPrice
         : 0,
-    sports,
+    sportIds,
+    typeOfCourtId,
     floor,
   };
 }
@@ -270,10 +245,6 @@ function isMockOnboardingState(value: unknown): value is MockOnboardingState {
   ) {
     return false;
   }
-  // password opcional em mocks antigos
-  if (v.password !== undefined && typeof v.password !== "string") {
-    return false;
-  }
   if (
     v.scheduleTemplate !== undefined &&
     !isWeekScheduleTemplate(v.scheduleTemplate)
@@ -283,39 +254,23 @@ function isMockOnboardingState(value: unknown): value is MockOnboardingState {
   return true;
 }
 
-/** Migra mock antigo (1 quadra) para o formato com courtCount. */
+/** Migra rascunho antigo (1 quadra) para o formato com courtCount. */
 function migrateLegacy(raw: unknown): MockOnboardingState | null {
   if (!raw || typeof raw !== "object") return null;
   const v = raw as Record<string, unknown>;
   if (typeof v.courtCount === "number") return null;
-  if (
-    typeof v.arenaName !== "string" ||
-    typeof v.email !== "string" ||
-    typeof v.ownerName !== "string" ||
-    typeof v.ownerPhone !== "string"
-  ) {
+  if (typeof v.arenaName !== "string" || typeof v.email !== "string") {
     return null;
-  }
-
-  const courts: MockCourt[] = [];
-  if (v.hasCourt === true && typeof v.courtName === "string" && v.courtName) {
-    courts.push({
-      id: "legacy-1",
-      name: v.courtName,
-      defaultPrice: 0,
-      sports: [],
-    });
   }
 
   return {
     email: v.email,
-    ownerName: v.ownerName,
-    ownerPhone: v.ownerPhone,
-    password: typeof v.password === "string" ? v.password : "",
+    ownerName: typeof v.ownerName === "string" ? v.ownerName : "",
+    ownerPhone: typeof v.ownerPhone === "string" ? v.ownerPhone : "",
     arenaName: typeof v.arenaName === "string" ? v.arenaName : "",
-    courtCount: Math.max(1, courts.length || 1),
+    courtCount: 1,
     hasScheduleTemplate: v.hasScheduleTemplate === true,
-    courts,
+    courts: [],
     isPublished: v.isPublished === true,
     createdAt:
       typeof v.createdAt === "string" ? v.createdAt : new Date().toISOString(),
@@ -328,32 +283,14 @@ export function getMockOnboarding(): MockOnboardingState | null {
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (isMockOnboardingState(parsed)) {
-      const password =
-        typeof parsed.password === "string" ? parsed.password : "";
-      const courts = parsed.courts.map((c) =>
-        normalizeMockCourt({
-          ...c,
-          defaultPrice:
-            typeof (c as MockCourt).defaultPrice === "number"
-              ? (c as MockCourt).defaultPrice
-              : 0,
-        })
-      );
-      const needsSave =
-        password !== parsed.password ||
-        courts.some(
-          (c, i) =>
-            c.defaultPrice !== (parsed.courts[i] as MockCourt).defaultPrice
-        );
-
-      let next: MockOnboardingState = { ...parsed, password, courts };
+      const courts = parsed.courts.map((c) => normalizeMockCourt(c));
+      let next: MockOnboardingState = { ...parsed, courts };
       if (next.scheduleTemplate) {
         next = {
           ...next,
           scheduleTemplate: normalizeWeekTemplate(next.scheduleTemplate),
         };
       }
-      if (needsSave) saveMockOnboarding(next);
       return next;
     }
     const migrated = migrateLegacy(parsed);
@@ -369,6 +306,27 @@ export function getMockOnboarding(): MockOnboardingState | null {
 
 export function saveMockOnboarding(state: MockOnboardingState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/** Retorna o rascunho atual ou cria um vazio (após o login do dono). */
+export function getOrCreateOnboardingDraft(seed?: {
+  email?: string;
+}): MockOnboardingState {
+  const current = getMockOnboarding();
+  if (current) return current;
+  const draft: MockOnboardingState = {
+    email: seed?.email ?? "",
+    ownerName: "",
+    ownerPhone: "",
+    arenaName: "",
+    courtCount: 1,
+    hasScheduleTemplate: false,
+    courts: [],
+    isPublished: false,
+    createdAt: new Date().toISOString(),
+  };
+  saveMockOnboarding(draft);
+  return draft;
 }
 
 export function updateMockOnboarding(
@@ -400,17 +358,17 @@ export function isMockSession(): boolean {
   return sessionStorage.getItem(SESSION_KEY) === "1";
 }
 
-export function tryMockLogin(email: string, password: string): boolean {
-  const mock = getMockOnboarding();
-  if (!mock) return false;
-  if (mock.email.toLowerCase() !== email.trim().toLowerCase()) return false;
-  if (!mock.password || mock.password !== password) return false;
-  setMockSession();
-  return true;
-}
-
 export function isArenaConfigured(state: MockOnboardingState): boolean {
   return Boolean(state.arenaName.trim()) && state.courtCount >= 1;
+}
+
+/** Uma quadra está completa quando tem preço, esportes e tipo definidos. */
+export function isCourtComplete(court: MockCourt): boolean {
+  return (
+    court.defaultPrice > 0 &&
+    court.sportIds.length > 0 &&
+    Boolean(court.typeOfCourtId)
+  );
 }
 
 export function isEstablishmentReady(state: MockOnboardingState): boolean {
@@ -425,15 +383,13 @@ export function areAllCourtsCreated(state: MockOnboardingState): boolean {
   return (
     isArenaConfigured(state) &&
     state.courts.length >= state.courtCount &&
-    state.courts
-      .slice(0, state.courtCount)
-      .every((c) => c.defaultPrice > 0)
+    state.courts.slice(0, state.courtCount).every(isCourtComplete)
   );
 }
 
 export function courtsDoneCount(state: MockOnboardingState): number {
   return Math.min(
-    state.courts.filter((c) => c.defaultPrice > 0).length,
+    state.courts.filter(isCourtComplete).length,
     state.courtCount
   );
 }
@@ -500,6 +456,18 @@ export function removeMockCourtAt(index: number): MockOnboardingState | null {
   };
   saveMockOnboarding(next);
   return next;
+}
+
+/** Converte a grade semanal do rascunho para o payload do backend. */
+export function buildWeekTemplatePayload(
+  template: WeekScheduleTemplate
+): { day_of_week_ref: number; hours: string[] }[] {
+  return WEEK_DAYS.map(({ key, ref }) => ({
+    day_of_week_ref: ref,
+    hours: (template.days[key] ?? [])
+      .filter((slot) => slot.enabled)
+      .map((slot) => slot.hour),
+  })).filter((day) => day.hours.length > 0);
 }
 
 export type ChecklistItemId = "arena" | "schedule" | "court";

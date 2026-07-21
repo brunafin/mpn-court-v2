@@ -8,12 +8,12 @@ import {
   WeekScheduleTemplate,
   ScheduleHourSlot,
   buildEmptyWeekTemplate,
-  getMockOnboarding,
+  getOrCreateOnboardingDraft,
   isArenaConfigured,
-  isMockSession,
   normalizeWeekTemplate,
   updateMockOnboarding,
 } from "../../../onboarding/mockStore";
+import { getAccessToken } from "../../../utils/authCookie";
 
 function OnboardingSchedule() {
   const navigate = useNavigate();
@@ -24,15 +24,11 @@ function OnboardingSchedule() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!isMockSession()) {
+    if (!getAccessToken()) {
       navigate("/");
       return;
     }
-    const mock = getMockOnboarding();
-    if (!mock) {
-      navigate("/cadastro");
-      return;
-    }
+    const mock = getOrCreateOnboardingDraft();
     if (!isArenaConfigured(mock)) {
       navigate("/comecar/estabelecimento");
       return;

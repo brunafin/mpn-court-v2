@@ -2,15 +2,26 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
 import { useEffect, useState } from "react";
 import { login } from "../../api/auth";
-import { getAccessToken, setAccessToken } from "../../utils/authCookie";
+import {
+  getAccessToken,
+  getAccessTokenPayload,
+  setAccessToken,
+} from "../../utils/authCookie";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { buttonClassName } from "../../components/Button";
-import {
-  getMockOnboarding,
-  isEstablishmentReady,
-  isMockSession,
-  tryMockLogin,
-} from "../../onboarding/mockStore";
+
+type LoginTokenPayload = {
+  updatedPassword?: boolean;
+  companyPublicId?: string | null;
+};
+
+function routeAfterLogin(token: string): string {
+  const payload =
+    getAccessTokenPayload<LoginTokenPayload>() ??
+    (JSON.parse(atob(token.split(".")[1])) as LoginTokenPayload);
+  if (payload && payload.updatedPassword === false) return "/alterar-senha";
+  return payload?.companyPublicId ? "/reservas" : "/comecar";
+}
 
 function Login() {
   const navigate = useNavigate();
@@ -32,14 +43,7 @@ function Login() {
   useEffect(() => {
     const token = getAccessToken();
     if (token) {
-      navigate("/reservas");
-      return;
-    }
-    if (isMockSession()) {
-      const mock = getMockOnboarding();
-      if (mock) {
-        navigate(isEstablishmentReady(mock) ? "/reservas" : "/comecar");
-      }
+      navigate(routeAfterLogin(token));
     }
   }, [navigate]);
 
@@ -55,23 +59,8 @@ function Login() {
     try {
       const response = await login(username, password);
       setAccessToken(response.access_token);
-      const tokenPayload = JSON.parse(
-        atob(response.access_token.split(".")[1])
-      );
-      if (tokenPayload.updatedPassword) {
-        navigate("/reservas");
-      } else {
-        navigate("/alterar-senha");
-      }
+      navigate(routeAfterLogin(response.access_token));
     } catch {
-      // Fallback do protótipo: conta criada no cadastro mock
-      if (tryMockLogin(username, password)) {
-        const mock = getMockOnboarding();
-        navigate(
-          mock && isEstablishmentReady(mock) ? "/reservas" : "/comecar"
-        );
-        return;
-      }
       const message = "Usuário ou senha inválidos.";
       setFormError(message);
       notifyError({ message, type: "error" });

@@ -1,14 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { AxiosError } from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
 import { buttonClassName } from "../../components/Button";
 import { formatPhoneMask, onlyPhoneDigits } from "../../utils/formatPhone";
-import {
-  clearMockOnboarding,
-  getMockOnboarding,
-  isMockSession,
-} from "../../onboarding/mockStore";
-import { startPendingSignup } from "../../onboarding/signupSmsMock";
+import { signup } from "../../api/auth";
 import { getAccessToken } from "../../utils/authCookie";
 import {
   isValidPassword,
@@ -23,19 +19,12 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [existingMock, setExistingMock] = useState(false);
   const [touchedPassword, setTouchedPassword] = useState(false);
 
   useEffect(() => {
     if (getAccessToken()) {
       navigate("/reservas");
-      return;
     }
-    if (isMockSession() && getMockOnboarding()) {
-      navigate("/comecar");
-      return;
-    }
-    setExistingMock(Boolean(getMockOnboarding()));
   }, [navigate]);
 
   const phoneDigits = onlyPhoneDigits(ownerPhone);
@@ -54,12 +43,7 @@ function SignUp() {
         passwordOk
     ) && !loading;
 
-  const handleClearExisting = () => {
-    clearMockOnboarding();
-    setExistingMock(false);
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError("");
     setTouchedPassword(true);
@@ -85,14 +69,20 @@ function SignUp() {
     }
 
     setLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
     try {
-      startPendingSignup({
-        email: email.trim().toLowerCase(),
-        ownerName: ownerName.trim(),
-        ownerPhone: phoneDigits,
+      await signup({
+        name: ownerName.trim(),
+        email: normalizedEmail,
+        phone: phoneDigits,
         password,
       });
-      navigate("/cadastro/codigo");
+      navigate("/cadastro/codigo", { state: { email: normalizedEmail } });
+    } catch (error) {
+      const message =
+        (error as AxiosError<{ message?: string }>)?.response?.data?.message ||
+        "Não foi possível criar a conta. Tente novamente.";
+      setFormError(message);
     } finally {
       setLoading(false);
     }
@@ -114,25 +104,6 @@ function SignUp() {
           <h1 className="text-xl font-bold tracking-tight text-text-light sm:text-2xl">
             Criar sua conta
           </h1>
-          {existingMock && (
-            <p className="mt-2 rounded-lg bg-master-light px-3 py-2 text-sm leading-5 text-text-light/80">
-              Já existe uma conta mock neste navegador.{" "}
-              <Link
-                to="/"
-                className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
-              >
-                Entrar
-              </Link>
-              {" · "}
-              <button
-                type="button"
-                onClick={handleClearExisting}
-                className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
-              >
-                Apagar e criar outra
-              </button>
-            </p>
-          )}
         </div>
 
         <form
