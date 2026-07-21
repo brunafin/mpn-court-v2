@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
 import {
+  MdCheckCircle,
   MdContentCopy,
   MdOutlineInfo,
   MdOpenInNew,
@@ -21,8 +22,158 @@ import {
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
 import { PageEyebrow } from "../../components/PageTitle";
+import {
+  canPublish,
+  getMockOnboarding,
+  isMockSession,
+  MockOnboardingState,
+  updateMockOnboarding,
+} from "../../onboarding/mockStore";
+import { formatPhoneMask } from "../../utils/formatPhone";
 
-function Info() {
+function MockInfo() {
+  const navigate = useNavigate();
+  const { notifyError } = useErrors();
+  const [state, setState] = useState<MockOnboardingState | null>(null);
+  const [publishing, setPublishing] = useState(false);
+
+  useEffect(() => {
+    if (!isMockSession()) {
+      navigate("/");
+      return;
+    }
+    const mock = getMockOnboarding();
+    if (!mock) {
+      navigate("/cadastro");
+      return;
+    }
+    setState(mock);
+  }, [navigate]);
+
+  if (!state) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-master text-text-light/70">
+        Carregando…
+      </div>
+    );
+  }
+
+  const ready = canPublish(state);
+  const published = state.isPublished;
+
+  const handlePublish = () => {
+    if (!ready) {
+      notifyError({
+        message: "Conclua a configuração básica antes de ativar no portal.",
+        type: "error",
+      });
+      return;
+    }
+    setPublishing(true);
+    try {
+      const next = updateMockOnboarding({ isPublished: true });
+      if (next) setState(next);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-master px-4 py-8 text-text-light">
+      <div className="mx-auto w-full max-w-lg">
+        <Link
+          to="/comecar"
+          className="text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+        >
+          ← Configuração básica
+        </Link>
+
+        <PageEyebrow className="mb-2 mt-4">Minhas informações</PageEyebrow>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {state.arenaName.trim() || "Seu estabelecimento"}
+        </h1>
+        <p className="mt-1 text-base text-text-light/65">
+          {state.ownerName} · {formatPhoneMask(state.ownerPhone)}
+        </p>
+        <p className="mt-3 rounded-lg bg-warning-500/15 px-3 py-2 text-sm font-medium text-warning-500">
+          Protótipo — ativação mock, não publica de verdade
+        </p>
+
+        <div className="mt-6 space-y-4">
+          <div className="rounded-2xl bg-master-light px-4 py-5">
+            <p className="text-base font-medium text-text-light/70">Conta</p>
+            <p className="mt-1 text-lg font-semibold text-text-light">
+              {state.email}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+            <p className="mb-2 text-lg font-semibold text-text-light">
+              Ativar no portal
+            </p>
+            <p className="mb-4 text-base leading-6 text-text-light/65">
+              Liberar a arena no portal de reservas é opcional. Você já pode
+              usar a agenda sem ativar.
+            </p>
+
+            {published ? (
+              <div className="flex items-start gap-3 rounded-xl bg-accent-green/15 px-4 py-3.5">
+                <MdCheckCircle
+                  size={24}
+                  className="mt-0.5 shrink-0 text-accent-green"
+                  aria-hidden
+                />
+                <div>
+                  <p className="text-lg font-semibold text-accent-green">
+                    Ativa no portal
+                  </p>
+                  <p className="mt-0.5 text-base text-text-light/70">
+                    (mock) — na API real isso publicaria a arena.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {!ready && (
+                  <div className="mb-4 flex items-start gap-2 rounded-xl bg-master px-4 py-3">
+                    <MdOutlineInfo
+                      size={20}
+                      className="mt-0.5 shrink-0 text-text-light/55"
+                      aria-hidden
+                    />
+                    <p className="text-base leading-6 text-text-light/65">
+                      Conclua estabelecimento, horários e quadras em{" "}
+                      <Link
+                        to="/comecar"
+                        className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                      >
+                        Configuração básica
+                      </Link>{" "}
+                      para liberar a ativação.
+                    </p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={!ready || publishing}
+                  onClick={handlePublish}
+                  className={buttonClassName({
+                    variant: "primary",
+                    className: "justify-center",
+                  })}
+                >
+                  {publishing ? "Ativando…" : "Ativar no portal"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RealInfo() {
   const navigate = useNavigate();
   const { loading, withLoading } = useLoading();
   const { notifyError } = useErrors();
@@ -267,6 +418,15 @@ function Info() {
       </section>
     </AppLayout>
   );
+}
+
+function Info() {
+  const hasJwt = Boolean(getAccessToken());
+  const mockSession = isMockSession() && Boolean(getMockOnboarding());
+
+  if (hasJwt) return <RealInfo />;
+  if (mockSession) return <MockInfo />;
+  return <RealInfo />;
 }
 
 export default Info;

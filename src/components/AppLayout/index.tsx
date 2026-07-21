@@ -11,6 +11,7 @@ import {
 } from "../../utils/authCookie";
 import { useEffect, useState } from "react";
 import Header from "../Header";
+import { getMockOnboarding } from "../../onboarding/mockStore";
 
 type NavItem = {
   to: string;
@@ -46,6 +47,11 @@ function AppLayout({ children }: AppLayoutProps) {
     const payload = getAccessTokenPayload<{ companyName?: string }>();
     if (payload?.companyName) {
       setCompanyName(payload.companyName);
+      return;
+    }
+    const mock = getMockOnboarding();
+    if (mock?.arenaName) {
+      setCompanyName(mock.arenaName);
     }
   }, []);
 

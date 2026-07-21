@@ -1,23 +1,45 @@
-import { useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
 import { useEffect, useState } from "react";
 import { login } from "../../api/auth";
 import { getAccessToken, setAccessToken } from "../../utils/authCookie";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { buttonClassName } from "../../components/Button";
+import {
+  getMockOnboarding,
+  isEstablishmentReady,
+  isMockSession,
+  tryMockLogin,
+} from "../../onboarding/mockStore";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { notifyError } = useErrors();
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const signupOk = Boolean(
+    (location.state as { signupOk?: boolean } | null)?.signupOk
+  );
+  const signupEmail = (location.state as { email?: string } | null)?.email;
+
+  useEffect(() => {
+    if (signupEmail) setUsername(signupEmail);
+  }, [signupEmail]);
 
   useEffect(() => {
     const token = getAccessToken();
     if (token) {
       navigate("/reservas");
+      return;
+    }
+    if (isMockSession()) {
+      const mock = getMockOnboarding();
+      if (mock) {
+        navigate(isEstablishmentReady(mock) ? "/reservas" : "/comecar");
+      }
     }
   }, [navigate]);
 
@@ -41,9 +63,16 @@ function Login() {
       } else {
         navigate("/alterar-senha");
       }
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "Usuário ou senha inválidos.";
+    } catch {
+      // Fallback do protótipo: conta criada no cadastro mock
+      if (tryMockLogin(username, password)) {
+        const mock = getMockOnboarding();
+        navigate(
+          mock && isEstablishmentReady(mock) ? "/reservas" : "/comecar"
+        );
+        return;
+      }
+      const message = "Usuário ou senha inválidos.";
       setFormError(message);
       notifyError({ message, type: "error" });
     } finally {
@@ -70,8 +99,13 @@ function Login() {
             Entrar
           </h1>
           <p className="mt-2 text-base leading-6 text-text-light/70">
-            Use seu usuário e senha para acessar as reservas.
+            Acesse com seu e-mail e senha.
           </p>
+          {signupOk && (
+            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-sm font-medium text-accent-green">
+              Conta criada. Entre para configurar o estabelecimento.
+            </p>
+          )}
         </div>
 
         <form
@@ -81,28 +115,24 @@ function Login() {
         >
           <Input
             name="username"
-            title="Usuário"
-            placeholder="Digite seu usuário"
+            title="E-mail ou usuário"
+            placeholder="seu@email.com"
             type="text"
             mode="dark"
             value={username}
             onChange={(e) => {
-              const value = e.target.value
-                .replace(/\s/g, "")
-                .replace(/[A-Z]/g, (c) => c.toLowerCase())
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "");
-              setUsername(value);
+              setUsername(e.target.value);
+              if (formError) setFormError("");
             }}
             required
             autoComplete="username"
-            autoCapitalize="none"
             enterKeyHint="next"
+            error={formError || undefined}
           />
           <Input
             name="password"
             title="Senha"
-            placeholder="Digite sua senha"
+            placeholder="Sua senha"
             type="password"
             mode="dark"
             value={password}
@@ -113,16 +143,29 @@ function Login() {
             required
             autoComplete="current-password"
             enterKeyHint="go"
-            className="mt-4"
-            error={formError || undefined}
+            className="mt-1"
           />
+
           <button
             type="submit"
             disabled={!canSubmit}
-            className={buttonClassName({ variant: "primary", className: "mt-6" })}
+            className={buttonClassName({
+              variant: "primary",
+              className: "mt-6",
+            })}
           >
             {loading ? "Entrando…" : "Entrar"}
           </button>
+
+          <p className="mt-5 text-center text-base text-text-light/70">
+            Não tem conta?{" "}
+            <Link
+              to="/cadastro"
+              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            >
+              Cadastrar
+            </Link>
+          </p>
         </form>
       </div>
     </div>

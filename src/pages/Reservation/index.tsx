@@ -26,6 +26,11 @@ import { BsX } from "react-icons/bs";
 import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
+import {
+  getMockOnboarding,
+  isEstablishmentReady,
+  isMockSession,
+} from "../../onboarding/mockStore";
 
 type SchedulesCache = {
   key: string;
@@ -68,6 +73,7 @@ function Reservation() {
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [isMockAgenda, setIsMockAgenda] = useState(false);
   const actionsTitleId = useId();
   const actionsDialogId = useId();
   const actionsTriggerRef = useRef<HTMLButtonElement>(null);
@@ -75,9 +81,21 @@ function Reservation() {
   const actionsFirstItemRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
-    if (!getAccessToken()) {
-      navigate("/");
+    if (getAccessToken()) return;
+
+    if (isMockSession()) {
+      const mock = getMockOnboarding();
+      if (mock && isEstablishmentReady(mock)) {
+        setIsMockAgenda(true);
+        setCourtsNameList(mock.courts.map((c) => c.name));
+        setList([]);
+        return;
+      }
+      navigate(mock ? "/comecar" : "/");
+      return;
     }
+
+    navigate("/");
   }, [navigate]);
 
   useEffect(() => {
@@ -87,7 +105,7 @@ function Reservation() {
 
   const fetchData = useCallback(
     async (dateInput: string) => {
-      if (!companyPublicId) {
+      if (!companyPublicId || isMockAgenda) {
         return;
       }
       try {
@@ -114,11 +132,11 @@ function Reservation() {
         }
       }
     },
-    [companyPublicId, navigate]
+    [companyPublicId, navigate, isMockAgenda]
   );
 
   useEffect(() => {
-    if (!companyPublicId || !date) return;
+    if (isMockAgenda || !companyPublicId || !date) return;
     const dateInput = toDateKey(date);
     const key = `${companyPublicId}:${dateInput}`;
     if (schedulesCache?.key === key) {
@@ -197,7 +215,7 @@ function Reservation() {
   }, [actionsOpen]);
 
   useEffect(() => {
-    if (!companyPublicId || !date) return;
+    if (isMockAgenda || !companyPublicId || !date) return;
 
     let cancelled = false;
     const fetchDayReminders = async () => {
@@ -216,11 +234,11 @@ function Reservation() {
     return () => {
       cancelled = true;
     };
-  }, [companyPublicId, date]);
+  }, [companyPublicId, date, isMockAgenda]);
 
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
-    if (creatingNote) return;
+    if (isMockAgenda || creatingNote) return;
     setCreatingNote(true);
     try {
       await createNote({
@@ -346,6 +364,11 @@ function Reservation() {
   return (
     <AppLayout>
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master text-text-light">
+        {isMockAgenda && (
+          <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
+            Protótipo — agenda vazia. Portal opcional em Minhas informações.
+          </p>
+        )}
         <div className="shrink-0 bg-master-light px-3 pb-4 pt-2 lg:bg-transparent lg:px-8 lg:pb-5 lg:pt-5">
           <div className="mx-auto w-full lg:max-w-6xl">
             <div className="mb-2 lg:mb-4 lg:flex lg:flex-col lg:gap-4">

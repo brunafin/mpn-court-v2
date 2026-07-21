@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import SignUpVerifyCode from "./pages/SignUp/VerifyCode";
+import OnboardingArena from "./pages/Onboarding/Arena";
+import OnboardingChecklist from "./pages/Onboarding";
+import OnboardingSchedule from "./pages/Onboarding/Schedule";
+import OnboardingCourt from "./pages/Onboarding/Court";
 import Reservation from "./pages/Reservation";
 import ReservationDetails from "./pages/Reservation/Details";
 import ChangePassword from "./pages/ChangePassword";
@@ -52,6 +58,15 @@ function App() {
           <NotificationProvider>
             <Routes>
               <Route index element={<Login />} />
+              <Route path="/cadastro" element={<SignUp />} />
+              <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />
+              <Route path="/comecar" element={<OnboardingChecklist />} />
+              <Route
+                path="/comecar/estabelecimento"
+                element={<OnboardingArena />}
+              />
+              <Route path="/comecar/horario" element={<OnboardingSchedule />} />
+              <Route path="/comecar/quadra" element={<OnboardingCourt />} />
               <Route path="/reservas" element={<Reservation />} />
               <Route path="/reservas/:id" element={<ReservationDetails />} />
               <Route path="/alterar-senha" element={<ChangePassword />} />

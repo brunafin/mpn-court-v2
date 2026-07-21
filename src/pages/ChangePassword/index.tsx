@@ -10,10 +10,11 @@ import {
   getAccessTokenPayload,
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
-
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-const PASSWORD_HINT =
-  "Use no mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial.";
+import {
+  isValidPassword,
+  PASSWORD_HINT,
+  PASSWORD_REGEX,
+} from "../../utils/passwordPolicy";
 
 export default function ChangePassword() {
   const { loading, withLoading } = useLoading();
@@ -47,7 +48,7 @@ export default function ChangePassword() {
     return undefined;
   }, [confirmPassword, newPassword, touchedConfirm]);
 
-  const passwordValid = PASSWORD_REGEX.test(newPassword);
+  const passwordValid = isValidPassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
 
   const handleChangePassword = async (

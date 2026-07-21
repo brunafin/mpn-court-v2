@@ -10,6 +10,7 @@ import {
   getAccessTokenPayload,
   logoutAndRedirect,
 } from "../../utils/authCookie";
+import { getMockOnboarding } from "../../onboarding/mockStore";
 
 type NavItem = {
   to: string;
@@ -53,6 +54,11 @@ function Header() {
     const payload = getAccessTokenPayload<{ companyName?: string }>();
     if (payload?.companyName) {
       setCompanyName(payload.companyName);
+      return;
+    }
+    const mock = getMockOnboarding();
+    if (mock?.arenaName.trim()) {
+      setCompanyName(mock.arenaName.trim());
     }
   }, []);
 
@@ -91,7 +97,6 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
-      {/* Mobile: logo + nome + hamburger */}
       <Link
         to="/reservas"
         className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
@@ -106,7 +111,7 @@ function Header() {
 
       <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-text-light sm:text-lg">
         <Link
-          to={`/reservas`}
+          to="/reservas"
           className="block truncate rounded-lg py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
         >
           {companyName}

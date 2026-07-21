@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
+import { clearMockSession } from "../onboarding/mockStore";
 
 const COOKIE_NAME = "access_token";
 
@@ -38,6 +39,7 @@ export function clearAccessToken() {
 
 export async function logoutAndRedirect() {
   clearAccessToken();
+  clearMockSession();
 
   try {
     if ("caches" in window) {
