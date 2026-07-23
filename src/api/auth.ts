@@ -1,16 +1,18 @@
 import api from './axios';
 
 export async function login(username: string, password: string) {
-  const response = await api.post(
-    '/auth/login',
-    { username, password },
-  );
+  const response = await api.post('/auth/login', { username, password });
   return response.data;
 }
 
-export async function changePassword(companyPublicId: string, newPassword: string) {
-
-  const response = await api.post('/auth/change-password', { companyPublicId, newPassword });
+export async function changePassword(
+  newPassword: string,
+  currentPassword?: string,
+) {
+  const response = await api.post('/auth/change-password', {
+    newPassword,
+    ...(currentPassword ? { currentPassword } : {}),
+  });
   return response.data;
 }
 

@@ -1,13 +1,7 @@
-import { ReactNode } from "react";
 import { logoutAndRedirect } from "../../utils/authCookie";
 
-type OnboardingFooterProps = {
-  /** Ação secundária (ex.: apagar mock). */
-  secondary?: ReactNode;
-};
-
 /** Rodapé discreto das telas de configuração (full, sem header de app). */
-function OnboardingFooter({ secondary }: OnboardingFooterProps) {
+function OnboardingFooter() {
   return (
     <footer className="mt-10 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center">
       <button
@@ -19,7 +13,6 @@ function OnboardingFooter({ secondary }: OnboardingFooterProps) {
       >
         Sair
       </button>
-      {secondary && <div className="mt-3">{secondary}</div>}
     </footer>
   );
 }

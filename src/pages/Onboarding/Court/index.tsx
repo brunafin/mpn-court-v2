@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { MdChevronLeft } from "react-icons/md";
 import Input from "../../../components/Input";
@@ -9,34 +9,32 @@ import OnboardingFooter from "../../../components/OnboardingFooter";
 import {
   areAllCourtsCreated,
   COURT_FLOORS,
+  COURT_SPORTS,
   CourtFloor,
+  CourtSport,
   getOrCreateOnboardingDraft,
   isArenaConfigured,
   MockCourt,
   MockOnboardingState,
   upsertMockCourt,
 } from "../../../onboarding/mockStore";
-import {
-  getSports,
-  getTypeOfCourts,
-  Sport,
-  TypeOfCourt,
-} from "../../../api/onboarding";
 import { getAccessToken } from "../../../utils/authCookie";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
+
+function scrollCourtPageToTop(pageEl: HTMLElement | null) {
+  window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  pageEl?.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 function OnboardingCourt() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const pageRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<MockOnboardingState | null>(null);
-  const [sportsCatalog, setSportsCatalog] = useState<Sport[]>([]);
-  const [typesCatalog, setTypesCatalog] = useState<TypeOfCourt[]>([]);
-  const [catalogError, setCatalogError] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [courtName, setCourtName] = useState("");
   const [priceDigits, setPriceDigits] = useState("");
-  const [sportIds, setSportIds] = useState<number[]>([]);
-  const [typeOfCourtId, setTypeOfCourtId] = useState<number | "">("");
+  const [sports, setSports] = useState<CourtSport[]>([]);
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [formError, setFormError] = useState("");
 
@@ -54,8 +52,7 @@ function OnboardingCourt() {
         ? String(Math.round(court.defaultPrice * 100))
         : ""
     );
-    setSportIds(court?.sportIds ?? []);
-    setTypeOfCourtId(court?.typeOfCourtId ?? "");
+    setSports(court?.sports ?? []);
     setFloor(court?.floor ?? "");
     setFormError("");
   }, []);
@@ -89,22 +86,6 @@ function OnboardingCourt() {
     }
   }, [navigate, searchParams, openEditor]);
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([getSports(), getTypeOfCourts()])
-      .then(([sports, types]) => {
-        if (!active) return;
-        setSportsCatalog(sports);
-        setTypesCatalog(types);
-      })
-      .catch(() => {
-        if (active) setCatalogError("Não foi possível carregar esportes e tipos.");
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
   if (!state) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-master text-text-light/70">
@@ -120,7 +101,7 @@ function OnboardingCourt() {
   );
   const doneCount = Math.min(
     state.courts.filter(
-      (c) => c.defaultPrice > 0 && c.sportIds.length > 0 && !!c.typeOfCourtId
+      (c) => c.defaultPrice > 0 && c.sports.length > 0 && !!c.floor
     ).length,
     state.courtCount
   );
@@ -135,13 +116,13 @@ function OnboardingCourt() {
       return;
     }
 
-    if (!typeOfCourtId) {
-      setFormError("Selecione o tipo de quadra.");
+    if (sports.length === 0) {
+      setFormError("Selecione ao menos um esporte.");
       return;
     }
 
-    if (sportIds.length === 0) {
-      setFormError("Selecione ao menos um esporte.");
+    if (!floor) {
+      setFormError("Selecione o tipo de piso.");
       return;
     }
 
@@ -153,9 +134,8 @@ function OnboardingCourt() {
         id: existing?.id ?? `court-${editingIndex + 1}-${Date.now()}`,
         name: courtName.trim(),
         defaultPrice: price,
-        sportIds,
-        typeOfCourtId,
-        floor: floor || undefined,
+        sports,
+        floor,
       },
       existing ? editingIndex : undefined
     );
@@ -166,14 +146,21 @@ function OnboardingCourt() {
 
     if (areAllCourtsCreated(next)) {
       navigate("/comecar");
-    } else {
-      openEditor(next.courts.length);
+      return;
     }
+
+    openEditor(next.courts.length);
+    requestAnimationFrame(() => {
+      scrollCourtPageToTop(pageRef.current);
+    });
   };
 
   return (
-    <div className="min-h-dvh bg-master px-4 py-6 text-text-light">
-      <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col">
+    <div
+      ref={pageRef}
+      className="min-h-dvh bg-master px-4 py-6 text-text-light lg:h-full lg:min-h-0 lg:overflow-y-auto"
+    >
+      <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col lg:min-h-full">
         <div className="-ml-2 flex items-center gap-1">
           <Link
             to="/comecar"
@@ -210,8 +197,9 @@ function OnboardingCourt() {
             <div className="mt-6">
               <div className="mb-2 flex items-center justify-between text-sm text-text-light/60">
                 <span>
-                  Quadra {Math.min((editingIndex ?? doneCount) + 1, state.courtCount)} de{" "}
-                  {state.courtCount}
+                  Quadra{" "}
+                  {Math.min((editingIndex ?? doneCount) + 1, state.courtCount)}{" "}
+                  de {state.courtCount}
                 </span>
                 <span>
                   {doneCount}/{state.courtCount} concluídas
@@ -222,8 +210,8 @@ function OnboardingCourt() {
                   const done =
                     !!court &&
                     court.defaultPrice > 0 &&
-                    court.sportIds.length > 0 &&
-                    !!court.typeOfCourtId;
+                    court.sports.length > 0 &&
+                    !!court.floor;
                   const current = editingIndex === index;
                   const clickable = index <= state.courts.length;
                   return (
@@ -235,7 +223,12 @@ function OnboardingCourt() {
                       }`}
                       aria-current={current || undefined}
                       disabled={!clickable}
-                      onClick={() => openEditor(index, court)}
+                      onClick={() => {
+                        openEditor(index, court);
+                        requestAnimationFrame(() => {
+                          scrollCourtPageToTop(pageRef.current);
+                        });
+                      }}
                       className="mpn-tap min-w-0 flex-1 py-2 disabled:cursor-default"
                     >
                       <span
@@ -252,12 +245,6 @@ function OnboardingCourt() {
                 })}
               </div>
             </div>
-
-            {catalogError && (
-              <p className="mt-4 rounded-lg bg-danger-400/15 px-3 py-2 text-sm font-medium text-danger-400">
-                {catalogError}
-              </p>
-            )}
 
             {editingIndex !== null && (
               <form
@@ -303,34 +290,19 @@ function OnboardingCourt() {
                   error={formError.includes("preço") ? formError : undefined}
                 />
 
-                <Select
-                  name="typeOfCourt"
-                  title="Tipo de quadra"
-                  mode="dark"
-                  required
-                  placeholder="Selecione o tipo"
-                  className="mt-1"
-                  value={typeOfCourtId}
-                  options={typesCatalog.map((t) => ({ id: t.id, name: t.name }))}
-                  onChange={(e) => {
-                    setTypeOfCourtId(e.target.value ? Number(e.target.value) : "");
-                    if (formError) setFormError("");
-                  }}
-                />
-
                 <CheckboxGroup
                   name="sports"
                   title="Esportes aceitos"
                   mode="dark"
                   required
                   className="mt-1"
-                  options={sportsCatalog.map((s) => ({
-                    value: String(s.id),
-                    label: s.name,
+                  options={COURT_SPORTS.map((s) => ({
+                    value: s.key,
+                    label: s.label,
                   }))}
-                  value={sportIds.map(String)}
+                  value={sports}
                   onChange={(next) => {
-                    setSportIds(next.map(Number));
+                    setSports(next as CourtSport[]);
                     if (formError) setFormError("");
                   }}
                   error={formError.includes("esporte") ? formError : undefined}
@@ -338,8 +310,9 @@ function OnboardingCourt() {
 
                 <Select
                   name="floor"
-                  title="Tipo de piso (opcional)"
+                  title="Tipo de piso"
                   mode="dark"
+                  required
                   placeholder="Selecione o piso"
                   className="mt-1"
                   value={floor}
@@ -347,11 +320,17 @@ function OnboardingCourt() {
                     id: f.key,
                     name: f.label,
                   }))}
-                  onChange={(e) => setFloor(e.target.value as CourtFloor | "")}
+                  onChange={(e) => {
+                    setFloor(e.target.value as CourtFloor | "");
+                    if (formError) setFormError("");
+                  }}
                 />
 
                 {formError && !/preço|esporte/.test(formError) && (
-                  <p className="mb-2 text-base font-medium text-danger-400" role="alert">
+                  <p
+                    className="mb-2 text-base font-medium text-danger-400"
+                    role="alert"
+                  >
                     {formError}
                   </p>
                 )}
@@ -363,8 +342,8 @@ function OnboardingCourt() {
                     disabled={
                       !courtName.trim() ||
                       price <= 0 ||
-                      !typeOfCourtId ||
-                      sportIds.length === 0
+                      sports.length === 0 ||
+                      !floor
                     }
                   >
                     {editingIndex >= state.courtCount - 1

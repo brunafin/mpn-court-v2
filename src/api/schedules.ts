@@ -78,9 +78,9 @@ export const updatePhoneContact = async (
   }
 }
 
-export const cancelReservation = async (token: string): Promise<void> => {
+export const cancelReservation = async (publicId: string): Promise<void> => {
   try {
-    await api.post<IReservationDetailsItemProps>('/reservation/cancel', { token });
+    await api.delete(`/reservation/${publicId}`);
   } catch (error) {
     console.error('Erro ao cancelar reserva:', error);
     throw error;

@@ -62,6 +62,11 @@ function Input({
 }: IInputProps) {
   const isDark = mode === "dark";
   const isPassword = type === "password";
+  const maskClarity =
+    isPassword ||
+    type === "email" ||
+    type === "tel" ||
+    /password|email|phone|telefone|cpf|senha|contato|^name$/i.test(name);
   const [showPassword, setShowPassword] = useState(false);
   const errorId = error ? `${name}-error` : undefined;
   const describedByIds =
@@ -112,7 +117,8 @@ function Input({
           aria-required={required || undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedByIds}
-          className={fieldClass}
+          className={`${fieldClass}${maskClarity ? " clarity-mask" : ""}`}
+          data-clarity-mask={maskClarity ? "true" : undefined}
           onChange={onChange}
           onBlur={onBlur}
           onClick={onClick}

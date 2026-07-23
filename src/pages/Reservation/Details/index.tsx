@@ -26,6 +26,8 @@ import {
   PHONE_MASK_PLACEHOLDER,
 } from "../../../utils/formatPhone";
 import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
+import { getAccessTokenPayload } from "../../../utils/authCookie";
+import { invalidateSchedulesDayCache } from "../../../utils/schedulesDayCache";
 import Textarea from "../../../components/Textarea";
 import Select from "../../../components/Select";
 import { useLoading } from "../../../hooks/useLoading";
@@ -182,6 +184,7 @@ function ReservationDetails() {
         sportId: sportSelected?.id || courtSports[0]?.id,
       });
       if (response) {
+        invalidateAgendaCache();
         navigate("/reservas", {
           state: {
             date: dateFrom,
@@ -231,6 +234,7 @@ function ReservationDetails() {
       setCustomerReservationName(contactName);
       setCustomerReservationPhone(contactPhone);
       setShowInfoCustomer(false);
+      invalidateAgendaCache();
     });
   };
 
@@ -307,8 +311,23 @@ function ReservationDetails() {
     }
   };
 
-  const goBackToList = () => {
-    navigate("/reservas", { state: { date: dateFrom } });
+  const invalidateAgendaCache = () => {
+    const companyPublicId =
+      getAccessTokenPayload<{ companyPublicId?: string }>()?.companyPublicId;
+    if (companyPublicId && dateFrom) {
+      invalidateSchedulesDayCache(companyPublicId, String(dateFrom));
+    } else {
+      invalidateSchedulesDayCache();
+    }
+  };
+
+  const goBackToList = (opts?: { stale?: boolean }) => {
+    if (opts?.stale !== false) {
+      invalidateAgendaCache();
+    }
+    navigate("/reservas", {
+      state: { date: dateFrom },
+    });
   };
 
   const statusActionHandlers = {
@@ -379,7 +398,7 @@ function ReservationDetails() {
       confirmLabel: "Cancelar reserva",
       tone: "danger",
       run: async () => {
-        await cancelReservation(String(court?.reservation?.tokenToCancel));
+        await cancelReservation(String(court?.reservation?.publicId));
         goBackToList();
       },
     });
@@ -430,9 +449,7 @@ function ReservationDetails() {
         <div className="relative mx-auto flex w-full max-w-lg items-center justify-center lg:max-w-3xl">
           <button
             type="button"
-            onClick={() =>
-              navigate(`/reservas`, { state: { date: dateFrom } })
-            }
+            onClick={() => goBackToList({ stale: false })}
             aria-label="Voltar para lista de reservas"
             className="mpn-tap absolute left-0 flex size-11 items-center justify-center rounded-xl text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >

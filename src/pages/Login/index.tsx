@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 import Input from "../../components/Input";
 import { useEffect, useState } from "react";
 import { login } from "../../api/auth";
@@ -31,6 +32,7 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const signupOk = Boolean(
     (location.state as { signupOk?: boolean } | null)?.signupOk
   );
@@ -50,6 +52,7 @@ function Login() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError("");
+    setUnverifiedEmail(null);
     if (!username || !password) {
       setFormError("Preencha usuário e senha.");
       return;
@@ -60,7 +63,16 @@ function Login() {
       const response = await login(username, password);
       setAccessToken(response.access_token);
       navigate(routeAfterLogin(response.access_token));
-    } catch {
+    } catch (error) {
+      const data = (
+        error as AxiosError<{ code?: string; email?: string; message?: string }>
+      )?.response?.data;
+
+      if (data?.code === "EMAIL_NOT_VERIFIED") {
+        setUnverifiedEmail(data.email ?? username.trim());
+        return;
+      }
+
       const message = "Usuário ou senha inválidos.";
       setFormError(message);
       notifyError({ message, type: "error" });
@@ -73,7 +85,7 @@ function Login() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-master px-4 py-10 text-text-light">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(61,111,184,0.18),_transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
@@ -94,6 +106,24 @@ function Login() {
             <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-sm font-medium text-accent-green">
               Conta criada. Entre para configurar o estabelecimento.
             </p>
+          )}
+          {unverifiedEmail && (
+            <div className="mt-3 rounded-lg bg-accent-blue/15 px-3 py-2 text-sm text-text-light">
+              <p className="font-medium">
+                Confirme seu e-mail antes de entrar.
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/cadastro/codigo", {
+                    state: { email: unverifiedEmail },
+                  })
+                }
+                className="mt-1 font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+              >
+                Confirmar e-mail / reenviar código
+              </button>
+            </div>
           )}
         </div>
 

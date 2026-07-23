@@ -7,7 +7,6 @@ import { MdOutlineInfo } from "react-icons/md";
 import { useErrors } from "../../contexts/ErrorsContext";
 import {
   getAccessToken,
-  getAccessTokenPayload,
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
 import {
@@ -22,7 +21,6 @@ export default function ChangePassword() {
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [companyPublicId, setCompanyPublicId] = useState("");
   const [touchedNew, setTouchedNew] = useState(false);
   const [touchedConfirm, setTouchedConfirm] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -30,10 +28,7 @@ export default function ChangePassword() {
   useEffect(() => {
     if (!getAccessToken()) {
       navigate("/");
-      return;
     }
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setCompanyPublicId(payload?.companyPublicId || "");
   }, [navigate]);
 
   const newPasswordError = useMemo(() => {
@@ -69,7 +64,8 @@ export default function ChangePassword() {
     }
     try {
       await withLoading(async () => {
-        await changePassword(companyPublicId, newPassword);
+        // Conta com senha padrão: API não exige currentPassword.
+        await changePassword(newPassword);
         notifyError({
           message: "Senha alterada com sucesso!",
           type: "success",
@@ -85,15 +81,11 @@ export default function ChangePassword() {
     }
   };
 
-  const canSubmit =
-    Boolean(companyPublicId) &&
-    passwordValid &&
-    passwordsMatch &&
-    !loading;
+  const canSubmit = passwordValid && passwordsMatch && !loading;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-master px-4 py-10 text-text-light">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(61,111,184,0.18),_transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
@@ -112,90 +104,71 @@ export default function ChangePassword() {
           </p>
         </div>
 
-        {companyPublicId ? (
-          <form
-            onSubmit={handleChangePassword}
-            className={`rounded-2xl bg-master-light p-5 sm:p-6 transition-opacity ${
-              loading ? "opacity-80" : ""
-            }`}
-            noValidate
-            aria-busy={loading}
-          >
-            <div className="mb-5 flex items-start gap-2 rounded-xl bg-master px-3 py-3">
-              <MdOutlineInfo
-                size={20}
-                className="mt-0.5 shrink-0 text-text-light/55"
-                aria-hidden
-              />
-              <p className="text-base leading-6 text-text-light/70">
-                {PASSWORD_HINT}
-              </p>
-            </div>
-
-            <Input
-              name="newPassword"
-              title="Nova senha"
-              placeholder="Digite a nova senha"
-              type="password"
-              required
-              mode="dark"
-              value={newPassword}
-              onChange={(e) => {
-                setNewPassword(e.target.value);
-                if (submitError) setSubmitError("");
-              }}
-              onBlur={() => setTouchedNew(true)}
-              autoComplete="new-password"
-              enterKeyHint="next"
-              error={newPasswordError}
+        <form
+          onSubmit={handleChangePassword}
+          className={`rounded-2xl bg-master-light p-5 sm:p-6 transition-opacity ${
+            loading ? "opacity-80" : ""
+          }`}
+          noValidate
+          aria-busy={loading}
+        >
+          <div className="mb-5 flex items-start gap-2 rounded-xl bg-master px-3 py-3">
+            <MdOutlineInfo
+              size={20}
+              className="mt-0.5 shrink-0 text-text-light/55"
+              aria-hidden
             />
-            <Input
-              name="confirmPassword"
-              title="Confirmar senha"
-              placeholder="Digite a senha novamente"
-              type="password"
-              required
-              mode="dark"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (submitError) setSubmitError("");
-              }}
-              onBlur={() => setTouchedConfirm(true)}
-              autoComplete="new-password"
-              enterKeyHint="go"
-              className="mt-4"
-              error={confirmPasswordError || submitError || undefined}
-            />
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className={buttonClassName({
-                variant: "primary",
-                className: "mt-6",
-              })}
-            >
-              {loading ? "Salvando…" : "Salvar senha"}
-            </button>
-          </form>
-        ) : (
-          <div className="rounded-2xl bg-master-light px-5 py-8 text-center">
-            <p className="text-lg text-text-light/80">
-              Não foi possível identificar sua conta.
+            <p className="text-base leading-6 text-text-light/70">
+              {PASSWORD_HINT}
             </p>
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className={buttonClassName({
-                variant: "secondary",
-                size: "md",
-                className: "mt-5",
-              })}
-            >
-              Voltar ao login
-            </button>
           </div>
-        )}
+
+          <Input
+            name="newPassword"
+            title="Nova senha"
+            placeholder="Digite a nova senha"
+            type="password"
+            required
+            mode="dark"
+            value={newPassword}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              if (submitError) setSubmitError("");
+            }}
+            onBlur={() => setTouchedNew(true)}
+            autoComplete="new-password"
+            enterKeyHint="next"
+            error={newPasswordError}
+          />
+          <Input
+            name="confirmPassword"
+            title="Confirmar senha"
+            placeholder="Digite a senha novamente"
+            type="password"
+            required
+            mode="dark"
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (submitError) setSubmitError("");
+            }}
+            onBlur={() => setTouchedConfirm(true)}
+            autoComplete="new-password"
+            enterKeyHint="go"
+            className="mt-4"
+            error={confirmPasswordError || submitError || undefined}
+          />
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className={buttonClassName({
+              variant: "primary",
+              className: "mt-6",
+            })}
+          >
+            {loading ? "Salvando…" : "Salvar senha"}
+          </button>
+        </form>
       </div>
     </div>
   );

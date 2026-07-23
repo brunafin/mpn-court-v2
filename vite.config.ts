@@ -5,6 +5,28 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const isProduction = process.env.VITE_ENVIRONMENT === 'production';
 
+/** Headers de endurecimento (dev/preview). Em prod o `serve` usa public/serve.json → dist. */
+const securityHeaders: Record<string, string> = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://scripts.clarity.ms",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.marcapranos.com.br https://*.up.railway.app https://www.google-analytics.com https://analytics.google.com https://*.clarity.ms https://www.clarity.ms https://viacep.com.br http://localhost:* http://127.0.0.1:* ws: wss:",
+    "worker-src 'self' blob:",
+    "media-src 'self' blob:",
+  ].join('; '),
+};
+
 export default defineConfig({
   plugins: [
     react(),
@@ -69,4 +91,10 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    headers: securityHeaders,
+  },
+  preview: {
+    headers: securityHeaders,
+  },
 });

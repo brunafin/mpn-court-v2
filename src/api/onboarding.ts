@@ -1,17 +1,5 @@
 import api from "./axios";
 
-export interface Sport {
-  id: number;
-  name: string;
-  needsNet: boolean;
-}
-
-export interface TypeOfCourt {
-  id: number;
-  name: string;
-  description?: string;
-}
-
 export interface OnboardingDay {
   day_of_week_ref: number; // 0=Domingo ... 6=Sábado (getDay)
   hours: string[];
@@ -19,9 +7,10 @@ export interface OnboardingDay {
 
 export interface OnboardingCourt {
   name: string;
-  type_of_court_id: number;
-  sport_ids: number[];
-  floor?: string;
+  /** Nomes dos esportes aceitos (mapeados para o catálogo no backend). */
+  sports: string[];
+  /** Tipo de piso (obrigatório). */
+  floor: string;
   is_covered?: boolean;
   is_can_have_net?: boolean;
   price: number;
@@ -30,6 +19,12 @@ export interface OnboardingCourt {
 export interface CompleteOnboardingInput {
   companyName: string;
   companyPhone?: string;
+  cep: string;
+  street: string;
+  number: string;
+  neighborhood: string;
+  city: string;
+  uf: string;
   weekTemplate: OnboardingDay[];
   courts: OnboardingCourt[];
 }
@@ -42,22 +37,16 @@ export interface CompleteOnboardingResponse {
   access_token: string;
 }
 
-export async function getSports(): Promise<Sport[]> {
-  const response = await api.get<Sport[]>("/sports");
-  return response.data;
-}
-
-export async function getTypeOfCourts(): Promise<TypeOfCourt[]> {
-  const response = await api.get<TypeOfCourt[]>("/type-of-court");
-  return response.data;
-}
-
 export async function completeOnboarding(
   input: CompleteOnboardingInput
 ): Promise<CompleteOnboardingResponse> {
   const response = await api.post<CompleteOnboardingResponse>(
     "/onboarding",
-    input
+    input,
+    {
+      // Criação + commit; populate roda em background no server.
+      timeout: 60000,
+    }
   );
   return response.data;
 }

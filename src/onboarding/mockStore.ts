@@ -1,4 +1,32 @@
+import { clearPendingLogo } from "./pendingLogo";
+
 const STORAGE_KEY = "mpn_onboarding_mock";
+
+/** Esportes que uma quadra pode aceitar. */
+export type CourtSport =
+  | "futsal"
+  | "fut5"
+  | "fut7"
+  | "fut11"
+  | "voleibol"
+  | "handebol"
+  | "basquete"
+  | "futevolei"
+  | "beach_tennis"
+  | "volei_praia";
+
+export const COURT_SPORTS: { key: CourtSport; label: string }[] = [
+  { key: "futsal", label: "Futsal" },
+  { key: "fut5", label: "Fut5" },
+  { key: "fut7", label: "Fut7" },
+  { key: "fut11", label: "Fut11" },
+  { key: "voleibol", label: "Voleibol" },
+  { key: "handebol", label: "Handebol" },
+  { key: "basquete", label: "Basquete" },
+  { key: "futevolei", label: "Futevôlei" },
+  { key: "beach_tennis", label: "Beach tennis" },
+  { key: "volei_praia", label: "Vôlei de praia" },
+];
 
 /** Tipos de piso mais comuns em quadras/arenas no Brasil. */
 export type CourtFloor =
@@ -20,7 +48,12 @@ export const COURT_FLOORS: { key: CourtFloor; label: string }[] = [
   { key: "saibro", label: "Saibro" },
 ];
 
+const COURT_SPORT_KEYS = COURT_SPORTS.map((s) => s.key);
 const COURT_FLOOR_KEYS = COURT_FLOORS.map((f) => f.key);
+
+export function courtSportLabel(key: CourtSport): string {
+  return COURT_SPORTS.find((s) => s.key === key)?.label ?? key;
+}
 
 export function courtFloorLabel(key: CourtFloor): string {
   return COURT_FLOORS.find((f) => f.key === key)?.label ?? key;
@@ -31,11 +64,9 @@ export type MockCourt = {
   name: string;
   /** Preço padrão R$/hora desta quadra (aplicado ao copiar a grade). */
   defaultPrice: number;
-  /** IDs dos esportes aceitos (catálogo do backend). */
-  sportIds: number[];
-  /** ID do tipo de quadra (catálogo do backend). */
-  typeOfCourtId?: number;
-  /** Tipo de piso (opcional). */
+  /** Esportes aceitos na quadra. */
+  sports: CourtSport[];
+  /** Tipo de piso da quadra (obrigatório). */
   floor?: CourtFloor;
 };
 
@@ -72,9 +103,10 @@ export const WEEK_DAYS: { key: WeekDayKey; label: string; ref: number }[] = [
   { key: "sun", label: "Domingo", ref: 0 },
 ];
 
-/** Faixa comercial padrão (check marcado). Demais horas aparecem desmarcadas. */
-export const COMMERCIAL_HOUR_START = 8;
-export const COMMERCIAL_HOUR_END = 22;
+/** Faixa comercial padrão (check marcado): 16:00–00:00. Demais horas desmarcadas. */
+export const COMMERCIAL_HOUR_START = 16;
+/** Último início de slot (23:00–00:00). */
+export const COMMERCIAL_HOUR_END = 23;
 
 export function formatHourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
@@ -168,8 +200,17 @@ export type MockOnboardingState = {
    * Vazio até configurar.
    */
   arenaName: string;
+  /** Telefone de contato do estabelecimento. */
+  companyPhone: string;
   /** Quantas quadras cadastrar (definido na config do estabelecimento). */
   courtCount: number;
+  /** Endereço do estabelecimento (CEP obrigatório; restante via ViaCEP + número). */
+  cep: string;
+  street: string;
+  number: string;
+  neighborhood: string;
+  city: string;
+  uf: string;
   hasScheduleTemplate: boolean;
   /** Grade semanal salva no rascunho (opcional em rascunhos antigos). */
   scheduleTemplate?: WeekScheduleTemplate;
@@ -187,10 +228,7 @@ function isMockCourt(value: unknown): value is MockCourt {
   if (v.defaultPrice !== undefined && typeof v.defaultPrice !== "number") {
     return false;
   }
-  if (v.sportIds !== undefined && !Array.isArray(v.sportIds)) {
-    return false;
-  }
-  if (v.typeOfCourtId !== undefined && typeof v.typeOfCourtId !== "number") {
+  if (v.sports !== undefined && !Array.isArray(v.sports)) {
     return false;
   }
   if (
@@ -204,16 +242,15 @@ function isMockCourt(value: unknown): value is MockCourt {
 }
 
 function normalizeMockCourt(court: MockCourt): MockCourt {
-  const sportIds = Array.isArray(court.sportIds)
-    ? court.sportIds.filter((id): id is number => Number.isInteger(id))
+  const sports = Array.isArray(court.sports)
+    ? court.sports.filter((key): key is CourtSport =>
+        COURT_SPORT_KEYS.includes(key)
+      )
     : [];
   const floor =
     court.floor && COURT_FLOOR_KEYS.includes(court.floor)
       ? court.floor
       : undefined;
-  const typeOfCourtId = Number.isInteger(court.typeOfCourtId)
-    ? court.typeOfCourtId
-    : undefined;
   return {
     id: court.id,
     name: court.name,
@@ -221,9 +258,48 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
       Number.isFinite(court.defaultPrice) && court.defaultPrice > 0
         ? court.defaultPrice
         : 0,
-    sportIds,
-    typeOfCourtId,
+    sports,
     floor,
+  };
+}
+
+function readOptionalString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function withAddressDefaults(
+  state: Omit<
+    MockOnboardingState,
+    | "cep"
+    | "street"
+    | "number"
+    | "neighborhood"
+    | "city"
+    | "uf"
+    | "companyPhone"
+  > &
+    Partial<
+      Pick<
+        MockOnboardingState,
+        | "cep"
+        | "street"
+        | "number"
+        | "neighborhood"
+        | "city"
+        | "uf"
+        | "companyPhone"
+      >
+    >
+): MockOnboardingState {
+  return {
+    ...state,
+    companyPhone: readOptionalString(state.companyPhone),
+    cep: readOptionalString(state.cep),
+    street: readOptionalString(state.street),
+    number: readOptionalString(state.number),
+    neighborhood: readOptionalString(state.neighborhood),
+    city: readOptionalString(state.city),
+    uf: readOptionalString(state.uf).toUpperCase().slice(0, 2),
   };
 }
 
@@ -263,8 +339,8 @@ function migrateLegacy(raw: unknown): MockOnboardingState | null {
     return null;
   }
 
-  return {
-    email: v.email,
+  return withAddressDefaults({
+    email: v.email as string,
     ownerName: typeof v.ownerName === "string" ? v.ownerName : "",
     ownerPhone: typeof v.ownerPhone === "string" ? v.ownerPhone : "",
     arenaName: typeof v.arenaName === "string" ? v.arenaName : "",
@@ -274,7 +350,7 @@ function migrateLegacy(raw: unknown): MockOnboardingState | null {
     isPublished: v.isPublished === true,
     createdAt:
       typeof v.createdAt === "string" ? v.createdAt : new Date().toISOString(),
-  };
+  });
 }
 
 export function getMockOnboarding(): MockOnboardingState | null {
@@ -284,7 +360,10 @@ export function getMockOnboarding(): MockOnboardingState | null {
     const parsed: unknown = JSON.parse(raw);
     if (isMockOnboardingState(parsed)) {
       const courts = parsed.courts.map((c) => normalizeMockCourt(c));
-      let next: MockOnboardingState = { ...parsed, courts };
+      let next: MockOnboardingState = withAddressDefaults({
+        ...parsed,
+        courts,
+      });
       if (next.scheduleTemplate) {
         next = {
           ...next,
@@ -314,7 +393,7 @@ export function getOrCreateOnboardingDraft(seed?: {
 }): MockOnboardingState {
   const current = getMockOnboarding();
   if (current) return current;
-  const draft: MockOnboardingState = {
+  const draft: MockOnboardingState = withAddressDefaults({
     email: seed?.email ?? "",
     ownerName: "",
     ownerPhone: "",
@@ -324,7 +403,7 @@ export function getOrCreateOnboardingDraft(seed?: {
     courts: [],
     isPublished: false,
     createdAt: new Date().toISOString(),
-  };
+  });
   saveMockOnboarding(draft);
   return draft;
 }
@@ -342,6 +421,7 @@ export function updateMockOnboarding(
 export function clearMockOnboarding(): void {
   localStorage.removeItem(STORAGE_KEY);
   clearMockSession();
+  clearPendingLogo();
 }
 
 const SESSION_KEY = "mpn_mock_session";
@@ -359,15 +439,27 @@ export function isMockSession(): boolean {
 }
 
 export function isArenaConfigured(state: MockOnboardingState): boolean {
-  return Boolean(state.arenaName.trim()) && state.courtCount >= 1;
+  const cepDigits = state.cep.replace(/\D/g, "");
+  const phoneDigits = state.companyPhone.replace(/\D/g, "");
+  return (
+    Boolean(state.arenaName.trim()) &&
+    state.courtCount >= 1 &&
+    phoneDigits.length === 11 &&
+    cepDigits.length === 8 &&
+    Boolean(state.street.trim()) &&
+    Boolean(state.number.trim()) &&
+    Boolean(state.neighborhood.trim()) &&
+    Boolean(state.city.trim()) &&
+    state.uf.trim().length === 2
+  );
 }
 
-/** Uma quadra está completa quando tem preço, esportes e tipo definidos. */
+/** Uma quadra está completa quando tem preço, esportes e piso definidos. */
 export function isCourtComplete(court: MockCourt): boolean {
   return (
     court.defaultPrice > 0 &&
-    court.sportIds.length > 0 &&
-    Boolean(court.typeOfCourtId)
+    court.sports.length > 0 &&
+    Boolean(court.floor)
   );
 }
 
@@ -501,8 +593,8 @@ export function buildChecklist(state: MockOnboardingState): ChecklistItem[] {
       id: "arena",
       title: "Estabelecimento",
       description: arenaDone
-        ? `${state.arenaName} · ${courtLabel}`
-        : "Nome da arena e quantas quadras você opera",
+        ? `${state.arenaName} · ${state.city}/${state.uf} · ${courtLabel}`
+        : "Nome, endereço, contato e número de quadras",
       done: arenaDone,
       locked: false,
       required: true,

@@ -4,11 +4,17 @@ import { ReservationStatusEnum } from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
+import { infosByCompanyPublicId } from "../../api/companies";
 import AppLayout from "../../components/AppLayout";
-import { clearAccessToken, getAccessToken, getAccessTokenPayload } from "../../utils/authCookie";
+import {
+  clearAccessToken,
+  getAccessToken,
+  getAccessTokenPayload,
+} from "../../utils/authCookie";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLoading } from "../../hooks/useLoading";
 import NewReminderModal from "../../components/NewNote";
+import ActivateCourtGuideModal from "../../components/ActivateCourtGuideModal";
 import { useNotification } from "../../contexts/NotificationContext";
 import { createNote, notesByDate } from "../../api/notes";
 import ReminderBadge from "../../components/ReminderBadge";
@@ -21,24 +27,26 @@ import {
   MdOutlineEventNote,
   MdOutlineNotifications,
   MdOutlinePostAdd,
+  MdOutlinePublic,
 } from "react-icons/md";
 import { BsX } from "react-icons/bs";
 import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
 import {
-  getMockOnboarding,
-  isEstablishmentReady,
-  isMockSession,
-} from "../../onboarding/mockStore";
+  getSchedulesDayCache,
+  isSchedulesDayCacheFresh,
+  setSchedulesDayCache,
+} from "../../utils/schedulesDayCache";
+import {
+  hasSeenActivateCourtGuide,
+  markActivateCourtGuideSeen,
+} from "../../utils/activateCourtGuide";
 
-type SchedulesCache = {
-  key: string;
-  list: IReservationItemProps[];
-  courtsNameList: string[];
+type ReservationLocationState = {
+  date?: string;
+  showActivateGuide?: boolean;
 };
-
-let schedulesCache: SchedulesCache | null = null;
 
 function toDateKey(value: Date) {
   return format(value, "yyyy-MM-dd");
@@ -55,7 +63,8 @@ function Reservation() {
   const [dayUnreadCount, setDayUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const dateFrom = location.state?.date;
+  const locationState = (location.state as ReservationLocationState | null) ?? null;
+  const dateFrom = locationState?.date;
 
   const [date, setDate] = useState<Date>(
     dateFrom
@@ -71,31 +80,23 @@ function Reservation() {
   const [courtSelected, setCourtSelected] = useState<string>("all");
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
+  const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
+  const [portalActive, setPortalActive] = useState<boolean | null>(null);
+  const [showActivateGuide, setShowActivateGuide] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
-  const [isMockAgenda, setIsMockAgenda] = useState(false);
   const actionsTitleId = useId();
   const actionsDialogId = useId();
   const actionsTriggerRef = useRef<HTMLButtonElement>(null);
   const actionsDialogRef = useRef<HTMLDivElement>(null);
   const actionsFirstItemRef = useRef<HTMLAnchorElement>(null);
+  const fetchGenRef = useRef(0);
+  const forceGuideFromNavRef = useRef(Boolean(locationState?.showActivateGuide));
 
   useEffect(() => {
-    if (getAccessToken()) return;
-
-    if (isMockSession()) {
-      const mock = getMockOnboarding();
-      if (mock && isEstablishmentReady(mock)) {
-        setIsMockAgenda(true);
-        setCourtsNameList(mock.courts.map((c) => c.name));
-        setList([]);
-        return;
-      }
-      navigate(mock ? "/comecar" : "/");
-      return;
+    if (!getAccessToken()) {
+      navigate("/");
     }
-
-    navigate("/");
   }, [navigate]);
 
   useEffect(() => {
@@ -103,27 +104,110 @@ function Reservation() {
     setCompanyPublicId(payload?.companyPublicId || "");
   }, []);
 
+  useEffect(() => {
+    if (!locationState?.showActivateGuide) return;
+    forceGuideFromNavRef.current = true;
+    setShowActivateGuide(true);
+    navigate(location.pathname, {
+      replace: true,
+      state: dateFrom ? { date: dateFrom } : null,
+    });
+  }, [dateFrom, location.pathname, locationState?.showActivateGuide, navigate]);
+
+  useEffect(() => {
+    if (!companyPublicId) return;
+    let cancelled = false;
+
+    const loadPortalStatus = async () => {
+      try {
+        const info = await infosByCompanyPublicId(companyPublicId);
+        if (cancelled) return;
+        const active =
+          typeof info.isActive === "boolean"
+            ? info.isActive
+            : (info.courts ?? []).some((court) => court.show);
+        setPortalActive(active);
+        if (active) {
+          setShowActivateGuide(false);
+          return;
+        }
+        if (
+          forceGuideFromNavRef.current ||
+          !hasSeenActivateCourtGuide(companyPublicId)
+        ) {
+          setShowActivateGuide(true);
+        }
+      } catch {
+        if (!cancelled) setPortalActive(null);
+      }
+    };
+
+    void loadPortalStatus();
+
+    const onFocus = () => {
+      void loadPortalStatus();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [companyPublicId]);
+
+  const handleCloseActivateGuide = () => {
+    setShowActivateGuide(false);
+    forceGuideFromNavRef.current = false;
+    markActivateCourtGuideSeen(companyPublicId);
+  };
+
+  const applyDayData = useCallback(
+    (response: IReservationItemProps[], dateInput: string) => {
+      const uniqueCourts = [
+        ...new Set(response.map((item) => item.court)),
+      ].sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
+      setList(response);
+      setCourtsNameList(uniqueCourts);
+      setLoadedDateKey(dateInput);
+      if (companyPublicId) {
+        setSchedulesDayCache(
+          companyPublicId,
+          dateInput,
+          response,
+          uniqueCourts,
+        );
+      }
+    },
+    [companyPublicId],
+  );
+
   const fetchData = useCallback(
-    async (dateInput: string) => {
-      if (!companyPublicId || isMockAgenda) {
+    async (dateInput: string, opts?: { silent?: boolean }) => {
+      if (!companyPublicId) {
         return;
       }
-      try {
-        await withLoading(async () => {
-          const response = await getSchedulesByCompanyPublicIdAndDate({
-            companyPublicId,
-            date: dateInput,
-          });
-          const uniqueCourts = [...new Set(response.map((item) => item.court))];
-          setList(response);
-          setCourtsNameList(uniqueCourts);
-          schedulesCache = {
-            key: `${companyPublicId}:${dateInput}`,
-            list: response,
-            courtsNameList: uniqueCourts,
-          };
+      const gen = ++fetchGenRef.current;
+      const run = async () => {
+        const response = await getSchedulesByCompanyPublicIdAndDate({
+          companyPublicId,
+          date: dateInput,
         });
+        // Ignora resposta se o usuário já mudou de dia
+        if (gen !== fetchGenRef.current) return;
+        applyDayData(response, dateInput);
+      };
+      try {
+        if (opts?.silent) {
+          await run();
+        } else {
+          await withLoading(run);
+        }
       } catch (error: any) {
+        // Evita skeleton infinito se a carga do dia falhar
+        if (gen === fetchGenRef.current && !opts?.silent) {
+          setLoadedDateKey(dateInput);
+          setList([]);
+          setCourtsNameList([]);
+        }
         if (error?.response?.status === 401) {
           clearAccessToken();
           navigate("/");
@@ -132,18 +216,26 @@ function Reservation() {
         }
       }
     },
-    [companyPublicId, navigate, isMockAgenda]
+    [companyPublicId, navigate, withLoading, applyDayData],
   );
 
   useEffect(() => {
-    if (isMockAgenda || !companyPublicId || !date) return;
+    if (!companyPublicId || !date) return;
     const dateInput = toDateKey(date);
-    const key = `${companyPublicId}:${dateInput}`;
-    if (schedulesCache?.key === key) {
-      setList(schedulesCache.list);
-      setCourtsNameList(schedulesCache.courtsNameList);
+    const cached = getSchedulesDayCache(companyPublicId, dateInput);
+
+    if (cached) {
+      setList(cached.list);
+      setCourtsNameList(cached.courtsNameList);
+      setLoadedDateKey(dateInput);
+      // Fresco: não refetch. Velho: revalida sem spinner.
+      if (!isSchedulesDayCacheFresh(companyPublicId, dateInput)) {
+        void fetchData(dateInput, { silent: true });
+      }
+      return;
     }
-    fetchData(dateInput);
+
+    void fetchData(dateInput);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [companyPublicId, date]);
 
@@ -215,7 +307,7 @@ function Reservation() {
   }, [actionsOpen]);
 
   useEffect(() => {
-    if (isMockAgenda || !companyPublicId || !date) return;
+    if (!companyPublicId || !date) return;
 
     let cancelled = false;
     const fetchDayReminders = async () => {
@@ -234,11 +326,11 @@ function Reservation() {
     return () => {
       cancelled = true;
     };
-  }, [companyPublicId, date, isMockAgenda]);
+  }, [companyPublicId, date]);
 
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
-    if (isMockAgenda || creatingNote) return;
+    if (creatingNote) return;
     setCreatingNote(true);
     try {
       await createNote({
@@ -289,7 +381,8 @@ function Reservation() {
       });
   }, [list, date, statusSelected, courtSelected]);
 
-  const showListLoading = loading && list.length === 0;
+  // Skeleton enquanto o dia selecionado ainda não foi aplicado (evita empty state piscando)
+  const showListLoading = loadedDateKey !== toDateKey(date);
   const showUnreadBadge = dayUnreadCount > 0;
   const canRemindDayBefore = !isSameDay(date, new Date());
 
@@ -364,11 +457,6 @@ function Reservation() {
   return (
     <AppLayout>
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master text-text-light">
-        {isMockAgenda && (
-          <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
-            Protótipo — agenda vazia. Portal opcional em Minhas informações.
-          </p>
-        )}
         <div className="shrink-0 bg-master-light px-3 pb-4 pt-2 lg:bg-transparent lg:px-8 lg:pb-5 lg:pt-5">
           <div className="mx-auto w-full lg:max-w-6xl">
             <div className="mb-2 lg:mb-4 lg:flex lg:flex-col lg:gap-4">
@@ -425,6 +513,19 @@ function Reservation() {
               courtSelected={courtSelected}
               setCourtSelected={setCourtSelected}
             />
+
+            {portalActive === false && (
+              <Link
+                to="/minhas-infos"
+                className="mpn-tap mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-accent-blue px-4 py-3 text-left text-base font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <MdOutlinePublic size={22} className="shrink-0" aria-hidden />
+                  <span className="min-w-0 truncate">Ativar a minha quadra</span>
+                </span>
+                <MdChevronRight size={22} className="shrink-0 opacity-90" aria-hidden />
+              </Link>
+            )}
           </div>
         </div>
 
@@ -558,6 +659,11 @@ function Reservation() {
           is24HoursBefore={is24before}
           setIs24HoursBefore={setIs24before}
           showRemind24HoursBefore={canRemindDayBefore}
+        />
+
+        <ActivateCourtGuideModal
+          isOpen={showActivateGuide}
+          onClose={handleCloseActivateGuide}
         />
       </section>
     </AppLayout>

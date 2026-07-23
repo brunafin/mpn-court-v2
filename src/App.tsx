@@ -13,6 +13,7 @@ import ChangePassword from "./pages/ChangePassword";
 import Info from "./pages/Info";
 import ConfigDay from "./pages/ConfigDay";
 import Notifications from "./pages/Notifications";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
 import { setAxiosErrorNotifier } from "./api/axios";
@@ -31,6 +32,8 @@ function App() {
         t.src = "https://www.clarity.ms/tag/" + i;
         y = l.getElementsByTagName(r)[0];
         y.parentNode.insertBefore(t, y);
+        // Replay mascarado; campos sensíveis também usam data-clarity-mask
+        c[a]("set", "maskingMode", "masked");
       })(window, document, "clarity", "script", "skzyiavfyw");
     }
   }, []);
@@ -60,19 +63,27 @@ function App() {
               <Route index element={<Login />} />
               <Route path="/cadastro" element={<SignUp />} />
               <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />
-              <Route path="/comecar" element={<OnboardingChecklist />} />
-              <Route
-                path="/comecar/estabelecimento"
-                element={<OnboardingArena />}
-              />
-              <Route path="/comecar/horario" element={<OnboardingSchedule />} />
-              <Route path="/comecar/quadra" element={<OnboardingCourt />} />
-              <Route path="/reservas" element={<Reservation />} />
-              <Route path="/reservas/:id" element={<ReservationDetails />} />
-              <Route path="/alterar-senha" element={<ChangePassword />} />
-              <Route path="/minhas-infos" element={<Info />} />
-              <Route path="/configuracoes-horarios" element={<ConfigDay />} />
-              <Route path="/notificacoes" element={<Notifications />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/comecar" element={<OnboardingChecklist />} />
+                <Route
+                  path="/comecar/estabelecimento"
+                  element={<OnboardingArena />}
+                />
+                <Route
+                  path="/comecar/horario"
+                  element={<OnboardingSchedule />}
+                />
+                <Route path="/comecar/quadra" element={<OnboardingCourt />} />
+                <Route path="/reservas" element={<Reservation />} />
+                <Route path="/reservas/:id" element={<ReservationDetails />} />
+                <Route path="/alterar-senha" element={<ChangePassword />} />
+                <Route path="/minhas-infos" element={<Info />} />
+                <Route
+                  path="/configuracoes-horarios"
+                  element={<ConfigDay />}
+                />
+                <Route path="/notificacoes" element={<Notifications />} />
+              </Route>
             </Routes>
           </NotificationProvider>
         </ErrorsProvider>

@@ -105,7 +105,7 @@ function OnboardingSchedule() {
   }
 
   return (
-    <div className="min-h-dvh bg-master pb-28 text-text-light">
+    <div className="min-h-dvh bg-master pb-28 text-text-light lg:h-full lg:min-h-0 lg:overflow-y-auto">
       <div className="mx-auto w-full max-w-lg px-4 pt-6">
         <div className="-ml-2 flex items-center gap-1">
           <Link
@@ -119,8 +119,9 @@ function OnboardingSchedule() {
             Horário de funcionamento
           </h1>
         </div>
-        <p className="mt-3 rounded-lg bg-warning-500/15 px-3 py-2 text-sm font-medium text-warning-500">
-          Mock — grade de horários; o preço fica em cada quadra
+        <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+          Marque os horários em que a arena funciona; o preço fica em cada
+          quadra
         </p>
       </div>
 

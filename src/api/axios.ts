@@ -28,12 +28,30 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+function userFacingErrorMessage(error: unknown): string {
+  const status = (error as { response?: { status?: number } })?.response
+    ?.status;
+  if (status === 401 || status === 403) {
+    return 'Sessão inválida ou sem permissão. Faça login novamente.';
+  }
+  if (status === 404) {
+    return 'Recurso não encontrado.';
+  }
+  if (status === 429) {
+    return 'Muitas tentativas. Aguarde um momento e tente de novo.';
+  }
+  if (typeof status === 'number' && status >= 500) {
+    return 'Serviço temporariamente indisponível. Tente novamente.';
+  }
+  // Não ecoar message/stack da API (pode vazar detalhes internos)
+  return 'Não foi possível concluir a operação. Tente novamente.';
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (notifyError) {
-      const message = error.response?.data?.message || 'Ocorreu um erro na requisição';
-      notifyError({ message, type: 'error' });
+      notifyError({ message: userFacingErrorMessage(error), type: 'error' });
     }
     return Promise.reject(error);
   }

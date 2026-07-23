@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { MdFilterList, MdNotInterested } from "react-icons/md";
 import { ReservationStatusEnum } from "../enum";
 import { StatusIcons } from "../statusIcons";
@@ -55,13 +56,13 @@ function LegendAndFilters({
   setCourtSelected,
 }: LegendProps) {
   const hasCourts = courtsNameList.length > 1;
-  const hasActiveFilter =
-    statusSelected !== null || (hasCourts && courtSelected !== "all");
-
-  const clearFilters = () => {
-    setStatusSelected(null);
-    setCourtSelected("all");
-  };
+  const courtsSorted = useMemo(
+    () =>
+      [...courtsNameList].sort((a, b) =>
+        a.localeCompare(b, "pt-BR", { sensitivity: "base" })
+      ),
+    [courtsNameList]
+  );
 
   const chipClass = (
     selected: boolean,
@@ -103,12 +104,47 @@ function LegendAndFilters({
     return "neutral";
   };
 
+  /** Mobile: scroll horizontal. Desktop: wrap na mesma linha do grupo. */
+  const chipsRowClass =
+    "flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible";
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2.5">
+      {hasCourts ? (
+        <div
+          role="group"
+          aria-label="Filtro de quadras"
+          className={chipsRowClass}
+        >
+          <button
+            type="button"
+            aria-pressed={courtSelected === "all"}
+            onClick={() => setCourtSelected("all")}
+            className={chipClass(courtSelected === "all")}
+          >
+            Todas
+          </button>
+          {courtsSorted.map((court) => {
+            const selected = courtSelected === court;
+            return (
+              <button
+                key={court}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setCourtSelected(court)}
+                className={chipClass(selected)}
+              >
+                {court}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       <div
         role="group"
-        aria-label="Filtros"
-        className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible"
+        aria-label="Filtro de status"
+        className={chipsRowClass}
       >
         {STATUS_OPTIONS.map(({ value, label, iconWrapClass, Icon }) => {
           const selected = statusSelected === value;
@@ -133,48 +169,7 @@ function LegendAndFilters({
             </button>
           );
         })}
-
-        {hasCourts && (
-          <>
-            <span
-              className="mx-0.5 h-6 w-px shrink-0 bg-text-light/15"
-              aria-hidden
-            />
-            <button
-              type="button"
-              aria-pressed={courtSelected === "all"}
-              onClick={() => setCourtSelected("all")}
-              className={chipClass(courtSelected === "all")}
-            >
-              Todas
-            </button>
-            {courtsNameList.map((court) => {
-              const selected = courtSelected === court;
-              return (
-                <button
-                  key={court}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setCourtSelected(court)}
-                  className={chipClass(selected)}
-                >
-                  {court}
-                </button>
-              );
-            })}
-          </>
-        )}
       </div>
-
-      {hasActiveFilter && (
-        <button
-          type="button"
-          onClick={clearFilters}
-          className="mpn-tap flex min-h-10 shrink-0 items-center rounded-full px-3 text-sm font-semibold text-accent-blue transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-        >
-          Limpar
-        </button>
-      )}
     </div>
   );
 }

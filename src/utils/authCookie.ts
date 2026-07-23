@@ -1,9 +1,11 @@
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-import { clearMockSession } from "../onboarding/mockStore";
+import { clearMockOnboarding } from "../onboarding/mockStore";
+import { invalidateSchedulesDayCache } from "./schedulesDayCache";
 
 const COOKIE_NAME = "access_token";
 
+/** Cookie legível por JS (Bearer). Mitigação XSS: CSP + SameSite=Strict — não HttpOnly. */
 const cookieOptions = {
   path: "/",
   secure: true,
@@ -39,7 +41,8 @@ export function clearAccessToken() {
 
 export async function logoutAndRedirect() {
   clearAccessToken();
-  clearMockSession();
+  clearMockOnboarding();
+  invalidateSchedulesDayCache();
 
   try {
     if ("caches" in window) {

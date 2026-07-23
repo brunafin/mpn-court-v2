@@ -24,7 +24,7 @@ const sizeClass: Record<ButtonSize, string> = {
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent-blue text-white hover:brightness-105 focus-visible:outline-white enabled:active:brightness-90",
+    "bg-accent-blue text-white hover:brightness-90 focus-visible:outline-white enabled:active:brightness-85",
   secondary:
     "border border-accent-blue-soft bg-master text-accent-blue-soft hover:bg-accent-blue/10 focus-visible:outline-accent-blue enabled:active:bg-accent-blue/20",
   danger:

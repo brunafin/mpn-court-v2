@@ -6,11 +6,9 @@ import {
   MdOutlineLogout,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
-import {
-  getAccessTokenPayload,
-  logoutAndRedirect,
-} from "../../utils/authCookie";
-import { getMockOnboarding } from "../../onboarding/mockStore";
+import { logoutAndRedirect } from "../../utils/authCookie";
+import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import CompanyAvatar from "../CompanyAvatar";
 
 type NavItem = {
   to: string;
@@ -45,22 +43,10 @@ const navItems: NavItem[] = [
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [companyName, setCompanyName] = useState("");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const location = useLocation();
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyName?: string }>();
-    if (payload?.companyName) {
-      setCompanyName(payload.companyName);
-      return;
-    }
-    const mock = getMockOnboarding();
-    if (mock?.arenaName.trim()) {
-      setCompanyName(mock.arenaName.trim());
-    }
-  }, []);
+  const { companyName } = useCompanyBranding();
 
   useEffect(() => {
     setMenuOpen(false);
@@ -99,14 +85,9 @@ function Header() {
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
       <Link
         to="/reservas"
-        className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+        className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
       >
-        <img
-          src={import.meta.env.VITE_LOGO_URL_HEADER}
-          title="logo"
-          alt="Logo"
-          className="size-full object-contain"
-        />
+        <CompanyAvatar sizeClass="size-12" roundedClass="rounded-md" />
       </Link>
 
       <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-text-light sm:text-lg">
@@ -152,14 +133,11 @@ function Header() {
             <div className="px-4 pb-4 pt-4">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100">
-                    <img
-                      src={import.meta.env.VITE_LOGO_URL_HEADER}
-                      alt=""
-                      aria-hidden
-                      className="size-full object-contain"
-                    />
-                  </div>
+                  <CompanyAvatar
+                    sizeClass="size-16"
+                    roundedClass="rounded-lg"
+                    decorative
+                  />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-light/65">
                       Menu

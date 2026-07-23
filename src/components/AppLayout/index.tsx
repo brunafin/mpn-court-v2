@@ -5,13 +5,13 @@ import {
   MdOutlineInfo,
   MdOutlineLogout,
 } from "react-icons/md";
-import {
-  getAccessTokenPayload,
-  logoutAndRedirect,
-} from "../../utils/authCookie";
-import { useEffect, useState } from "react";
+import { logoutAndRedirect } from "../../utils/authCookie";
 import Header from "../Header";
-import { getMockOnboarding } from "../../onboarding/mockStore";
+import CompanyAvatar from "../CompanyAvatar";
+import {
+  CompanyBrandingProvider,
+  useCompanyBranding,
+} from "../../contexts/CompanyBrandingContext";
 
 type NavItem = {
   to: string;
@@ -39,21 +39,9 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-function AppLayout({ children }: AppLayoutProps) {
+function AppLayoutShell({ children }: AppLayoutProps) {
   const location = useLocation();
-  const [companyName, setCompanyName] = useState("");
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyName?: string }>();
-    if (payload?.companyName) {
-      setCompanyName(payload.companyName);
-      return;
-    }
-    const mock = getMockOnboarding();
-    if (mock?.arenaName) {
-      setCompanyName(mock.arenaName);
-    }
-  }, []);
+  const { companyName } = useCompanyBranding();
 
   return (
     <div className="flex h-full min-h-0 flex-1">
@@ -61,14 +49,9 @@ function AppLayout({ children }: AppLayoutProps) {
         <div className="flex items-center gap-3 px-4 py-5">
           <Link
             to="/reservas"
-            className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
-            <img
-              src={import.meta.env.VITE_LOGO_URL_HEADER}
-              alt=""
-              aria-hidden
-              className="size-full object-contain"
-            />
+            <CompanyAvatar sizeClass="size-11" roundedClass="rounded-xl" />
           </Link>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-text-light/50">
@@ -91,7 +74,7 @@ function AppLayout({ children }: AppLayoutProps) {
                     aria-current={isActive ? "page" : undefined}
                     className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
                       isActive
-                        ? "bg-accent-blue text-white shadow-[0_0_0_1px_rgba(61,111,184,0.45)]"
+                        ? "bg-accent-blue text-white shadow-[0_0_0_1px_rgba(37,84,160,0.45)]"
                         : "text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
                     }`}
                   >
@@ -123,6 +106,14 @@ function AppLayout({ children }: AppLayoutProps) {
         {children}
       </div>
     </div>
+  );
+}
+
+function AppLayout({ children }: AppLayoutProps) {
+  return (
+    <CompanyBrandingProvider>
+      <AppLayoutShell>{children}</AppLayoutShell>
+    </CompanyBrandingProvider>
   );
 }
 

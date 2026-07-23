@@ -74,7 +74,7 @@ function Textarea({
         placeholder={placeholder}
         aria-required={required || undefined}
         aria-describedby={describedByIds}
-        className={`w-full min-h-[6rem] resize-none rounded-xl px-4 py-3 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out
+        className={`w-full min-h-[6rem] resize-none rounded-xl px-4 py-3 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out clarity-mask
           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
           ${
             isDark
@@ -82,6 +82,7 @@ function Textarea({
               : "border border-neutral-300 bg-neutral-100 text-neutral-800 hover:border-neutral-400 focus-visible:ring-neutral-400 focus-visible:ring-offset-neutral-100 placeholder:font-normal placeholder-neutral-400"
           }
         `}
+        data-clarity-mask="true"
         onChange={onChange}
         onBlur={onBlur}
         onClick={onClick}

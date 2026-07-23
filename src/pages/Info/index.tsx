@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
-import {
-  MdCheckCircle,
-  MdContentCopy,
-  MdOutlineInfo,
-  MdOpenInNew,
-  MdShare,
-} from "react-icons/md";
+import { MdClose, MdOutlineInfo, MdOutlinePhotoCamera } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import {
+  deleteCompanyPhoto,
   IInfo,
+  IInfoPhoto,
   infosByCompanyPublicId,
+  updateCourtVisibility,
   updatePreferencesByCompanyPublicId,
+  uploadCompanyLogo,
+  uploadCompanyPhoto,
 } from "../../api/companies";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { useErrors } from "../../contexts/ErrorsContext";
@@ -22,154 +21,89 @@ import {
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
 import { PageEyebrow } from "../../components/PageTitle";
-import {
-  canPublish,
-  getMockOnboarding,
-  isMockSession,
-  MockOnboardingState,
-  updateMockOnboarding,
-} from "../../onboarding/mockStore";
+import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
 import { formatPhoneMask } from "../../utils/formatPhone";
+import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
 
-function MockInfo() {
-  const navigate = useNavigate();
-  const { notifyError } = useErrors();
-  const [state, setState] = useState<MockOnboardingState | null>(null);
-  const [publishing, setPublishing] = useState(false);
+function formatFloorLabel(floor: string | null | undefined): string | null {
+  if (!floor) return null;
+  return courtFloorLabel(floor as CourtFloor) || floor;
+}
 
-  useEffect(() => {
-    if (!isMockSession()) {
-      navigate("/");
-      return;
-    }
-    const mock = getMockOnboarding();
-    if (!mock) {
-      navigate("/cadastro");
-      return;
-    }
-    setState(mock);
-  }, [navigate]);
-
-  if (!state) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-master text-text-light/70">
-        Carregando…
-      </div>
-    );
-  }
-
-  const ready = canPublish(state);
-  const published = state.isPublished;
-
-  const handlePublish = () => {
-    if (!ready) {
-      notifyError({
-        message: "Conclua a configuração básica antes de ativar no portal.",
-        type: "error",
-      });
-      return;
-    }
-    setPublishing(true);
-    try {
-      const next = updateMockOnboarding({ isPublished: true });
-      if (next) setState(next);
-    } finally {
-      setPublishing(false);
-    }
-  };
-
+function CourtCard({
+  name,
+  floorLabel,
+  sportsLabel,
+  price,
+  show,
+  toggling,
+  onToggleShow,
+}: {
+  name: string;
+  floorLabel?: string | null;
+  sportsLabel?: string | null;
+  price?: number | null;
+  show?: boolean;
+  toggling?: boolean;
+  onToggleShow?: () => void;
+}) {
   return (
-    <div className="min-h-screen bg-master px-4 py-8 text-text-light">
-      <div className="mx-auto w-full max-w-lg">
-        <Link
-          to="/comecar"
-          className="text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
-        >
-          ← Configuração básica
-        </Link>
-
-        <PageEyebrow className="mb-2 mt-4">Minhas informações</PageEyebrow>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {state.arenaName.trim() || "Seu estabelecimento"}
-        </h1>
-        <p className="mt-1 text-base text-text-light/65">
-          {state.ownerName} · {formatPhoneMask(state.ownerPhone)}
-        </p>
-        <p className="mt-3 rounded-lg bg-warning-500/15 px-3 py-2 text-sm font-medium text-warning-500">
-          Protótipo — ativação mock, não publica de verdade
-        </p>
-
-        <div className="mt-6 space-y-4">
-          <div className="rounded-2xl bg-master-light px-4 py-5">
-            <p className="text-base font-medium text-text-light/70">Conta</p>
-            <p className="mt-1 text-lg font-semibold text-text-light">
-              {state.email}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-master-light p-4 sm:p-5">
-            <p className="mb-2 text-lg font-semibold text-text-light">
-              Ativar no portal
-            </p>
-            <p className="mb-4 text-base leading-6 text-text-light/65">
-              Liberar a arena no portal de reservas é opcional. Você já pode
-              usar a agenda sem ativar.
-            </p>
-
-            {published ? (
-              <div className="flex items-start gap-3 rounded-xl bg-accent-green/15 px-4 py-3.5">
-                <MdCheckCircle
-                  size={24}
-                  className="mt-0.5 shrink-0 text-accent-green"
-                  aria-hidden
-                />
-                <div>
-                  <p className="text-lg font-semibold text-accent-green">
-                    Ativa no portal
-                  </p>
-                  <p className="mt-0.5 text-base text-text-light/70">
-                    (mock) — na API real isso publicaria a arena.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                {!ready && (
-                  <div className="mb-4 flex items-start gap-2 rounded-xl bg-master px-4 py-3">
-                    <MdOutlineInfo
-                      size={20}
-                      className="mt-0.5 shrink-0 text-text-light/55"
-                      aria-hidden
-                    />
-                    <p className="text-base leading-6 text-text-light/65">
-                      Conclua estabelecimento, horários e quadras em{" "}
-                      <Link
-                        to="/comecar"
-                        className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
-                      >
-                        Configuração básica
-                      </Link>{" "}
-                      para liberar a ativação.
-                    </p>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  disabled={!ready || publishing}
-                  onClick={handlePublish}
-                  className={buttonClassName({
-                    variant: "primary",
-                    className: "justify-center",
-                  })}
-                >
-                  {publishing ? "Ativando…" : "Ativar no portal"}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+    <li className="rounded-xl bg-master px-4 py-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-lg font-semibold text-text-light">{name}</p>
+        {onToggleShow && (
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              show
+                ? "bg-accent-green/20 text-accent-green"
+                : "bg-text-light/10 text-text-light/55"
+            }`}
+          >
+            {show ? "No site" : "Oculta"}
+          </span>
+        )}
       </div>
-    </div>
+      <dl className="mt-2 space-y-1.5 text-base text-text-light/70">
+        {floorLabel && (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-medium text-text-light/55">Piso</dt>
+            <dd className="text-text-light/80">{floorLabel}</dd>
+          </div>
+        )}
+        {sportsLabel && (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-medium text-text-light/55">Esportes</dt>
+            <dd className="text-text-light/80">{sportsLabel}</dd>
+          </div>
+        )}
+        {price != null && Number.isFinite(price) && (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-medium text-text-light/55">Preço padrão</dt>
+            <dd className="font-semibold text-text-light">
+              {formatCurrencyBRL(price)}/hora
+            </dd>
+          </div>
+        )}
+      </dl>
+      {onToggleShow && (
+        <button
+          type="button"
+          disabled={toggling}
+          onClick={onToggleShow}
+          className={buttonClassName({
+            variant: show ? "secondary" : "primary",
+            size: "md",
+            className: "mt-3",
+          })}
+        >
+          {toggling
+            ? "Salvando…"
+            : show
+              ? "Ocultar do site"
+              : "Ativar no site"}
+        </button>
+      )}
+    </li>
   );
 }
 
@@ -177,11 +111,18 @@ function RealInfo() {
   const navigate = useNavigate();
   const { loading, withLoading } = useLoading();
   const { notifyError } = useErrors();
+  const { setLogoUrl, setCompanyName: setBrandingCompanyName } =
+    useCompanyBranding();
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [publicId, setPublicId] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [isHiddenInactiveHours, setIsHiddenInactiveHours] = useState(false);
   const [info, setInfo] = useState<IInfo | null>(null);
-  const [copyFeedback, setCopyFeedback] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [removingPhotoId, setRemovingPhotoId] = useState<number | null>(null);
+  const [togglingCourtId, setTogglingCourtId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -209,6 +150,10 @@ function RealInfo() {
         );
         if (response?.companyName) {
           setCompanyName(response.companyName);
+          setBrandingCompanyName(response.companyName);
+        }
+        if (response?.logoUrl) {
+          setLogoUrl(response.logoUrl);
         }
       } catch (error) {
         console.error("Erro ao buscar informações da empresa:", error);
@@ -216,37 +161,6 @@ function RealInfo() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [publicId]);
-
-  const copyToClipboard = async () => {
-    if (!info?.link) return;
-    try {
-      await navigator.clipboard.writeText(info.link);
-      setCopyFeedback(true);
-      window.setTimeout(() => setCopyFeedback(false), 2000);
-    } catch {
-      notifyError({
-        message: "Não foi possível copiar o link. Tente novamente.",
-        type: "error",
-      });
-    }
-  };
-
-  const shareLink = async () => {
-    if (!info?.link) return;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: companyName || "Minha quadra",
-          text: companyName ? `Confira ${companyName}` : "Confira a minha página",
-          url: info.link,
-        });
-      } catch {
-        // Usuário cancelou — sem alerta agressivo
-      }
-      return;
-    }
-    await copyToClipboard();
-  };
 
   const updatePreferences = async (
     isHiddenInactiveHoursInput: boolean
@@ -265,10 +179,152 @@ function RealInfo() {
     });
   };
 
-  const primaryBtnClass = buttonClassName({ variant: "primary", size: "md" });
-  const secondaryBtnClass = buttonClassName({ variant: "secondary" });
+  const handleToggleCourtVisibility = async (
+    courtPublicId: string,
+    nextShow: boolean
+  ) => {
+    setTogglingCourtId(courtPublicId);
+    try {
+      const result = await updateCourtVisibility(courtPublicId, nextShow);
+      setInfo((prev) =>
+        prev
+          ? {
+              ...prev,
+              courts: prev.courts.map((court) =>
+                court.publicId === courtPublicId
+                  ? { ...court, show: result.show }
+                  : court
+              ),
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error(error);
+      notifyError({
+        message: "Não foi possível atualizar a visibilidade da quadra.",
+        type: "error",
+      });
+    } finally {
+      setTogglingCourtId(null);
+    }
+  };
+
+  const handleLogoChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !publicId) return;
+
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      notifyError({
+        message: "Use uma imagem JPG, PNG ou WebP.",
+        type: "error",
+      });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      notifyError({
+        message: "A imagem deve ter no máximo 2 MB.",
+        type: "error",
+      });
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const { logoUrl } = await uploadCompanyLogo(publicId, file);
+      setInfo((prev) => (prev ? { ...prev, logoUrl } : prev));
+      setLogoUrl(logoUrl);
+    } catch (error) {
+      console.error(error);
+      notifyError({
+        message: "Não foi possível enviar o logo. Tente novamente.",
+        type: "error",
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const photos: IInfoPhoto[] = info?.photos ?? [];
+  const canAddPhoto = photos.length < 3;
+
+  const handlePhotoChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !publicId) return;
+
+    if (!canAddPhoto) {
+      notifyError({
+        message: "Você já enviou 3 fotos. Remova uma para enviar outra.",
+        type: "error",
+      });
+      return;
+    }
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      notifyError({
+        message: "Use uma imagem JPG, PNG ou WebP.",
+        type: "error",
+      });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      notifyError({
+        message: "A imagem deve ter no máximo 2 MB.",
+        type: "error",
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const photo = await uploadCompanyPhoto(publicId, file);
+      setInfo((prev) =>
+        prev
+          ? { ...prev, photos: [...(prev.photos ?? []), photo].slice(0, 3) }
+          : prev
+      );
+    } catch (error) {
+      console.error(error);
+      notifyError({
+        message: "Não foi possível enviar a foto. Tente novamente.",
+        type: "error",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = async (imageId: number) => {
+    if (!publicId) return;
+    setRemovingPhotoId(imageId);
+    try {
+      await deleteCompanyPhoto(publicId, imageId);
+      setInfo((prev) =>
+        prev
+          ? {
+              ...prev,
+              photos: (prev.photos ?? []).filter((p) => p.id !== imageId),
+            }
+          : prev
+      );
+    } catch (error) {
+      console.error(error);
+      notifyError({
+        message: "Não foi possível remover a foto. Tente novamente.",
+        type: "error",
+      });
+    } finally {
+      setRemovingPhotoId(null);
+    }
+  };
 
   const isInitialLoading = loading && !info;
+  const courts = info?.courts ?? [];
+  const logoUrl = info?.logoUrl || null;
 
   return (
     <AppLayout>
@@ -286,7 +342,7 @@ function RealInfo() {
             aria-label="Carregando informações"
           >
             <div className="h-28 rounded-2xl bg-master-light/70 lg:col-span-2" />
-            <div className="h-40 rounded-2xl bg-master-light/70 lg:col-span-2" />
+            <div className="h-48 rounded-2xl bg-master-light/70 lg:col-span-2" />
             <div className="h-36 rounded-2xl bg-master-light/70" />
             <div className="h-32 rounded-2xl bg-master-light/70" />
           </div>
@@ -294,53 +350,220 @@ function RealInfo() {
           <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             <div className="rounded-2xl bg-master-light px-4 py-5 lg:col-span-2 lg:px-6">
               <p className="text-base font-medium text-text-light/70">
-                Empresa
+                Estabelecimento
               </p>
-              <p className="mt-1 text-2xl font-bold leading-snug text-text-light">
-                {companyName || info?.companyName || "—"}
-              </p>
+              <div className="mt-3 min-w-0">
+                <p className="text-2xl font-bold leading-snug text-text-light">
+                  {companyName || info?.companyName || "—"}
+                </p>
+                {info?.companyPhone && (
+                  <p className="mt-2 text-base text-text-light/70">
+                    {formatPhoneMask(info.companyPhone)}
+                  </p>
+                )}
+
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={handleLogoChange}
+                />
+                <button
+                  type="button"
+                  disabled={uploadingLogo || !publicId}
+                  onClick={() => logoInputRef.current?.click()}
+                  aria-label={
+                    logoUrl
+                      ? "Alterar logo do estabelecimento"
+                      : "Enviar logo do estabelecimento"
+                  }
+                  className="group relative mt-4 flex min-h-40 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed border-text-light/20 bg-master/40 px-4 py-6 transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
+                >
+                  {logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt={`Logo de ${companyName || info?.companyName || "estabelecimento"}`}
+                      className="max-h-28 max-w-[min(100%,12rem)] object-contain"
+                    />
+                  ) : (
+                    <MdOutlinePhotoCamera
+                      size={40}
+                      className="text-text-light/40"
+                      aria-hidden
+                    />
+                  )}
+                  <span className="text-center text-sm leading-5 text-text-light/60">
+                    {uploadingLogo
+                      ? "Enviando…"
+                      : logoUrl
+                        ? "Clique para alterar o logo"
+                        : "Clique para enviar o logo"}
+                    {!uploadingLogo && (
+                      <>
+                        <br />
+                        JPG, PNG ou WebP · até 2 MB
+                      </>
+                    )}
+                  </span>
+                </button>
+
+                <div className="mt-6 border-t border-text-light/10 pt-5">
+                  <p className="text-base font-semibold text-text-light">
+                    Fotos do espaço
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-text-light/60">
+                    Até 3 fotos do espaço — aparecem na página da sua arena no
+                    site.
+                  </p>
+
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={handlePhotoChange}
+                  />
+
+                  <ul className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+                    {photos.map((photo) => (
+                      <li
+                        key={photo.id}
+                        className="relative aspect-[4/3] overflow-hidden rounded-xl bg-master"
+                      >
+                        <img
+                          src={photo.url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          disabled={removingPhotoId === photo.id}
+                          onClick={() => handleRemovePhoto(photo.id)}
+                          aria-label="Remover foto"
+                          className="absolute right-1.5 top-1.5 flex size-8 items-center justify-center rounded-full bg-master/85 text-text-light shadow-sm transition hover:bg-master disabled:opacity-60"
+                        >
+                          <MdClose size={18} aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                    {canAddPhoto ? (
+                      <li>
+                        <button
+                          type="button"
+                          disabled={uploadingPhoto || !publicId}
+                          onClick={() => photoInputRef.current?.click()}
+                          aria-label="Adicionar foto do espaço"
+                          className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-text-light/20 bg-master/40 px-2 text-center transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
+                        >
+                          <MdOutlinePhotoCamera
+                            size={28}
+                            className="text-text-light/40"
+                            aria-hidden
+                          />
+                          <span className="text-xs leading-4 text-text-light/55">
+                            {uploadingPhoto ? "Enviando…" : "Adicionar"}
+                          </span>
+                        </button>
+                      </li>
+                    ) : null}
+                  </ul>
+                  <p className="mt-2 text-xs text-text-light/45">
+                    JPG, PNG ou WebP · até 2 MB cada · {photos.length}/3
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
-              <p className="mb-3 text-lg font-semibold text-text-light">
-                Página pública
-              </p>
-              <p className="mb-4 break-all text-base leading-6 text-text-light/70">
-                {info?.link || "Link não disponível"}
-              </p>
-              <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap">
-                <button
-                  type="button"
-                  onClick={shareLink}
-                  disabled={!info?.link}
-                  className={`${primaryBtnClass} lg:w-auto lg:min-w-[12rem]`}
-                >
-                  <MdShare size={20} aria-hidden />
-                  Compartilhar link
-                </button>
-                <a
-                  href={info?.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${secondaryBtnClass} lg:w-auto lg:min-w-[12rem]`}
-                  aria-disabled={!info?.link}
-                  onClick={(e) => {
-                    if (!info?.link) e.preventDefault();
-                  }}
-                >
-                  <MdOpenInNew size={20} aria-hidden />
-                  Abrir minha página
-                </a>
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  disabled={!info?.link}
-                  className={`${secondaryBtnClass} lg:w-auto lg:min-w-[12rem]`}
-                >
-                  <MdContentCopy size={20} aria-hidden />
-                  {copyFeedback ? "Link copiado!" : "Copiar link"}
-                </button>
+            {(info?.owner?.name ||
+              info?.owner?.email ||
+              info?.owner?.phone) && (
+              <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
+                <p className="mb-3 text-lg font-semibold text-text-light">
+                  Contato do dono
+                </p>
+                <dl className="space-y-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0">
+                  {info.owner?.name && (
+                    <div>
+                      <dt className="text-base font-medium text-text-light/55">
+                        Nome
+                      </dt>
+                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                        {info.owner.name}
+                      </dd>
+                    </div>
+                  )}
+                  {info.owner?.email && (
+                    <div>
+                      <dt className="text-base font-medium text-text-light/55">
+                        E-mail
+                      </dt>
+                      <dd className="mt-0.5 break-all text-lg font-semibold text-text-light">
+                        {info.owner.email}
+                      </dd>
+                    </div>
+                  )}
+                  {info.owner?.phone && (
+                    <div>
+                      <dt className="text-base font-medium text-text-light/55">
+                        Telefone
+                      </dt>
+                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                        {formatPhoneMask(info.owner.phone)}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
               </div>
+            )}
+
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
+              <div className="mb-3 flex items-end justify-between gap-3">
+                <p className="text-lg font-semibold text-text-light">
+                  Quadras
+                </p>
+                {courts.length > 0 && (
+                  <span className="text-base font-medium tabular-nums text-text-light/60">
+                    {courts.length}
+                  </span>
+                )}
+              </div>
+              {courts.length > 0 &&
+                courts.every((court) => !court.show) && (
+                  <p className="mb-3 rounded-lg bg-master px-3 py-2 text-sm leading-5 text-text-light/70">
+                    Cadastre reservas e horários fixos na agenda antes de ativar
+                    a quadra no site.
+                  </p>
+                )}
+              {courts.length === 0 ? (
+                <p className="text-base text-text-light/65">
+                  Nenhuma quadra cadastrada.
+                </p>
+              ) : (
+                <ul className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                  {courts.map((court) => (
+                    <CourtCard
+                      key={court.publicId}
+                      name={court.name}
+                      floorLabel={formatFloorLabel(court.floor)}
+                      sportsLabel={
+                        court.sports.length > 0
+                          ? court.sports.join(", ")
+                          : null
+                      }
+                      price={court.price}
+                      show={court.show}
+                      toggling={togglingCourtId === court.publicId}
+                      onToggleShow={() =>
+                        handleToggleCourtVisibility(
+                          court.publicId,
+                          !court.show
+                        )
+                      }
+                    />
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:p-6">
@@ -421,11 +644,6 @@ function RealInfo() {
 }
 
 function Info() {
-  const hasJwt = Boolean(getAccessToken());
-  const mockSession = isMockSession() && Boolean(getMockOnboarding());
-
-  if (hasJwt) return <RealInfo />;
-  if (mockSession) return <MockInfo />;
   return <RealInfo />;
 }
 

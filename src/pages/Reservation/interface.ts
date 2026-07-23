@@ -24,7 +24,6 @@ export interface IReservationDetailsItemProps {
     customerId?: number;
     contactName: string;
     contactPhone: string;
-    tokenToCancel: string;
     observation: string;
     isBarbecueIncluded: boolean;
     isEvent: boolean;
