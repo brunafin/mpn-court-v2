@@ -4,6 +4,7 @@ import {
   MdOutlineCalendarMonth,
   MdOutlineInfo,
   MdOutlineLogout,
+  MdOutlinePayments,
 } from "react-icons/md";
 import { logoutAndRedirect } from "../../utils/authCookie";
 import Header from "../Header";
@@ -12,6 +13,7 @@ import {
   CompanyBrandingProvider,
   useCompanyBranding,
 } from "../../contexts/CompanyBrandingContext";
+import PendingBillingModal from "../PendingBillingModal";
 
 type NavItem = {
   to: string;
@@ -26,6 +28,12 @@ const navItems: NavItem[] = [
     label: "Início",
     Icon: MdOutlineCalendarMonth,
     match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+  },
+  {
+    to: "/mensalidades",
+    label: "Mensalidades",
+    Icon: MdOutlinePayments,
+    match: (path) => path.startsWith("/mensalidades"),
   },
   {
     to: "/minhas-infos",
@@ -105,6 +113,7 @@ function AppLayoutShell({ children }: AppLayoutProps) {
         <Header />
         {children}
       </div>
+      <PendingBillingModal />
     </div>
   );
 }

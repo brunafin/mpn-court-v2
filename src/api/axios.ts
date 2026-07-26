@@ -50,7 +50,13 @@ function userFacingErrorMessage(error: unknown): string {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (notifyError) {
+    const data = error?.response?.data as
+      | { code?: string; message?: { code?: string } }
+      | undefined;
+    const isCpfRequired =
+      data?.code === 'CPF_REQUIRED' ||
+      data?.message?.code === 'CPF_REQUIRED';
+    if (notifyError && !isCpfRequired) {
       notifyError({ message: userFacingErrorMessage(error), type: 'error' });
     }
     return Promise.reject(error);

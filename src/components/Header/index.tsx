@@ -4,6 +4,7 @@ import {
   MdOutlineHome,
   MdOutlineInfo,
   MdOutlineLogout,
+  MdOutlinePayments,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { logoutAndRedirect } from "../../utils/authCookie";
@@ -29,6 +30,15 @@ const navItems: NavItem[] = [
     iconClass: "text-accent-blue",
     iconBgClass: "bg-accent-blue/15",
     match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+  },
+  {
+    to: "/mensalidades",
+    label: "Mensalidades",
+    description: "Cobrança da plataforma",
+    Icon: MdOutlinePayments,
+    iconClass: "text-accent-green",
+    iconBgClass: "bg-accent-green/15",
+    match: (path) => path.startsWith("/mensalidades"),
   },
   {
     to: "/minhas-infos",
