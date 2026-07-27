@@ -1,13 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
+import { jwtDecode } from "jwt-decode";
 import Input from "../../components/Input";
 import { useEffect, useState } from "react";
 import { login } from "../../api/auth";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-  setAccessToken,
-} from "../../utils/authCookie";
+import { getAccessToken, setAccessToken } from "../../utils/authCookie";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { buttonClassName } from "../../components/Button";
 
@@ -17,11 +14,9 @@ type LoginTokenPayload = {
 };
 
 function routeAfterLogin(token: string): string {
-  const payload =
-    getAccessTokenPayload<LoginTokenPayload>() ??
-    (JSON.parse(atob(token.split(".")[1])) as LoginTokenPayload);
-  if (payload && payload.updatedPassword === false) return "/alterar-senha";
-  return payload?.companyPublicId ? "/reservas" : "/comecar";
+  const payload = jwtDecode<LoginTokenPayload>(token);
+  if (payload.updatedPassword === false) return "/alterar-senha";
+  return payload.companyPublicId ? "/reservas" : "/comecar";
 }
 
 function Login() {
@@ -45,7 +40,11 @@ function Login() {
   useEffect(() => {
     const token = getAccessToken();
     if (token) {
-      navigate(routeAfterLogin(token));
+      try {
+        navigate(routeAfterLogin(token));
+      } catch {
+        // token inválido no cookie — permanece no login
+      }
     }
   }, [navigate]);
 
@@ -61,8 +60,12 @@ function Login() {
 
     try {
       const response = await login(username, password);
-      setAccessToken(response.access_token);
-      navigate(routeAfterLogin(response.access_token));
+      const token = response?.access_token as string | undefined;
+      if (!token) {
+        throw new Error("EMPTY_TOKEN");
+      }
+      setAccessToken(token);
+      navigate(routeAfterLogin(token));
     } catch (error) {
       const data = (
         error as AxiosError<{ code?: string; email?: string; message?: string }>
@@ -73,7 +76,10 @@ function Login() {
         return;
       }
 
-      const message = "Usuário ou senha inválidos.";
+      const message =
+        (error as Error)?.message === "EMPTY_TOKEN"
+          ? "Login sem token. Verifique a API e tente novamente."
+          : "Usuário ou senha inválidos.";
       setFormError(message);
       notifyError({ message, type: "error" });
     } finally {

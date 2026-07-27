@@ -5,15 +5,19 @@ import { invalidateSchedulesDayCache } from "./schedulesDayCache";
 
 const COOKIE_NAME = "access_token";
 
-/** Cookie legível por JS (Bearer). Mitigação XSS: CSP + SameSite=Strict — não HttpOnly. */
-const cookieOptions = {
-  path: "/",
-  secure: true,
-  sameSite: "strict" as const,
-};
+/** Em http://localhost o flag Secure impede o cookie de gravar — login “200” e UI de senha inválida. */
+function cookieOptions() {
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:";
+  return {
+    path: "/",
+    secure,
+    sameSite: "strict" as const,
+  };
+}
 
 export function setAccessToken(token: string) {
-  Cookies.set(COOKIE_NAME, token, cookieOptions);
+  Cookies.set(COOKIE_NAME, token, cookieOptions());
 }
 
 export function getAccessToken(): string | undefined {
@@ -32,8 +36,9 @@ export function getAccessTokenPayload<T = Record<string, unknown>>(): T | null {
 
 /** Remove o cookie com os mesmos atributos usados no set (Secure/SameSite). */
 export function clearAccessToken() {
+  const opts = cookieOptions();
   Cookies.remove(COOKIE_NAME, { path: "/" });
-  Cookies.remove(COOKIE_NAME, cookieOptions);
+  Cookies.remove(COOKIE_NAME, opts);
   // Fallback para limpeza via document.cookie
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict`;
