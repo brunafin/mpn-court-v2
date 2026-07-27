@@ -52,6 +52,10 @@ export async function getBillingPayment(
 ) {
   const response = await api.get<BillingPaymentItem>(
     `/companies/${companyPublicId}/billing/${paymentId}`,
+    {
+      // Polling: não dispara toast global em falha transitória (ex.: app em background).
+      silentError: true,
+    },
   );
   return response.data;
 }

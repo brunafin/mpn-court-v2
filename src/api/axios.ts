@@ -2,6 +2,13 @@ import axios from 'axios';
 import { IError } from '../contexts/ErrorsContext';
 import { getAccessToken, logoutAndRedirect } from '../utils/authCookie';
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /** Se true, o interceptor não mostra toast de erro. */
+    silentError?: boolean;
+  }
+}
+
 let notifyError: ((error: IError) => void) | null = null;
 let sessionExpiredHandling = false;
 
@@ -78,6 +85,7 @@ api.interceptors.response.use(
       (typeof data?.message === 'object' &&
         data?.message?.code === 'CPF_REQUIRED') ||
       (error?.response?.status === 422 && /CPF/i.test(messageText));
+    const silent = Boolean(error?.config?.silentError);
 
     // 401: login trata na tela; demais rotas → um único redirect, sem toast
     if (status === 401) {
@@ -87,7 +95,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (notifyError && !isCpfRequired) {
+    if (notifyError && !isCpfRequired && !silent) {
       notifyError({ message: userFacingErrorMessage(error), type: 'error' });
     }
     return Promise.reject(error);
