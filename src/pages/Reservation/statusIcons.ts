@@ -22,7 +22,6 @@ export function getStatusIcon(status: ReservationStatusEnum): IconType {
     case ReservationStatusEnum.FIXED:
       return StatusIcons.fixed;
     case ReservationStatusEnum.RESERVED:
-    case ReservationStatusEnum.PREPAID:
       return StatusIcons.reserved;
     case ReservationStatusEnum.AVAILABLE:
       return StatusIcons.available;

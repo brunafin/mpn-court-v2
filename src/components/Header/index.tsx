@@ -8,7 +8,7 @@ import {
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { logoutAndRedirect } from "../../utils/authCookie";
-import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import { useCompanyBranding, useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import CompanyAvatar from "../CompanyAvatar";
 
 type NavItem = {
@@ -57,6 +57,7 @@ function Header() {
   const titleId = useId();
   const location = useLocation();
   const { companyName } = useCompanyBranding();
+  const caps = useCompanyCapabilities();
 
   useEffect(() => {
     setMenuOpen(false);
@@ -94,7 +95,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
       <Link
-        to="/reservas"
+        to={caps.canViewAgenda ? "/reservas" : "/mensalidades"}
         className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
       >
         <CompanyAvatar sizeClass="size-12" roundedClass="rounded-md" />
@@ -180,7 +181,11 @@ function Header() {
                 Navegação
               </p>
               <ul className="flex flex-col gap-2">
-                {navItems.map(
+                {navItems
+                  .filter((item) =>
+                    caps.entitlement === "none" ? item.to !== "/reservas" : true,
+                  )
+                  .map(
                   ({
                     to,
                     label,

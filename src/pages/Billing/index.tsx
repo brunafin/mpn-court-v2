@@ -84,7 +84,9 @@ function BillingPage() {
         setSummary(data);
       } catch (error) {
         console.error(error);
-        notifyError("Não foi possível carregar as mensalidades.");
+        notifyError({
+          message: "Não foi possível carregar as mensalidades.",
+        });
       }
     });
   }, [companyPublicId, notifyError, withLoading]);
@@ -124,7 +126,10 @@ function BillingPage() {
   const startPay = async (payment: BillingPaymentItem, withCpf?: string) => {
     if (!companyPublicId) return;
     if (!summary?.pixEnabled) {
-      notifyError("Pagamento PIX ainda não está disponível. Contate o suporte.");
+      notifyError({
+        message:
+          "Pagamento PIX ainda não está disponível. Contate o suporte.",
+      });
       return;
     }
     setGenerating(true);
@@ -143,7 +148,9 @@ function BillingPage() {
         setPaying(true);
         return;
       }
-      notifyError("Não foi possível gerar o PIX. Tente novamente.");
+      notifyError({
+        message: "Não foi possível gerar o PIX. Tente novamente.",
+      });
     } finally {
       setGenerating(false);
     }
@@ -154,7 +161,7 @@ function BillingPage() {
     if (!openPayment) return;
     const digits = cpf.replace(/\D/g, "");
     if (digits.length !== 11) {
-      notifyError("Informe um CPF válido com 11 dígitos.");
+      notifyError({ message: "Informe um CPF válido com 11 dígitos." });
       return;
     }
     await startPay(openPayment, digits);
@@ -167,7 +174,9 @@ function BillingPage() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      notifyError("Não foi possível copiar. Selecione o código manualmente.");
+      notifyError({
+        message: "Não foi possível copiar. Selecione o código manualmente.",
+      });
     }
   };
 

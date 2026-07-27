@@ -1,9 +1,10 @@
 import { BsX } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { useLocation, useParams } from "react-router";
-import { ReservationStatusEnum } from "../enum";
+import { isBookedStatus, ReservationStatusEnum } from "../enum";
 import {
   MdOutlineArrowBackIos,
+  MdOutlineCelebration,
   MdOutlineRestaurant,
 } from "react-icons/md";
 import { IReservationDetailsItemProps } from "../interface";
@@ -38,11 +39,13 @@ import ConfirmSheet, {
 import { useNotification } from "../../../contexts/NotificationContext";
 import { useErrors } from "../../../contexts/ErrorsContext";
 import { createNote } from "../../../api/notes";
-import { LuPartyPopper } from "react-icons/lu";
 import { StatusIcons } from "../statusIcons";
 import { buttonClassName } from "../../../components/Button";
 import EmptyState from "../../../components/EmptyState";
 import { PageTitle } from "../../../components/PageTitle";
+import OptionToggle from "../../../components/OptionToggle";
+import OptionChip from "../../../components/OptionChip";
+import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 
 type ConfirmAction = {
   title: string;
@@ -346,11 +349,11 @@ function ReservationDetails() {
         },
       });
     },
-    onReativar: () => {
+    onAtivar: () => {
       setConfirmAction({
-        title: "Reativar horário?",
+        title: "Ativar horário?",
         description: "O horário volta a aparecer como disponível para reserva.",
-        confirmLabel: "Reativar",
+        confirmLabel: "Ativar horário",
         tone: "success",
         run: async () => {
           await changeAvailability(court?.scheduleId || "", true);
@@ -432,12 +435,10 @@ function ReservationDetails() {
   const secondaryBtnClass = buttonClassName({ variant: "secondary" });
   const primaryBtnClass = buttonClassName({ variant: "primary", size: "md" });
 
-  const isBookedStatus =
-    court?.status === ReservationStatusEnum.FIXED ||
-    court?.status === ReservationStatusEnum.RESERVED ||
-    court?.status === ReservationStatusEnum.PREPAID;
-  const isPastConsultation = Boolean(isPastSchedule && isBookedStatus);
-  const showCancelSticky = Boolean(isBookedStatus && !isPastSchedule);
+  const booked = isBookedStatus(court?.status);
+  const isPastConsultation = Boolean(isPastSchedule && booked);
+  // Passado abre em leitura; cancelamento continua permitido para limpar a grade.
+  const showCancelSticky = Boolean(booked);
   const showCreateSticky = Boolean(
     court?.status === ReservationStatusEnum.AVAILABLE && !isPastSchedule
   );
@@ -478,7 +479,7 @@ function ReservationDetails() {
           <>
             {isPastConsultation && (
               <p className="mb-4 text-base font-medium text-text-light/65">
-                Somente consulta
+                Horário passado — somente consulta (cancelar ainda disponível)
               </p>
             )}
 
@@ -486,21 +487,20 @@ function ReservationDetails() {
               isPastConsultation ? undefined : openEditContact,
               court?.status,
               {
-              sportName: court?.reservation?.sportName,
-              contactName: court?.reservation?.contactName,
-              contactPhone: court?.reservation?.contactPhone,
-              courtName: court?.court,
-              price: court?.price,
-              isNeedsNetting: court?.reservation?.isNeedsNetting,
-              onCreateReminder:
-                !isPastConsultation &&
-                court.reservation?.publicId &&
-                (court.status === ReservationStatusEnum.FIXED ||
-                  court.status === ReservationStatusEnum.RESERVED ||
-                  court.status === ReservationStatusEnum.PREPAID)
-                  ? () => setShowNewReminderModal(true)
-                  : undefined,
-            })}
+                sportName: court?.reservation?.sportName,
+                contactName: court?.reservation?.contactName,
+                contactPhone: court?.reservation?.contactPhone,
+                courtName: court?.court,
+                price: court?.price,
+                onCreateReminder:
+                  !isPastConsultation &&
+                  court.reservation?.publicId &&
+                  (court.status === ReservationStatusEnum.FIXED ||
+                    court.status === ReservationStatusEnum.RESERVED)
+                    ? () => setShowNewReminderModal(true)
+                    : undefined,
+              }
+            )}
 
             {(court.status === ReservationStatusEnum.INACTIVE ||
               (court.status === ReservationStatusEnum.AVAILABLE &&
@@ -516,62 +516,36 @@ function ReservationDetails() {
                     Informações adicionais
                   </p>
 
-                  <div
-                    className="space-y-2"
-                    role="group"
-                    aria-label="Opções da reserva"
-                  >
+                  {(isBarbecueIncluded ||
+                    isEvent ||
+                    court.reservation?.isNeedsNetting) && (
                     <div
-                      className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 ${
-                        isBarbecueIncluded
-                          ? "bg-accent-blue/10"
-                          : "bg-master/50"
-                      }`}
+                      className="mb-5 flex flex-wrap gap-2"
+                      role="group"
+                      aria-label="Opções da reserva"
                     >
-                      <MdOutlineRestaurant
-                        size={20}
-                        className={`shrink-0 ${
-                          isBarbecueIncluded
-                            ? "text-text-light"
-                            : "text-text-light/40"
-                        }`}
-                        aria-hidden
-                      />
-                      <span
-                        className={`text-base font-medium ${
-                          isBarbecueIncluded
-                            ? "text-text-light"
-                            : "text-text-light/45"
-                        }`}
-                      >
-                        {isBarbecueIncluded
-                          ? "Com churrasqueira"
-                          : "Sem churrasqueira"}
-                      </span>
+                      {court.reservation?.isNeedsNetting && (
+                        <OptionChip
+                          label="Rede"
+                          icon={<VoleyNetIcon className="size-3.5" />}
+                        />
+                      )}
+                      {isEvent && (
+                        <OptionChip
+                          label="Evento"
+                          icon={<MdOutlineCelebration size={13} />}
+                        />
+                      )}
+                      {isBarbecueIncluded && (
+                        <OptionChip
+                          label="Churrasqueira"
+                          icon={<MdOutlineRestaurant size={14} />}
+                        />
+                      )}
                     </div>
-                    <div
-                      className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 ${
-                        isEvent ? "bg-accent-blue/10" : "bg-master/50"
-                      }`}
-                    >
-                      <LuPartyPopper
-                        size={20}
-                        className={`shrink-0 ${
-                          isEvent ? "text-text-light" : "text-text-light/40"
-                        }`}
-                        aria-hidden
-                      />
-                      <span
-                        className={`text-base font-medium ${
-                          isEvent ? "text-text-light" : "text-text-light/45"
-                        }`}
-                      >
-                        {isEvent ? "É um evento" : "Não é um evento"}
-                      </span>
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="mt-5">
+                  <div>
                     <p className="text-base font-semibold text-text-light">
                       Observação
                     </p>
@@ -591,60 +565,31 @@ function ReservationDetails() {
               ) : (
                 <>
                   <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
-                    <div
-                      className="mb-4 space-y-1"
-                      role="group"
-                      aria-label="Opções da reserva"
-                    >
-                      <label
-                        className={`flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-3 transition focus-within:ring-2 focus-within:ring-accent-blue/60 ${
-                          isBarbecueIncluded
-                            ? "bg-accent-blue/10"
-                            : "hover:bg-master/80"
-                        }`}
-                      >
-                        <span className="flex items-center gap-3 text-base font-medium text-text-light">
-                          <MdOutlineRestaurant
-                            size={20}
-                            className="shrink-0 text-text-light/70"
-                            aria-hidden
-                          />
-                          Com churrasqueira
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={isBarbecueIncluded}
-                          onChange={(e) => {
-                            setIsBarbecueIncluded(e.target.checked);
-                          }}
-                          className="size-6 shrink-0 rounded accent-accent-blue"
-                        />
-                      </label>
-                      <label
-                        className={`flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-3 transition focus-within:ring-2 focus-within:ring-accent-blue/60 ${
-                          isEvent
-                            ? "bg-accent-blue/10"
-                            : "hover:bg-master/80"
-                        }`}
-                      >
-                        <span className="flex items-center gap-3 text-base font-medium text-text-light">
-                          <LuPartyPopper
-                            size={20}
-                            className="shrink-0 text-text-light/70"
-                            aria-hidden
-                          />
-                          É um evento
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={isEvent}
-                          onChange={(e) => {
-                            setIsEvent(e.target.checked);
-                          }}
-                          className="size-6 shrink-0 rounded accent-accent-blue"
-                        />
-                      </label>
-                    </div>
+                    <fieldset className="mb-4 space-y-2">
+                      <legend className="mb-1 text-base font-semibold text-text-light">
+                        Opções da reserva
+                      </legend>
+                      {court.reservation?.isNeedsNetting && (
+                        <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master/50 px-3.5 py-2.5">
+                          <VoleyNetIcon className="size-5 shrink-0 text-text-light/75" />
+                          <p className="text-base font-medium text-text-light">
+                            Precisa de rede
+                          </p>
+                        </div>
+                      )}
+                      <OptionToggle
+                        label="Com churrasqueira"
+                        checked={isBarbecueIncluded}
+                        onChange={setIsBarbecueIncluded}
+                        icon={<MdOutlineRestaurant size={20} />}
+                      />
+                      <OptionToggle
+                        label="É um evento"
+                        checked={isEvent}
+                        onChange={setIsEvent}
+                        icon={<MdOutlineCelebration size={20} />}
+                      />
+                    </fieldset>
 
                     <Textarea
                       title="Observação"
@@ -684,8 +629,7 @@ function ReservationDetails() {
                   </div>
 
                   {(court.status === ReservationStatusEnum.FIXED ||
-                    court.status === ReservationStatusEnum.RESERVED ||
-                    court.status === ReservationStatusEnum.PREPAID) &&
+                    court.status === ReservationStatusEnum.RESERVED) &&
                     renderButtonByStatus(court.status, statusActionHandlers)}
                 </>
               ))}
@@ -771,58 +715,35 @@ function ReservationDetails() {
                 </div>
 
                 <div className="rounded-2xl bg-master-light p-4 sm:p-5">
-                  <fieldset aria-label="Opções adicionais">
+                  <fieldset>
+                    <legend className="mb-3 text-base font-semibold text-text-light">
+                      Opções da reserva
+                    </legend>
                     <div className="mb-3 space-y-2">
-                      <label
-                        htmlFor="barbecue-included"
-                        className={`flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
-                          isBarbecueIncluded
-                            ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
-                            : "bg-master"
-                        }`}
-                      >
-                        <span className="flex items-center gap-3 text-lg font-medium text-text-light">
-                          <MdOutlineRestaurant
-                            size={22}
-                            className="shrink-0 text-text-light"
-                            aria-hidden
-                          />
-                          Com churrasqueira
-                        </span>
-                        <input
-                          type="checkbox"
-                          id="barbecue-included"
-                          checked={isBarbecueIncluded}
-                          onChange={(e) =>
-                            setIsBarbecueIncluded(e.target.checked)
-                          }
-                          className="size-7 shrink-0 rounded accent-accent-blue"
-                        />
-                      </label>
-                      <label
-                        htmlFor="is-event"
-                        className={`flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
-                          isEvent
-                            ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
-                            : "bg-master"
-                        }`}
-                      >
-                        <span className="flex items-center gap-3 text-lg font-medium text-text-light">
-                          <LuPartyPopper
-                            size={22}
-                            className="shrink-0 text-text-light"
-                            aria-hidden
-                          />
-                          É um evento
-                        </span>
-                        <input
-                          type="checkbox"
-                          id="is-event"
-                          checked={isEvent}
-                          onChange={(e) => setIsEvent(e.target.checked)}
-                          className="size-7 shrink-0 rounded accent-accent-blue"
-                        />
-                      </label>
+                      {court.reservation?.isNeedsNetting && (
+                        <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master/50 px-3.5 py-2.5">
+                          <VoleyNetIcon className="size-5 shrink-0 text-text-light/75" />
+                          <p className="text-base font-medium text-text-light">
+                            Precisa de rede
+                          </p>
+                        </div>
+                      )}
+                      <OptionToggle
+                        id="barbecue-included"
+                        name="barbecue-included"
+                        label="Com churrasqueira"
+                        checked={isBarbecueIncluded}
+                        onChange={setIsBarbecueIncluded}
+                        icon={<MdOutlineRestaurant size={20} />}
+                      />
+                      <OptionToggle
+                        id="is-event"
+                        name="is-event"
+                        label="É um evento"
+                        checked={isEvent}
+                        onChange={setIsEvent}
+                        icon={<MdOutlineCelebration size={20} />}
+                      />
                     </div>
                   </fieldset>
                   <Textarea

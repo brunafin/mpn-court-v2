@@ -1,14 +1,10 @@
 import { Link } from "react-router-dom";
 import { ReservationStatusEnum } from "../enum";
-import {
-  MdChevronRight,
-  MdOutlineRestaurant,
-} from "react-icons/md";
-import { BsCashCoin } from "react-icons/bs";
+import { MdChevronRight, MdOutlineCelebration, MdOutlineRestaurant } from "react-icons/md";
 import { IReservationItemProps } from "../interface";
 import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
-import { LuPartyPopper } from "react-icons/lu";
 import { getStatusIcon } from "../statusIcons";
+import OptionChip from "../../../components/OptionChip";
 
 function getStatusMeta(status: ReservationStatusEnum) {
   const Icon = getStatusIcon(status);
@@ -22,7 +18,6 @@ function getStatusMeta(status: ReservationStatusEnum) {
         markerIconClass: "size-[16px] scale-110 sm:size-[18px]",
       };
     case ReservationStatusEnum.RESERVED:
-    case ReservationStatusEnum.PREPAID:
       return {
         label: "Reservado",
         barClass: "bg-accent-blue",
@@ -57,49 +52,41 @@ function getStatusMeta(status: ReservationStatusEnum) {
   }
 }
 
-const optionBadgeClass =
-  "flex size-6 shrink-0 items-center justify-center rounded-md bg-text-light/15 text-text-light";
-
 function OptionIcons({
-  status,
   isNeedsNetting,
   isEvent,
   isBarbecueIncluded,
 }: {
-  status: ReservationStatusEnum;
   isNeedsNetting: boolean;
   isEvent: boolean;
   isBarbecueIncluded: boolean;
 }) {
-  if (
-    !isNeedsNetting &&
-    !isEvent &&
-    !isBarbecueIncluded &&
-    status !== ReservationStatusEnum.PREPAID
-  ) {
+  if (!isNeedsNetting && !isEvent && !isBarbecueIncluded) {
     return null;
   }
 
   return (
     <div
-      className="flex shrink-0 items-center gap-1.5 text-text-light"
+      className="flex flex-wrap items-center gap-1.5"
       aria-label="Opções da reserva"
     >
       {isNeedsNetting && (
-        <VoleyNetIcon className="size-4 shrink-0" aria-label="Rede" />
+        <OptionChip
+          label="Rede"
+          icon={<VoleyNetIcon className="size-3.5" />}
+        />
       )}
       {isEvent && (
-        <span className={optionBadgeClass} aria-label="Evento">
-          <LuPartyPopper size={14} aria-hidden />
-        </span>
+        <OptionChip
+          label="Evento"
+          icon={<MdOutlineCelebration size={13} />}
+        />
       )}
       {isBarbecueIncluded && (
-        <span className={optionBadgeClass} aria-label="Com churrasqueira">
-          <MdOutlineRestaurant size={14} aria-hidden />
-        </span>
-      )}
-      {status === ReservationStatusEnum.PREPAID && (
-        <BsCashCoin size={16} aria-label="Pré-pago" />
+        <OptionChip
+          label="Churrasqueira"
+          icon={<MdOutlineRestaurant size={14} />}
+        />
       )}
     </div>
   );
@@ -118,21 +105,34 @@ function ReservationItem({
 }: IReservationItemProps) {
   const isPastDate =
     new Date(`${date}T${time}`) < new Date(new Date().setSeconds(0, 0));
-  const { label, barClass, iconWrapClass, Icon, markerIconClass } =
-    getStatusMeta(status);
+  const statusMeta = getStatusMeta(status);
   const isAvailable = status === ReservationStatusEnum.AVAILABLE;
   const isInactive = status === ReservationStatusEnum.INACTIVE;
+  const isPastAvailable = isAvailable && isPastDate;
+
+  // Horário que ficou disponível e passou sem reserva: visual neutro, menor peso que reservados.
+  const { label, barClass, iconWrapClass, Icon, markerIconClass } =
+    isPastAvailable
+      ? {
+          label: "Encerrado",
+          barClass: "bg-text-light/25",
+          iconWrapClass: "bg-text-light/8 text-text-light/45",
+          Icon: statusMeta.Icon,
+          markerIconClass: statusMeta.markerIconClass,
+        }
+      : statusMeta;
+
   const ariaLabel = `${label}. ${time}. ${court}${customerName ? `. ${customerName}` : ""}`;
 
-  const rightLabel = isAvailable
-    ? isPastDate
-      ? "Encerrado"
-      : "Reservar"
-    : isInactive
-      ? "Inativo"
-      : customerName || label;
+  const rightLabel = isPastAvailable
+    ? "(Encerrado)"
+    : isAvailable
+      ? "Reservar"
+      : isInactive
+        ? "Inativo"
+        : customerName || label;
 
-  const isPastAvailable = isAvailable && isPastDate;
+  const hasOptions = isNeedsNetting || isEvent || isBarbecueIncluded;
 
   const cardClassName =
     "relative flex min-h-14 items-stretch overflow-hidden rounded-2xl border border-text-light/8 bg-master-light transition hover:border-text-light/15 hover:bg-master-light/90 active:bg-master-light/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
@@ -143,45 +143,65 @@ function ReservationItem({
         className={`absolute inset-y-2.5 left-0 w-1 rounded-full ${barClass}`}
         aria-hidden
       />
-      <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 pl-4 sm:gap-3 sm:px-4 sm:py-3 sm:pl-5">
+      <div className="flex min-w-0 flex-1 items-start gap-2 px-3 py-2.5 pl-4 sm:gap-3 sm:px-4 sm:py-3 sm:pl-5">
         <span
-          className={`flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9 ${iconWrapClass}`}
+          className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9 ${iconWrapClass}`}
           aria-hidden
         >
           <Icon className={`shrink-0 ${markerIconClass}`} />
         </span>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="min-w-0 truncate text-base font-semibold tabular-nums text-text-light">
-            {time}
-            <span className="font-medium text-text-light/70"> — {court}</span>
-          </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className={`min-w-0 flex-1 truncate tabular-nums ${
+                isPastAvailable
+                  ? "text-sm font-medium text-text-light/55"
+                  : "text-base font-semibold text-text-light"
+              }`}
+            >
+              {time}
+              <span
+                className={
+                  isPastAvailable
+                    ? "font-medium text-text-light/40"
+                    : "font-medium text-text-light/70"
+                }
+              >
+                {" "}
+                — {court}
+              </span>
+            </span>
 
-          <OptionIcons
-            status={status}
-            isNeedsNetting={isNeedsNetting}
-            isEvent={isEvent}
-            isBarbecueIncluded={isBarbecueIncluded}
-          />
+            <span
+              className={`max-w-[42%] shrink-0 truncate text-right ${
+                isPastAvailable
+                  ? "text-sm font-normal text-text-light/45"
+                  : isAvailable
+                    ? "text-base font-semibold text-accent-green"
+                    : "text-base font-semibold text-text-light"
+              }`}
+            >
+              {rightLabel}
+            </span>
+
+            {!isPastAvailable && (
+              <MdChevronRight
+                size={20}
+                className="shrink-0 text-text-light/40"
+                aria-hidden
+              />
+            )}
+          </div>
+
+          {hasOptions && (
+            <OptionIcons
+              isNeedsNetting={isNeedsNetting}
+              isEvent={isEvent}
+              isBarbecueIncluded={isBarbecueIncluded}
+            />
+          )}
         </div>
-
-        <span
-          className={`max-w-[40%] shrink-0 truncate text-right text-base font-semibold ${
-            isAvailable && !isPastDate
-              ? "text-accent-green"
-              : "text-text-light"
-          }`}
-        >
-          {rightLabel}
-        </span>
-
-        {!isPastAvailable && (
-          <MdChevronRight
-            size={20}
-            className="shrink-0 text-text-light/40"
-            aria-hidden
-          />
-        )}
       </div>
     </>
   );

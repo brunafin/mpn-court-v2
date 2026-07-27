@@ -23,7 +23,7 @@ import { buttonClassName } from "../../components/Button";
 import { PageEyebrow } from "../../components/PageTitle";
 import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
 import { formatPhoneMask } from "../../utils/formatPhone";
-import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import { useCompanyBranding, useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 
 function formatFloorLabel(floor: string | null | undefined): string | null {
   if (!floor) return null;
@@ -51,7 +51,7 @@ function CourtCard({
     <li className="rounded-xl bg-master px-4 py-3.5">
       <div className="flex items-start justify-between gap-3">
         <p className="text-lg font-semibold text-text-light">{name}</p>
-        {onToggleShow && (
+        {show != null && (
           <span
             className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
               show
@@ -113,6 +113,7 @@ function RealInfo() {
   const { notifyError } = useErrors();
   const { setLogoUrl, setCompanyName: setBrandingCompanyName } =
     useCompanyBranding();
+  const caps = useCompanyCapabilities();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [publicId, setPublicId] = useState("");
@@ -554,11 +555,14 @@ function RealInfo() {
                       price={court.price}
                       show={court.show}
                       toggling={togglingCourtId === court.publicId}
-                      onToggleShow={() =>
-                        handleToggleCourtVisibility(
-                          court.publicId,
-                          !court.show
-                        )
+                      onToggleShow={
+                        caps.canMutate
+                          ? () =>
+                              handleToggleCourtVisibility(
+                                court.publicId,
+                                !court.show,
+                              )
+                          : undefined
                       }
                     />
                   ))}

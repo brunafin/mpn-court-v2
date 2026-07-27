@@ -1,4 +1,8 @@
 import { IReservationDetailsItemProps, IReservationItemProps } from '../pages/Reservation/interface';
+import {
+  normalizeReservationStatus,
+  ReservationStatusEnum,
+} from '../pages/Reservation/enum';
 import api from './axios';
 
 export interface IScheduleApi {
@@ -6,20 +10,42 @@ export interface IScheduleApi {
   date: string;
 }
 
+function normalizeScheduleItem(
+  item: IReservationItemProps,
+): IReservationItemProps {
+  const status =
+    normalizeReservationStatus(item.status) ?? ReservationStatusEnum.AVAILABLE;
+  return { ...item, status };
+}
+
+function normalizeScheduleDetails(
+  item: IReservationDetailsItemProps,
+): IReservationDetailsItemProps {
+  const status =
+    normalizeReservationStatus(item.status) ?? ReservationStatusEnum.AVAILABLE;
+  return { ...item, status };
+}
+
 export const getSchedulesByCompanyPublicIdAndDate = async ({ companyPublicId, date }: IScheduleApi) => {
   const response = await api.get<IReservationItemProps[]>(`/companies/${companyPublicId}/schedules/${date}`);
-  return response.data;
+  return response.data.map(normalizeScheduleItem);
 }
 
 export const getAllSchedulesByCompanyPublicIdAndDate = async ({ companyPublicId, date }: IScheduleApi) => {
-  const response = await api.get<IReservationItemProps[]>(`/companies/${companyPublicId}/all-schedules/${date}`);
-  return response.data;
-}
+  const response = await api.get<{
+    schedules: IReservationItemProps[];
+    isDayClosed: boolean;
+  }>(`/companies/${companyPublicId}/all-schedules/${date}`);
+  return {
+    ...response.data,
+    schedules: response.data.schedules.map(normalizeScheduleItem),
+  };
+};
 
 export const getScheduleById = async (id: string) => {
   try {
     const response = await api.get<IReservationDetailsItemProps>(`/court-schedules/${id}`);
-    return response.data;
+    return normalizeScheduleDetails(response.data);
   } catch (error) {
     console.error('Erro ao buscar horário:', error);
     throw error;
@@ -96,18 +122,42 @@ export const changeAvailability = async (courtScheduleId: string, available: boo
   }
 }
 
+export type DayAvailabilityResult = {
+  updated: number;
+  date: string;
+  available: boolean;
+  isDayClosed: boolean;
+};
+
+/** Fecha (available=false) ou reabre (available=true) horários livres do dia. */
+export const setDayAvailability = async (
+  companyPublicId: string,
+  date: string,
+  available: boolean,
+): Promise<DayAvailabilityResult> => {
+  const response = await api.patch<DayAvailabilityResult>(
+    '/court-schedules/day-availability',
+    {
+      company_public_id: companyPublicId,
+      date,
+      available,
+    },
+  );
+  return response.data;
+};
+
 
 interface IFixOrUnfixSchedule {
   court_schedule_public_id: string;
 }
 
 export const fixSchedule = async (data: IFixOrUnfixSchedule): Promise<void> => {
-  await api.post('/court-schedules/fix', data);
+  await api.post('/court-schedules/fix', data, { timeout: 30000 });
 };
 
 export const unfixSchedule = async (data: IFixOrUnfixSchedule): Promise<void> => {
   try {
-    await api.post('/court-schedules/unfix', data);
+    await api.post('/court-schedules/unfix', data, { timeout: 30000 });
   } catch (error) {
     console.error('Erro ao desfixar horário:', error);
     throw error;

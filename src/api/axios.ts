@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { IError } from '../contexts/ErrorsContext';
-import { getAccessToken } from '../utils/authCookie';
+import { getAccessToken, logoutAndRedirect } from '../utils/authCookie';
 
 let notifyError: ((error: IError) => void) | null = null;
+let sessionExpiredHandling = false;
 
 export const setAxiosErrorNotifier = (notifier: (error: IError) => void) => {
   notifyError = notifier;
@@ -28,11 +29,22 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+function isAuthEndpoint(error: unknown): boolean {
+  const url = (error as { config?: { url?: string } })?.config?.url ?? '';
+  return url.includes('/auth/');
+}
+
+function handleSessionExpired() {
+  if (sessionExpiredHandling) return;
+  sessionExpiredHandling = true;
+  void logoutAndRedirect();
+}
+
 function userFacingErrorMessage(error: unknown): string {
   const status = (error as { response?: { status?: number } })?.response
     ?.status;
-  if (status === 401 || status === 403) {
-    return 'Sessão inválida ou sem permissão. Faça login novamente.';
+  if (status === 403) {
+    return 'Você não tem permissão para esta ação.';
   }
   if (status === 404) {
     return 'Recurso não encontrado.';
@@ -50,12 +62,22 @@ function userFacingErrorMessage(error: unknown): string {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error?.response?.status as number | undefined;
     const data = error?.response?.data as
       | { code?: string; message?: { code?: string } }
       | undefined;
     const isCpfRequired =
       data?.code === 'CPF_REQUIRED' ||
       data?.message?.code === 'CPF_REQUIRED';
+
+    // 401: login trata na tela; demais rotas → um único redirect, sem toast
+    if (status === 401) {
+      if (!isAuthEndpoint(error)) {
+        handleSessionExpired();
+      }
+      return Promise.reject(error);
+    }
+
     if (notifyError && !isCpfRequired) {
       notifyError({ message: userFacingErrorMessage(error), type: 'error' });
     }

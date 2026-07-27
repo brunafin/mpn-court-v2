@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   MdOutlineArrowBackIos,
+  MdOutlineEventBusy,
+  MdOutlineEventAvailable,
 } from "react-icons/md";
 import { BsPlus } from "react-icons/bs";
 import { useLoading } from "../../hooks/useLoading";
@@ -9,6 +11,7 @@ import { IReservationItemProps } from "../Reservation/interface";
 import {
   changeAvailability,
   getAllSchedulesByCompanyPublicIdAndDate,
+  setDayAvailability,
 } from "../../api/schedules";
 import { ReservationStatusEnum } from "../Reservation/enum";
 import { format, isValid, parseISO } from "date-fns";
@@ -16,13 +19,17 @@ import { ptBR } from "date-fns/locale";
 import AddCourtSchedule from "./AddCourtSchedule";
 import { getCourtsByCompanyPublicId } from "../../api/companies";
 import {
-  clearAccessToken,
   getAccessToken,
   getAccessTokenPayload,
 } from "../../utils/authCookie";
 import { StatusIcons } from "../Reservation/statusIcons";
 import { buttonClassName } from "../../components/Button";
 import { PageTitle } from "../../components/PageTitle";
+import ConfirmSheet, { ConfirmTone } from "../../components/ConfirmSheet";
+import { useErrors } from "../../contexts/ErrorsContext";
+import { invalidateSchedulesDayCache } from "../../utils/schedulesDayCache";
+
+type DayAction = "close" | "reopen";
 
 function parseIncomingDate(value: unknown): Date {
   if (value instanceof Date && isValid(value)) {
@@ -40,15 +47,20 @@ function parseIncomingDate(value: unknown): Date {
 
 function ConfigDay() {
   const { loading, withLoading } = useLoading();
+  const { notifyError } = useErrors();
   const location = useLocation();
   const navigate = useNavigate();
   const [showAddCourtSchedule, setShowAddCourtSchedule] = useState(false);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courts, setCourts] = useState<{ id: number; name: string }[]>([]);
+  const [isDayClosed, setIsDayClosed] = useState(false);
   const [date] = useState<Date>(() => parseIncomingDate(location.state?.date));
+  const [dayAction, setDayAction] = useState<DayAction | null>(null);
+  const [dayActionLoading, setDayActionLoading] = useState(false);
 
   const dateKey = format(date, "yyyy-MM-dd");
+  const dateLabel = format(date, "dd/MM/yyyy", { locale: ptBR });
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -68,21 +80,19 @@ function ConfigDay() {
       }
       try {
         await withLoading(async () => {
-          const [schedules, courtsResponse] = await Promise.all([
+          const [dayData, courtsResponse] = await Promise.all([
             getAllSchedulesByCompanyPublicIdAndDate({
               companyPublicId,
               date: dateInput,
             }),
             getCourtsByCompanyPublicId(companyPublicId),
           ]);
-          setList(schedules);
+          setList(dayData.schedules);
+          setIsDayClosed(dayData.isDayClosed);
           setCourts(courtsResponse);
         });
       } catch (error: any) {
-        if (error?.response?.status === 401) {
-          clearAccessToken();
-          navigate("/");
-        } else {
+        if (error?.response?.status !== 401) {
           console.error(error);
         }
       }
@@ -101,9 +111,7 @@ function ConfigDay() {
       (item) => item.status === ReservationStatusEnum.AVAILABLE
     ).length;
     const reserved = list.filter(
-      (item) =>
-        item.status === ReservationStatusEnum.RESERVED ||
-        item.status === ReservationStatusEnum.PREPAID
+      (item) => item.status === ReservationStatusEnum.RESERVED
     ).length;
     const fixed = list.filter(
       (item) => item.status === ReservationStatusEnum.FIXED
@@ -159,6 +167,60 @@ function ConfigDay() {
   const totalHours =
     counts.available + counts.reserved + counts.fixed + counts.inactive;
   const showSummaryLoading = loading && list.length === 0;
+
+  const dayConfirm =
+    dayAction === "close"
+      ? {
+          title: "Fechar o dia?",
+          description:
+            counts.reserved + counts.fixed > 0
+              ? `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}. ${counts.reserved} reserva${counts.reserved === 1 ? "" : "s"} e ${counts.fixed} fixo${counts.fixed === 1 ? "" : "s"} não serão alterados.`
+              : `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}.`,
+          confirmLabel: "Fechar o dia",
+          tone: "danger" as ConfirmTone,
+        }
+      : dayAction === "reopen"
+        ? {
+            title: "Reabrir o dia?",
+            description: `Isso reativa os horários fechados em lote em ${dateLabel}. Inativações manuais de horários isolados não são alteradas.`,
+            confirmLabel: "Reabrir o dia",
+            tone: "primary" as ConfirmTone,
+          }
+        : null;
+
+  const handleConfirmDayAction = async () => {
+    if (!dayAction || !companyPublicId || dayActionLoading) return;
+    const action = dayAction;
+    setDayActionLoading(true);
+    try {
+      const result = await setDayAvailability(
+        companyPublicId,
+        dateKey,
+        action === "reopen",
+      );
+      invalidateSchedulesDayCache(companyPublicId, dateKey);
+      setDayAction(null);
+      setIsDayClosed(result.isDayClosed);
+      await fetchData(dateKey);
+      notifyError({
+        type: "success",
+        message:
+          action === "close"
+            ? result.updated === 0
+              ? "Nenhum horário livre para fechar."
+              : `Dia fechado: ${result.updated} horário${result.updated === 1 ? "" : "s"} inativado${result.updated === 1 ? "" : "s"}.`
+            : result.updated === 0
+              ? "Nenhum horário inativo para reabrir."
+              : `Dia reaberto: ${result.updated} horário${result.updated === 1 ? "" : "s"} reativado${result.updated === 1 ? "" : "s"}.`,
+      });
+    } catch (error) {
+      if ((error as { response?: { status?: number } })?.response?.status !== 401) {
+        console.error(error);
+      }
+    } finally {
+      setDayActionLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
@@ -263,6 +325,39 @@ function ConfigDay() {
             )}
           </div>
 
+          {(counts.available > 0 || isDayClosed) && (
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {counts.available > 0 && (
+                <button
+                  type="button"
+                  disabled={showSummaryLoading || dayActionLoading}
+                  onClick={() => setDayAction("close")}
+                  className={buttonClassName({
+                    variant: "danger",
+                    className: "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
+                  })}
+                >
+                  <MdOutlineEventBusy size={22} className="shrink-0" aria-hidden />
+                  Fechar o dia
+                </button>
+              )}
+              {isDayClosed && (
+                <button
+                  type="button"
+                  disabled={showSummaryLoading || dayActionLoading}
+                  onClick={() => setDayAction("reopen")}
+                  className={buttonClassName({
+                    variant: "secondary",
+                    className: "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
+                  })}
+                >
+                  <MdOutlineEventAvailable size={22} className="shrink-0" aria-hidden />
+                  Reabrir o dia
+                </button>
+              )}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setShowAddCourtSchedule(true)}
@@ -288,7 +383,7 @@ function ConfigDay() {
                   </span>
                 </div>
                 <p className="text-base leading-6 text-text-light/65">
-                  Não aparecem na lista de reservas. Ao reativar, voltam como
+                  Não aparecem na lista de reservas. Ao ativar, voltam como
                   disponíveis.
                 </p>
               </div>
@@ -327,7 +422,7 @@ function ConfigDay() {
                       <button
                         type="button"
                         disabled={loading || isPast}
-                        aria-label={`Reativar horário ${inactiveHour.time} da quadra ${inactiveHour.court}`}
+                        aria-label={`Ativar horário ${inactiveHour.time} da quadra ${inactiveHour.court}`}
                         className={buttonClassName({
                           variant: "secondary",
                           size: "md",
@@ -345,12 +440,12 @@ function ConfigDay() {
                           });
                         }}
                       >
-                        <StatusIcons.unlock
+                        <StatusIcons.available
                           size={20}
                           className="shrink-0"
                           aria-hidden
                         />
-                        Reativar
+                        Ativar
                       </button>
                     </li>
                   );
@@ -367,6 +462,21 @@ function ConfigDay() {
         onClose={() => setShowAddCourtSchedule(false)}
         onSuccess={() => fetchData(dateKey)}
       />
+
+      {dayConfirm && (
+        <ConfirmSheet
+          isOpen={Boolean(dayAction)}
+          title={dayConfirm.title}
+          description={dayConfirm.description}
+          confirmLabel={dayConfirm.confirmLabel}
+          tone={dayConfirm.tone}
+          loading={dayActionLoading}
+          onConfirm={handleConfirmDayAction}
+          onClose={() => {
+            if (!dayActionLoading) setDayAction(null);
+          }}
+        />
+      )}
     </div>
   );
 }

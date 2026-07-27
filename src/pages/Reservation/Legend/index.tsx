@@ -93,12 +93,7 @@ function LegendAndFilters({
     value: ReservationStatusEnum | null
   ): "neutral" | "green" | "blue" | "purple" | "danger" => {
     if (value === ReservationStatusEnum.AVAILABLE) return "green";
-    if (
-      value === ReservationStatusEnum.RESERVED ||
-      value === ReservationStatusEnum.PREPAID
-    ) {
-      return "blue";
-    }
+    if (value === ReservationStatusEnum.RESERVED) return "blue";
     if (value === ReservationStatusEnum.FIXED) return "purple";
     if (value === ReservationStatusEnum.INACTIVE) return "danger";
     return "neutral";

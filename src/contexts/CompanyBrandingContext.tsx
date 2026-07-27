@@ -7,11 +7,13 @@ import {
   useMemo,
   useState,
 } from "react";
-import { infosByCompanyPublicId } from "../api/companies";
+import { infosByCompanyPublicId, type IInfo } from "../api/companies";
 import {
   getAccessToken,
   getAccessTokenPayload,
 } from "../utils/authCookie";
+
+type CompanyCapabilities = NonNullable<IInfo["capabilities"]>;
 
 type CompanyBrandingContextValue = {
   companyName: string;
@@ -19,6 +21,18 @@ type CompanyBrandingContextValue = {
   logoUrl: string | null;
   setLogoUrl: (url: string | null) => void;
   setCompanyName: (name: string) => void;
+  capabilities: CompanyCapabilities | null;
+  refreshCapabilities: () => Promise<void>;
+};
+
+const defaultCapabilities: CompanyCapabilities = {
+  entitlement: "paid",
+  accessMode: "full",
+  accessReason: null,
+  canViewAgenda: true,
+  canMutate: true,
+  canPayBilling: true,
+  portalEligible: true,
 };
 
 const CompanyBrandingContext =
@@ -27,8 +41,11 @@ const CompanyBrandingContext =
 export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
   const [companyName, setCompanyName] = useState("");
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<CompanyCapabilities | null>(
+    null,
+  );
 
-  useEffect(() => {
+  const loadInfos = useCallback(async () => {
     const payload = getAccessTokenPayload<{
       companyName?: string;
       companyPublicId?: string | null;
@@ -41,21 +58,19 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
     const companyPublicId = payload?.companyPublicId;
     if (!companyPublicId || !getAccessToken()) return;
 
-    let active = true;
-    infosByCompanyPublicId(companyPublicId)
-      .then((info) => {
-        if (!active) return;
-        if (info.companyName) setCompanyName(info.companyName);
-        setCompanyLogoUrl(info.logoUrl || null);
-      })
-      .catch(() => {
-        // Sem logo: a UI mostra as iniciais do estabelecimento.
-      });
-
-    return () => {
-      active = false;
-    };
+    try {
+      const info = await infosByCompanyPublicId(companyPublicId);
+      if (info.companyName) setCompanyName(info.companyName);
+      setCompanyLogoUrl(info.logoUrl || null);
+      if (info.capabilities) setCapabilities(info.capabilities);
+    } catch {
+      // Sem logo: a UI mostra as iniciais do estabelecimento.
+    }
   }, []);
+
+  useEffect(() => {
+    void loadInfos();
+  }, [loadInfos]);
 
   const setLogoUrl = useCallback((url: string | null) => {
     setCompanyLogoUrl(url);
@@ -67,8 +82,10 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
       logoUrl: companyLogoUrl,
       setLogoUrl,
       setCompanyName,
+      capabilities,
+      refreshCapabilities: loadInfos,
     }),
-    [companyName, companyLogoUrl, setLogoUrl]
+    [companyName, companyLogoUrl, setLogoUrl, capabilities, loadInfos],
   );
 
   return (
@@ -86,7 +103,14 @@ export function useCompanyBranding() {
       logoUrl: null,
       setLogoUrl: () => undefined,
       setCompanyName: () => undefined,
+      capabilities: defaultCapabilities,
+      refreshCapabilities: async () => undefined,
     };
   }
   return ctx;
+}
+
+export function useCompanyCapabilities(): CompanyCapabilities {
+  const { capabilities } = useCompanyBranding();
+  return capabilities ?? defaultCapabilities;
 }

@@ -5,7 +5,6 @@ import { formatPhoneMask } from "../../../utils/formatPhone";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 import { getStatusIcon, StatusIcons } from "../statusIcons";
 import { buttonClassName } from "../../../components/Button";
-import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 
 /** Ex.: 16/07/2026 (qui) — 10:00 */
 export function formatSchedulePageTitle(
@@ -73,7 +72,6 @@ export function getStatusAccent(status?: ReservationStatusEnum | null) {
         iconBg: "bg-danger-400 text-white",
       };
     case ReservationStatusEnum.RESERVED:
-    case ReservationStatusEnum.PREPAID:
       return {
         surface: "bg-accent-blue/20",
         text: "text-accent-blue-bright",
@@ -107,7 +105,6 @@ export function getStatusLabel(status?: ReservationStatusEnum | null) {
     case ReservationStatusEnum.INACTIVE:
       return "Inativo";
     case ReservationStatusEnum.RESERVED:
-    case ReservationStatusEnum.PREPAID:
       return "Reservado";
     case ReservationStatusEnum.AVAILABLE:
       return "Horário disponível";
@@ -123,7 +120,6 @@ export function getStatusDescription(status?: ReservationStatusEnum | null) {
     case ReservationStatusEnum.INACTIVE:
       return "Não aparece como disponível para reserva.";
     case ReservationStatusEnum.RESERVED:
-    case ReservationStatusEnum.PREPAID:
       return "Já possui cliente neste horário.";
     case ReservationStatusEnum.AVAILABLE:
       return "Pronto para nova reserva.";
@@ -197,7 +193,6 @@ export function getMeanByStatus(
     contactPhone?: string;
     courtName?: string;
     price?: string;
-    isNeedsNetting?: boolean;
     onCreateReminder?: () => void;
   }
 ) {
@@ -209,7 +204,6 @@ export function getMeanByStatus(
     contactPhone,
     courtName,
     price,
-    isNeedsNetting,
     onCreateReminder,
   } = details || {};
 
@@ -219,7 +213,6 @@ export function getMeanByStatus(
     [
       ReservationStatusEnum.FIXED,
       ReservationStatusEnum.RESERVED,
-      ReservationStatusEnum.PREPAID,
     ].includes(status);
 
   const priceLabel =
@@ -243,7 +236,6 @@ export function getMeanByStatus(
   const isCompactStatus =
     status === ReservationStatusEnum.AVAILABLE ||
     status === ReservationStatusEnum.RESERVED ||
-    status === ReservationStatusEnum.PREPAID ||
     status === ReservationStatusEnum.FIXED;
 
   if (isCompactStatus) {
@@ -251,7 +243,7 @@ export function getMeanByStatus(
     const ariaSummary = metaLine
       ? `${statusLabel}. ${metaLine}`
       : statusLabel;
-    const hasExtras = showContact || isNeedsNetting;
+    const hasExtras = showContact;
 
     return (
       <div className={hasExtras ? "mb-5 space-y-3" : "mb-4"}>
@@ -280,15 +272,6 @@ export function getMeanByStatus(
           </div>
           {reminderButton}
         </div>
-
-        {isNeedsNetting && (
-          <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master-light px-4 py-3">
-            <VoleyNetIcon className="size-5 shrink-0 text-text-light" />
-            <p className="text-base font-medium leading-snug text-text-light">
-              Precisa de rede
-            </p>
-          </div>
-        )}
 
         {showContact && (
           <ContactCard
@@ -335,22 +318,13 @@ export function getMeanByStatus(
           </div>
         </div>
       </div>
-
-      {isNeedsNetting && (
-        <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master-light px-4 py-3">
-          <VoleyNetIcon className="size-5 shrink-0 text-text-light" />
-          <p className="text-base font-medium leading-snug text-text-light">
-            Precisa de rede
-          </p>
-        </div>
-      )}
     </div>
   );
 }
 
 type StatusActionHandlers = {
   onLiberarFixo: () => void;
-  onReativar: () => void;
+  onAtivar: () => void;
   onFixar: () => void;
   onInativar: () => void;
 };
@@ -382,18 +356,17 @@ export function renderButtonByStatus(
       return (
         <button
           type="button"
-          onClick={handlers.onReativar}
+          onClick={handlers.onAtivar}
           className={buttonClassName({
             variant: "success",
             className: "mx-auto mb-5 justify-center",
           })}
         >
-          <StatusIcons.unlock size={20} className="shrink-0" aria-hidden />
-          Reativar
+          <StatusIcons.available size={20} className="shrink-0" aria-hidden />
+          Ativar horário
         </button>
       );
     case ReservationStatusEnum.RESERVED:
-    case ReservationStatusEnum.PREPAID:
       return (
         <button
           type="button"

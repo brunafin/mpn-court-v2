@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
 import {
   MdCheckCircleOutline,
   MdClose,
@@ -65,25 +72,30 @@ type ToastEntry = IError & { id: number; type: NonNullable<IError["type"]> };
 export const ErrorsProvider = ({ children }: { children: ReactNode }) => {
   const [errors, setErrors] = useState<ToastEntry[]>([]);
 
-  const dismiss = (id: number) => {
+  const dismiss = useCallback((id: number) => {
     setErrors((prev) => prev.filter((e) => e.id !== id));
-  };
+  }, []);
 
-  const notifyError = (error: IError) => {
-    const id = Date.now() + Math.random();
-    const entry: ToastEntry = {
-      ...error,
-      id,
-      type: error.type || "error",
-    };
-    setErrors((prev) => [entry, ...prev]);
-    window.setTimeout(() => {
-      dismiss(id);
-    }, 4500);
-  };
+  const notifyError = useCallback(
+    (error: IError) => {
+      const id = Date.now() + Math.random();
+      const entry: ToastEntry = {
+        ...error,
+        id,
+        type: error.type || "error",
+      };
+      setErrors((prev) => [entry, ...prev]);
+      window.setTimeout(() => {
+        dismiss(id);
+      }, 4500);
+    },
+    [dismiss],
+  );
+
+  const value = useMemo(() => ({ notifyError }), [notifyError]);
 
   return (
-    <ErrorsContext.Provider value={{ notifyError }}>
+    <ErrorsContext.Provider value={value}>
       {children}
       <div
         className="pointer-events-none fixed inset-x-0 top-0 z-[1200] flex flex-col items-center gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]"

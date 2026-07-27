@@ -34,6 +34,15 @@ export interface IInfo {
   preferences: {
     isHiddenInactiveHours: boolean;
   };
+  capabilities?: {
+    entitlement: 'trial' | 'paid' | 'none';
+    accessMode: 'full' | 'read_only';
+    accessReason: string | null;
+    canViewAgenda: boolean;
+    canMutate: boolean;
+    canPayBilling: boolean;
+    portalEligible: boolean;
+  };
   plan: {
     name: string;
     price: number;
