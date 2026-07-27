@@ -20,6 +20,7 @@ export async function signup(input: {
   name: string;
   email: string;
   phone: string;
+  cpf: string;
   password: string;
 }) {
   const response = await api.post('/auth/signup', input);

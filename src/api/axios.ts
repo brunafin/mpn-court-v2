@@ -64,11 +64,20 @@ api.interceptors.response.use(
   (error) => {
     const status = error?.response?.status as number | undefined;
     const data = error?.response?.data as
-      | { code?: string; message?: { code?: string } }
+      | {
+          code?: string;
+          message?: string | { code?: string; message?: string };
+        }
       | undefined;
+    const messageText =
+      typeof data?.message === 'string'
+        ? data.message
+        : String(data?.message?.message ?? '');
     const isCpfRequired =
       data?.code === 'CPF_REQUIRED' ||
-      data?.message?.code === 'CPF_REQUIRED';
+      (typeof data?.message === 'object' &&
+        data?.message?.code === 'CPF_REQUIRED') ||
+      (error?.response?.status === 422 && /CPF/i.test(messageText));
 
     // 401: login trata na tela; demais rotas → um único redirect, sem toast
     if (status === 401) {

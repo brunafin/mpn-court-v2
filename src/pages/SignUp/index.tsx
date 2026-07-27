@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/Input";
 import { buttonClassName } from "../../components/Button";
 import { formatPhoneMask, onlyPhoneDigits } from "../../utils/formatPhone";
+import { formatCpfMask, onlyCpfDigits } from "../../utils/formatCpf";
 import { signup } from "../../api/auth";
 import { getAccessToken } from "../../utils/authCookie";
 import {
@@ -11,13 +12,20 @@ import {
   PASSWORD_HINT,
 } from "../../utils/passwordPolicy";
 
-type FieldError = "email" | "ownerName" | "ownerPhone" | "password" | null;
+type FieldError =
+  | "email"
+  | "ownerName"
+  | "ownerPhone"
+  | "ownerCpf"
+  | "password"
+  | null;
 
 function SignUp() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
+  const [ownerCpf, setOwnerCpf] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
   const [errorField, setErrorField] = useState<FieldError>(null);
@@ -31,6 +39,7 @@ function SignUp() {
   }, [navigate]);
 
   const phoneDigits = onlyPhoneDigits(ownerPhone);
+  const cpfDigits = onlyCpfDigits(ownerCpf);
   const passwordOk = isValidPassword(password);
   const passwordPolicyError = useMemo(() => {
     if (!touchedPassword || !password) return undefined;
@@ -53,6 +62,7 @@ function SignUp() {
       email.trim() &&
         ownerName.trim() &&
         phoneDigits.length === 11 &&
+        cpfDigits.length === 11 &&
         passwordOk
     ) && !loading;
 
@@ -81,6 +91,11 @@ function SignUp() {
       return;
     }
 
+    if (cpfDigits.length !== 11) {
+      setFieldError("ownerCpf", "Informe um CPF válido com 11 dígitos.");
+      return;
+    }
+
     if (!password) {
       setFieldError("password", "Informe uma senha.");
       return;
@@ -98,6 +113,7 @@ function SignUp() {
         name: ownerName.trim(),
         email: normalizedEmail,
         phone: phoneDigits,
+        cpf: cpfDigits,
         password,
       });
       navigate("/cadastro/codigo", { state: { email: normalizedEmail } });
@@ -115,6 +131,8 @@ function SignUp() {
           "email",
           "Já existe uma conta com este e-mail. Faça login ou recupere o acesso.",
         );
+      } else if (/cpf/i.test(text)) {
+        setFieldError("ownerCpf", text);
       } else if (/should not exist|must be|valid/i.test(text)) {
         setFieldError(
           null,
@@ -215,6 +233,24 @@ function SignUp() {
             enterKeyHint="next"
             className="mt-1"
             error={fieldError("ownerPhone")}
+          />
+          <Input
+            name="ownerCpf"
+            title="Seu CPF"
+            placeholder="000.000.000-00"
+            type="text"
+            mode="dark"
+            value={ownerCpf}
+            onChange={(e) => {
+              setOwnerCpf(formatCpfMask(e.target.value));
+              clearErrors();
+            }}
+            required
+            autoComplete="off"
+            inputMode="numeric"
+            enterKeyHint="next"
+            className="mt-1"
+            error={fieldError("ownerCpf")}
           />
           <Input
             name="password"
