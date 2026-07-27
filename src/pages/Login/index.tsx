@@ -60,26 +60,38 @@ function Login() {
 
     try {
       const response = await login(username, password);
-      const token = response?.access_token as string | undefined;
+      const token =
+        typeof response === "object" && response !== null
+          ? (response as { access_token?: string }).access_token
+          : undefined;
       if (!token) {
         throw new Error("EMPTY_TOKEN");
       }
       setAccessToken(token);
       navigate(routeAfterLogin(token));
     } catch (error) {
-      const data = (
-        error as AxiosError<{ code?: string; email?: string; message?: string }>
-      )?.response?.data;
+      const axiosError = error as AxiosError<{
+        code?: string;
+        email?: string;
+        message?: string;
+      }>;
+      const data = axiosError?.response?.data;
 
       if (data?.code === "EMAIL_NOT_VERIFIED") {
         setUnverifiedEmail(data.email ?? username.trim());
         return;
       }
 
+      const isNetwork =
+        axiosError?.code === "ERR_NETWORK" ||
+        axiosError?.message === "Network Error" ||
+        !axiosError?.response;
       const message =
         (error as Error)?.message === "EMPTY_TOKEN"
-          ? "Login sem token. Verifique a API e tente novamente."
-          : "Usuário ou senha inválidos.";
+          ? "A API não retornou o token. Confirme que o mpn-api está no ar (porta 3001)."
+          : isNetwork && !(error as AxiosError)?.response
+            ? "Não foi possível conectar à API. Verifique se o mpn-api está rodando."
+            : "Usuário ou senha inválidos.";
       setFormError(message);
       notifyError({ message, type: "error" });
     } finally {
