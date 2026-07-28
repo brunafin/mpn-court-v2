@@ -150,9 +150,15 @@ function ReservationItem({
         className={`absolute inset-y-2.5 left-0 w-1 rounded-full ${barClass}`}
         aria-hidden
       />
-      <div className="flex min-w-0 flex-1 items-start gap-2 px-3 py-2.5 pl-4 sm:gap-3 sm:px-4 sm:py-3 sm:pl-5">
+      <div
+        className={`flex min-w-0 flex-1 gap-2 px-3 py-2.5 pl-4 sm:gap-3 sm:px-4 sm:py-3 sm:pl-5 ${
+          hasOptions ? "items-start" : "items-center"
+        }`}
+      >
         <span
-          className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9 ${iconWrapClass}`}
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9 ${
+            hasOptions ? "mt-0.5" : ""
+          } ${iconWrapClass}`}
           aria-hidden
         >
           <Icon className={`shrink-0 ${markerIconClass}`} />

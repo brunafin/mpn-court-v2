@@ -482,7 +482,7 @@ function Reservation() {
 
             {portalActive === false && (
               <Link
-                to="/minhas-infos#quadras"
+                to="/quadras"
                 className="mpn-tap mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-accent-blue px-4 py-3 text-left text-base font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 <span className="flex min-w-0 items-center gap-2.5">

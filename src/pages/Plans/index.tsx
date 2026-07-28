@@ -8,7 +8,7 @@ import {
 } from "react-icons/md";
 import AppLayout from "../../components/AppLayout";
 import { buttonClassName } from "../../components/Button";
-import { PageEyebrow, PageTitle } from "../../components/PageTitle";
+import { PageEyebrow } from "../../components/PageTitle";
 import {
   useCompanyBranding,
   useCompanyCapabilities,
@@ -210,8 +210,7 @@ function PlansPage() {
     <AppLayout>
       <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 lg:px-8">
         <div>
-          <PageEyebrow>Plano</PageEyebrow>
-          <PageTitle>Planos</PageTitle>
+          <PageEyebrow>Planos</PageEyebrow>
           <p className="mt-2 max-w-xl text-base leading-7 text-text-light/70">
             {introCopy}
           </p>
@@ -251,7 +250,6 @@ function PlansPage() {
                 {[
                   "Agenda ilimitada para reservas e horários fixos",
                   "Publicação das quadras no site da Marca Pra Nós",
-                  "Lembretes, fechamento do dia e gestão no celular",
                 ].map((item) => (
                   <li
                     key={item}
@@ -281,7 +279,7 @@ function PlansPage() {
                     {generating
                       ? "Gerando PIX…"
                       : summary?.pixEnabled
-                        ? "Contrate um plano"
+                        ? "Gerar PIX"
                         : "Contrate pelo WhatsApp"}
                   </button>
                   <p className="mt-3 text-center text-sm text-text-light/55">

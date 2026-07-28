@@ -8,12 +8,12 @@ import {
   IInfo,
   IInfoPhoto,
   infosByCompanyPublicId,
-  updateCourtVisibility,
   updatePreferencesByCompanyPublicId,
   uploadCompanyLogo,
   uploadCompanyPhoto,
 } from "../../api/companies";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { useErrors } from "../../contexts/ErrorsContext";
 import {
   getAccessToken,
@@ -21,91 +21,8 @@ import {
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
 import { PageEyebrow } from "../../components/PageTitle";
-import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
 import { formatPhoneMask } from "../../utils/formatPhone";
-import { useCompanyBranding, useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
-
-function formatFloorLabel(floor: string | null | undefined): string | null {
-  if (!floor) return null;
-  return courtFloorLabel(floor as CourtFloor) || floor;
-}
-
-function CourtCard({
-  name,
-  floorLabel,
-  sportsLabel,
-  price,
-  show,
-  toggling,
-  onToggleShow,
-}: {
-  name: string;
-  floorLabel?: string | null;
-  sportsLabel?: string | null;
-  price?: number | null;
-  show?: boolean;
-  toggling?: boolean;
-  onToggleShow?: () => void;
-}) {
-  return (
-    <li className="rounded-xl bg-master px-4 py-3.5">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-lg font-semibold text-text-light">{name}</p>
-        {show != null && (
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-              show
-                ? "bg-accent-green/20 text-accent-green"
-                : "bg-text-light/10 text-text-light/55"
-            }`}
-          >
-            {show ? "No site" : "Oculta"}
-          </span>
-        )}
-      </div>
-      <dl className="mt-2 space-y-1.5 text-base text-text-light/70">
-        {floorLabel && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Piso</dt>
-            <dd className="text-text-light/80">{floorLabel}</dd>
-          </div>
-        )}
-        {sportsLabel && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Esportes</dt>
-            <dd className="text-text-light/80">{sportsLabel}</dd>
-          </div>
-        )}
-        {price != null && Number.isFinite(price) && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Preço padrão</dt>
-            <dd className="font-semibold text-text-light">
-              {formatCurrencyBRL(price)}/hora
-            </dd>
-          </div>
-        )}
-      </dl>
-      {onToggleShow && (
-        <button
-          type="button"
-          disabled={toggling}
-          onClick={onToggleShow}
-          className={buttonClassName({
-            variant: show ? "secondary" : "primary",
-            size: "md",
-            className: "mt-3",
-          })}
-        >
-          {toggling
-            ? "Salvando…"
-            : show
-              ? "Ocultar do site"
-              : "Ativar no site"}
-        </button>
-      )}
-    </li>
-  );
-}
+import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
 
 function RealInfo() {
   const navigate = useNavigate();
@@ -114,7 +31,6 @@ function RealInfo() {
   const { notifyError } = useErrors();
   const { setLogoUrl, setCompanyName: setBrandingCompanyName } =
     useCompanyBranding();
-  const caps = useCompanyCapabilities();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [publicId, setPublicId] = useState("");
@@ -124,13 +40,18 @@ function RealInfo() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [removingPhotoId, setRemovingPhotoId] = useState<number | null>(null);
-  const [togglingCourtId, setTogglingCourtId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getAccessToken()) {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (location.hash === "#quadras") {
+      navigate("/quadras", { replace: true });
+    }
+  }, [location.hash, navigate]);
 
   useEffect(() => {
     const payload = getAccessTokenPayload<{
@@ -164,17 +85,6 @@ function RealInfo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [publicId]);
 
-  useEffect(() => {
-    if (!info || location.hash !== "#quadras") return;
-    const timer = window.setTimeout(() => {
-      document.getElementById("quadras")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 50);
-    return () => window.clearTimeout(timer);
-  }, [info, location.hash]);
-
   const updatePreferences = async (
     isHiddenInactiveHoursInput: boolean
   ): Promise<void> => {
@@ -190,36 +100,6 @@ function RealInfo() {
         isHiddenInactiveHours: isHiddenInactiveHoursInput,
       });
     });
-  };
-
-  const handleToggleCourtVisibility = async (
-    courtPublicId: string,
-    nextShow: boolean
-  ) => {
-    setTogglingCourtId(courtPublicId);
-    try {
-      const result = await updateCourtVisibility(courtPublicId, nextShow);
-      setInfo((prev) =>
-        prev
-          ? {
-              ...prev,
-              courts: prev.courts.map((court) =>
-                court.publicId === courtPublicId
-                  ? { ...court, show: result.show }
-                  : court
-              ),
-            }
-          : prev
-      );
-    } catch (error) {
-      console.error(error);
-      notifyError({
-        message: "Não foi possível atualizar a visibilidade da quadra.",
-        type: "error",
-      });
-    } finally {
-      setTogglingCourtId(null);
-    }
   };
 
   const handleLogoChange = async (
@@ -336,7 +216,6 @@ function RealInfo() {
   };
 
   const isInitialLoading = loading && !info;
-  const courts = info?.courts ?? [];
   const logoUrl = info?.logoUrl || null;
 
   return (
@@ -488,61 +367,6 @@ function RealInfo() {
               </div>
             </div>
 
-            <div
-              id="quadras"
-              className="scroll-mt-4 rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6"
-            >
-              <div className="mb-3 flex items-end justify-between gap-3">
-                <p className="text-lg font-semibold text-text-light">
-                  Quadras
-                </p>
-                {courts.length > 0 && (
-                  <span className="text-base font-medium tabular-nums text-text-light/60">
-                    {courts.length}
-                  </span>
-                )}
-              </div>
-              {courts.length > 0 &&
-                courts.every((court) => !court.show) && (
-                  <p className="mb-3 rounded-lg bg-master px-3 py-2 text-sm leading-5 text-text-light/70">
-                    Cadastre reservas e horários fixos na agenda antes de ativar
-                    a quadra no site.
-                  </p>
-                )}
-              {courts.length === 0 ? (
-                <p className="text-base text-text-light/65">
-                  Nenhuma quadra cadastrada.
-                </p>
-              ) : (
-                <ul className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-                  {courts.map((court) => (
-                    <CourtCard
-                      key={court.publicId}
-                      name={court.name}
-                      floorLabel={formatFloorLabel(court.floor)}
-                      sportsLabel={
-                        court.sports.length > 0
-                          ? court.sports.join(", ")
-                          : null
-                      }
-                      price={court.price}
-                      show={court.show}
-                      toggling={togglingCourtId === court.publicId}
-                      onToggleShow={
-                        caps.canMutate
-                          ? () =>
-                              handleToggleCourtVisibility(
-                                court.publicId,
-                                !court.show,
-                              )
-                          : undefined
-                      }
-                    />
-                  ))}
-                </ul>
-              )}
-            </div>
-
             <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">
                 Preferências
@@ -633,6 +457,18 @@ function RealInfo() {
                 {info?.plan?.name || "—"}
               </p>
               <dl className="mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+                {info?.plan?.trialEndsAt ? (
+                  <div>
+                    <dt className="text-base font-medium text-text-light/70">
+                      {info.plan.isTrial
+                        ? "Período de teste até"
+                        : "Período de teste encerrou em"}
+                    </dt>
+                    <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                      {formatDateToDDMMYYYY(info.plan.trialEndsAt)}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt className="text-base font-medium text-text-light/70">
                     Valor mensal

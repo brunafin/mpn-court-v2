@@ -12,11 +12,13 @@ import {
   COURT_SPORTS,
   CourtFloor,
   CourtSport,
+  getEnabledScheduleSlots,
   getOrCreateOnboardingDraft,
   isArenaConfigured,
   MockCourt,
   MockOnboardingState,
   upsertMockCourt,
+  WeekDayKey,
 } from "../../../onboarding/mockStore";
 import { getAccessToken } from "../../../utils/authCookie";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
@@ -24,6 +26,21 @@ import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 function scrollCourtPageToTop(pageEl: HTMLElement | null) {
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   pageEl?.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function digitsFromReais(value: number): string {
+  if (!(value > 0)) return "";
+  return String(Math.round(value * 100));
+}
+
+function reaisFromDigits(digits: string): number {
+  const cents = Number(digits);
+  if (!Number.isFinite(cents) || cents <= 0) return 0;
+  return cents / 100;
+}
+
+function slotKey(dayKey: WeekDayKey, hour: string): string {
+  return `${dayKey}|${hour}`;
 }
 
 function OnboardingCourt() {
@@ -34,24 +51,44 @@ function OnboardingCourt() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [courtName, setCourtName] = useState("");
   const [priceDigits, setPriceDigits] = useState("");
+  const [customPricing, setCustomPricing] = useState(false);
+  /** Digits de preço por dia|hora (override local no editor). */
+  const [slotPriceDigits, setSlotPriceDigits] = useState<Record<string, string>>(
+    {},
+  );
   const [sports, setSports] = useState<CourtSport[]>([]);
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [formError, setFormError] = useState("");
 
-  const price = useMemo(() => {
-    const cents = Number(priceDigits);
-    if (!Number.isFinite(cents) || cents <= 0) return 0;
-    return cents / 100;
-  }, [priceDigits]);
+  const price = useMemo(() => reaisFromDigits(priceDigits), [priceDigits]);
+
+  const enabledDays = useMemo(
+    () => getEnabledScheduleSlots(state?.scheduleTemplate),
+    [state?.scheduleTemplate],
+  );
 
   const openEditor = useCallback((slotIndex: number, court?: MockCourt | null) => {
     setEditingIndex(slotIndex);
     setCourtName(court?.name ?? `Q${slotIndex + 1}`);
     setPriceDigits(
       court && court.defaultPrice > 0
-        ? String(Math.round(court.defaultPrice * 100))
-        : ""
+        ? digitsFromReais(court.defaultPrice)
+        : "",
     );
+    const enabled = Boolean(court?.customPricingEnabled);
+    setCustomPricing(enabled);
+    const digits: Record<string, string> = {};
+    if (enabled && court?.priceOverrides) {
+      for (const [dayKey, hours] of Object.entries(court.priceOverrides)) {
+        if (!hours) continue;
+        for (const [hour, value] of Object.entries(hours)) {
+          if (typeof value === "number" && value > 0) {
+            digits[slotKey(dayKey as WeekDayKey, hour)] = digitsFromReais(value);
+          }
+        }
+      }
+    }
+    setSlotPriceDigits(digits);
     setSports(court?.sports ?? []);
     setFloor(court?.floor ?? "");
     setFormError("");
@@ -97,14 +134,29 @@ function OnboardingCourt() {
   const blocked = !state.hasScheduleTemplate;
   const slots: Array<MockCourt | null> = Array.from(
     { length: state.courtCount },
-    (_, i) => state.courts[i] ?? null
+    (_, i) => state.courts[i] ?? null,
   );
   const doneCount = Math.min(
     state.courts.filter(
-      (c) => c.defaultPrice > 0 && c.sports.length > 0 && !!c.floor
+      (c) => c.defaultPrice > 0 && c.sports.length > 0 && !!c.floor,
     ).length,
-    state.courtCount
+    state.courtCount,
   );
+
+  const handleSlotPriceChange = (dayKey: WeekDayKey, hour: string, raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    const key = slotKey(dayKey, hour);
+    setSlotPriceDigits((prev) => {
+      const next = { ...prev };
+      if (digits === "") {
+        delete next[key];
+      } else {
+        next[key] = digits;
+      }
+      return next;
+    });
+    if (formError) setFormError("");
+  };
 
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
@@ -126,6 +178,29 @@ function OnboardingCourt() {
       return;
     }
 
+    let priceOverrides: MockCourt["priceOverrides"];
+    if (customPricing) {
+      const overrides: NonNullable<MockCourt["priceOverrides"]> = {};
+      for (const day of enabledDays) {
+        for (const hour of day.hours) {
+          const digits = slotPriceDigits[slotKey(day.dayKey, hour)];
+          const slotPrice = digits ? reaisFromDigits(digits) : price;
+          if (!(slotPrice > 0)) {
+            setFormError(
+              `Informe o preço de ${day.dayLabel} às ${hour}.`,
+            );
+            return;
+          }
+          if (slotPrice !== price) {
+            if (!overrides[day.dayKey]) overrides[day.dayKey] = {};
+            overrides[day.dayKey]![hour] = slotPrice;
+          }
+        }
+      }
+      priceOverrides =
+        Object.keys(overrides).length > 0 ? overrides : undefined;
+    }
+
     const existing = state.courts[editingIndex];
     if (!existing && editingIndex !== state.courts.length) return;
 
@@ -134,10 +209,12 @@ function OnboardingCourt() {
         id: existing?.id ?? `court-${editingIndex + 1}-${Date.now()}`,
         name: courtName.trim(),
         defaultPrice: price,
+        customPricingEnabled: customPricing || undefined,
+        priceOverrides,
         sports,
         floor,
       },
-      existing ? editingIndex : undefined
+      existing ? editingIndex : undefined,
     );
 
     const next = getOrCreateOnboardingDraft();
@@ -174,7 +251,7 @@ function OnboardingCourt() {
           </h1>
         </div>
         <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
-          Cada quadra tem seu preço; a grade de horários usa esse valor
+          Informe o preço padrão; se quiser, personalize por horário
         </p>
 
         {blocked ? (
@@ -287,8 +364,98 @@ function OnboardingCourt() {
                   }}
                   required
                   className="mt-1"
-                  error={formError.includes("preço") ? formError : undefined}
+                  error={
+                    formError.includes("preço padrão") ? formError : undefined
+                  }
                 />
+
+                <label className="mt-3 flex min-h-14 cursor-pointer items-center gap-3 rounded-xl bg-master/40 px-3 py-3">
+                  <input
+                    type="checkbox"
+                    className="size-5 shrink-0 accent-accent-blue"
+                    checked={customPricing}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setCustomPricing(on);
+                      if (!on) setSlotPriceDigits({});
+                      if (formError) setFormError("");
+                    }}
+                  />
+                  <span>
+                    <span className="block text-base font-medium text-text-light">
+                      Preços personalizados
+                    </span>
+                    <span className="mt-0.5 block text-base text-text-light/60">
+                      Defina valores diferentes por dia e horário
+                    </span>
+                  </span>
+                </label>
+
+                {customPricing && (
+                  <div className="mt-4 space-y-4">
+                    {enabledDays.length === 0 ? (
+                      <p className="text-base text-text-light/70">
+                        Nenhum horário aberto na grade. Volte e ajuste o horário.
+                      </p>
+                    ) : (
+                      enabledDays.map((day) => (
+                        <fieldset key={day.dayKey} className="min-w-0">
+                          <legend className="mb-2 text-base font-semibold text-text-light/80">
+                            {day.dayLabel}
+                          </legend>
+                          <ul className="space-y-3">
+                            {day.hours.map((hour) => {
+                              const key = slotKey(day.dayKey, hour);
+                              const digits = slotPriceDigits[key];
+                              const inputId = `price-${day.dayKey}-${hour.replace(":", "")}`;
+                              return (
+                                <li
+                                  key={key}
+                                  className="flex items-center gap-3"
+                                >
+                                  <label
+                                    htmlFor={inputId}
+                                    className="w-14 shrink-0 text-base font-medium tabular-nums text-text-light/80"
+                                  >
+                                    {hour}
+                                  </label>
+                                  <input
+                                    id={inputId}
+                                    name={inputId}
+                                    type="text"
+                                    inputMode="numeric"
+                                    enterKeyHint="next"
+                                    aria-label={`Preço ${day.dayLabel} às ${hour}`}
+                                    placeholder={
+                                      price > 0
+                                        ? formatCurrencyBRL(price)
+                                        : "R$ 0,00"
+                                    }
+                                    value={
+                                      digits
+                                        ? formatCurrencyBRL(
+                                            Number(digits) / 100,
+                                          )
+                                        : ""
+                                    }
+                                    onChange={(e) =>
+                                      handleSlotPriceChange(
+                                        day.dayKey,
+                                        hour,
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="mpn-field-dark min-h-14 min-w-0 flex-1 rounded-xl border-0 bg-master px-4 py-3.5 text-lg font-medium leading-7 text-text-light placeholder:font-normal placeholder:text-text-light/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-2 focus-visible:ring-offset-master-light"
+                                  />
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </fieldset>
+                      ))
+                    )}
+                  </div>
+                )}
 
                 <CheckboxGroup
                   name="sports"
@@ -326,7 +493,8 @@ function OnboardingCourt() {
                   }}
                 />
 
-                {formError && !/preço|esporte/.test(formError) && (
+                {formError &&
+                  !/preço padrão|esporte/.test(formError) && (
                   <p
                     className="mb-2 text-base font-medium text-danger-400"
                     role="alert"

@@ -5,6 +5,12 @@ export interface OnboardingDay {
   hours: string[];
 }
 
+export interface OnboardingPriceSlot {
+  day_of_week_ref: number;
+  hour: string;
+  price: number;
+}
+
 export interface OnboardingCourt {
   name: string;
   /** Nomes dos esportes aceitos (mapeados para o catálogo no backend). */
@@ -14,6 +20,8 @@ export interface OnboardingCourt {
   is_covered?: boolean;
   is_can_have_net?: boolean;
   price: number;
+  /** Preços personalizados por dia/hora; ausente = usa price em todos. */
+  priceSlots?: OnboardingPriceSlot[];
 }
 
 export interface CompleteOnboardingInput {

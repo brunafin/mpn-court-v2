@@ -6,6 +6,7 @@ import {
   MdOutlineLogout,
   MdOutlinePayments,
 } from "react-icons/md";
+import { GiSoccerField } from "react-icons/gi";
 import { logoutAndRedirect } from "../../utils/authCookie";
 import Header from "../Header";
 import CompanyAvatar from "../CompanyAvatar";
@@ -39,6 +40,12 @@ function buildNavItems(
       label: "Início",
       Icon: MdOutlineCalendarMonth,
       match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+    },
+    {
+      to: "/quadras",
+      label: "Quadras",
+      Icon: GiSoccerField,
+      match: (path) => path.startsWith("/quadras"),
     },
     {
       to: "/minhas-infos",

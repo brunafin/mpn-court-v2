@@ -62,8 +62,15 @@ export function courtFloorLabel(key: CourtFloor): string {
 export type MockCourt = {
   id: string;
   name: string;
-  /** Preço padrão R$/hora desta quadra (aplicado ao copiar a grade). */
+  /** Preço padrão R$/hora desta quadra (aplicado aos slots sem override). */
   defaultPrice: number;
+  /** Se true, usa priceOverrides nos slots habilitados. */
+  customPricingEnabled?: boolean;
+  /**
+   * Preços por dia/hora (só quando customPricingEnabled).
+   * Ausência de chave = usa defaultPrice.
+   */
+  priceOverrides?: Partial<Record<WeekDayKey, Record<string, number>>>;
   /** Esportes aceitos na quadra. */
   sports: CourtSport[];
   /** Tipo de piso da quadra (obrigatório). */
@@ -241,6 +248,29 @@ function isMockCourt(value: unknown): value is MockCourt {
   return true;
 }
 
+function normalizePriceOverrides(
+  value: unknown,
+): Partial<Record<WeekDayKey, Record<string, number>>> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const out: Partial<Record<WeekDayKey, Record<string, number>>> = {};
+  let hasAny = false;
+  for (const { key } of WEEK_DAYS) {
+    const day = (value as Record<string, unknown>)[key];
+    if (!day || typeof day !== "object") continue;
+    const hours: Record<string, number> = {};
+    for (const [hour, price] of Object.entries(day as Record<string, unknown>)) {
+      if (typeof price === "number" && Number.isFinite(price) && price > 0) {
+        hours[hour] = price;
+      }
+    }
+    if (Object.keys(hours).length > 0) {
+      out[key] = hours;
+      hasAny = true;
+    }
+  }
+  return hasAny ? out : undefined;
+}
+
 function normalizeMockCourt(court: MockCourt): MockCourt {
   const sports = Array.isArray(court.sports)
     ? court.sports.filter((key): key is CourtSport =>
@@ -251,6 +281,10 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
     court.floor && COURT_FLOOR_KEYS.includes(court.floor)
       ? court.floor
       : undefined;
+  const customPricingEnabled = Boolean(court.customPricingEnabled);
+  const priceOverrides = customPricingEnabled
+    ? normalizePriceOverrides(court.priceOverrides)
+    : undefined;
   return {
     id: court.id,
     name: court.name,
@@ -258,6 +292,8 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
       Number.isFinite(court.defaultPrice) && court.defaultPrice > 0
         ? court.defaultPrice
         : 0,
+    customPricingEnabled: customPricingEnabled || undefined,
+    priceOverrides,
     sports,
     floor,
   };
@@ -515,14 +551,15 @@ export function upsertMockCourt(
   if (!current) return null;
 
   const courts = [...current.courts];
+  const normalized = normalizeMockCourt(court);
   if (typeof index === "number" && index >= 0 && index < courts.length) {
-    courts[index] = court;
+    courts[index] = normalized;
   } else {
-    const existing = courts.findIndex((c) => c.id === court.id);
+    const existing = courts.findIndex((c) => c.id === normalized.id);
     if (existing >= 0) {
-      courts[existing] = court;
+      courts[existing] = normalized;
     } else {
-      courts.push(court);
+      courts.push(normalized);
     }
   }
 
@@ -556,6 +593,44 @@ export function buildWeekTemplatePayload(
 ): { day_of_week_ref: number; hours: string[] }[] {
   return WEEK_DAYS.map(({ key, ref }) => ({
     day_of_week_ref: ref,
+    hours: (template.days[key] ?? [])
+      .filter((slot) => slot.enabled)
+      .map((slot) => slot.hour),
+  })).filter((day) => day.hours.length > 0);
+}
+
+/** Slots com preço efetivo por dia/hora (só se personalizado estiver ligado). */
+export function buildCourtPriceSlotsPayload(
+  court: MockCourt,
+  template: WeekScheduleTemplate,
+): { day_of_week_ref: number; hour: string; price: number }[] | undefined {
+  if (!court.customPricingEnabled) return undefined;
+  const slots: { day_of_week_ref: number; hour: string; price: number }[] = [];
+  for (const { key, ref } of WEEK_DAYS) {
+    for (const slot of template.days[key] ?? []) {
+      if (!slot.enabled) continue;
+      const override = court.priceOverrides?.[key]?.[slot.hour];
+      const price =
+        typeof override === "number" &&
+        Number.isFinite(override) &&
+        override > 0
+          ? override
+          : court.defaultPrice;
+      if (!(price > 0)) continue;
+      slots.push({ day_of_week_ref: ref, hour: slot.hour, price });
+    }
+  }
+  return slots.length > 0 ? slots : undefined;
+}
+
+/** Horários abertos da grade, agrupados por dia (para editor de preço). */
+export function getEnabledScheduleSlots(
+  template: WeekScheduleTemplate | undefined,
+): { dayKey: WeekDayKey; dayLabel: string; hours: string[] }[] {
+  if (!template) return [];
+  return WEEK_DAYS.map(({ key, label }) => ({
+    dayKey: key,
+    dayLabel: label,
     hours: (template.days[key] ?? [])
       .filter((slot) => slot.enabled)
       .map((slot) => slot.hour),

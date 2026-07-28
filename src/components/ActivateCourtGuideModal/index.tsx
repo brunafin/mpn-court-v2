@@ -71,7 +71,7 @@ function ActivateCourtGuideModal({
               id={titleId}
               className="text-xl font-semibold leading-7 text-text-light"
             >
-              Antes de ativar no site
+              Compartilhe horários livres no site
             </h2>
             <div
               id={descriptionId}
@@ -86,7 +86,7 @@ function ActivateCourtGuideModal({
                 <span className="font-semibold text-text-light">
                   Ativar a minha quadra
                 </span>{" "}
-                na agenda e mostre a quadra no site.
+                na agenda para publicar a quadra no site.
               </p>
             </div>
           </div>

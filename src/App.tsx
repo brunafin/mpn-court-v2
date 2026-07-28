@@ -11,6 +11,7 @@ import Reservation from "./pages/Reservation";
 import ReservationDetails from "./pages/Reservation/Details";
 import ChangePassword from "./pages/ChangePassword";
 import Info from "./pages/Info";
+import Courts from "./pages/Courts";
 import Billing from "./pages/Billing";
 import Plans from "./pages/Plans";
 import ConfigDay from "./pages/ConfigDay";
@@ -82,6 +83,7 @@ function App() {
                 <Route path="/reservas/:id" element={<ReservationDetails />} />
                 <Route path="/alterar-senha" element={<ChangePassword />} />
                 <Route path="/minhas-infos" element={<Info />} />
+                <Route path="/quadras" element={<Courts />} />
                 <Route path="/mensalidades" element={<Billing />} />
                 <Route path="/planos" element={<Plans />} />
                 <Route

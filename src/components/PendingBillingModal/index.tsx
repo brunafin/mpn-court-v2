@@ -39,10 +39,12 @@ function PendingBillingModal() {
       setSummary(data);
       const payment = data.openPayment;
       if (
+        data.isTrial ||
         !payment ||
         payment.paid ||
         !isDueOrOverdue(payment.dueDate) ||
-        location.pathname.startsWith("/mensalidades")
+        location.pathname.startsWith("/mensalidades") ||
+        location.pathname.startsWith("/planos")
       ) {
         setOpen(false);
         return;

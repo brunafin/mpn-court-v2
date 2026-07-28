@@ -10,6 +10,7 @@ import Button, { buttonClassName } from "../../components/Button";
 import OnboardingFooter from "../../components/OnboardingFooter";
 import {
   buildChecklist,
+  buildCourtPriceSlotsPayload,
   buildWeekTemplatePayload,
   clearMockOnboarding,
   courtSportLabel,
@@ -82,6 +83,9 @@ function OnboardingChecklist() {
           sports: court.sports.map((key) => courtSportLabel(key)),
           floor: court.floor as string,
           price: court.defaultPrice,
+          priceSlots: state.scheduleTemplate
+            ? buildCourtPriceSlotsPayload(court, state.scheduleTemplate)
+            : undefined,
         })),
       });
       setAccessToken(response.access_token);

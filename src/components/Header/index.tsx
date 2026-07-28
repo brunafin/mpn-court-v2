@@ -6,6 +6,7 @@ import {
   MdOutlineLogout,
   MdOutlinePayments,
 } from "react-icons/md";
+import { GiSoccerField } from "react-icons/gi";
 import { Link, useLocation } from "react-router-dom";
 import { logoutAndRedirect } from "../../utils/authCookie";
 import {
@@ -46,6 +47,15 @@ function buildNavItems(
       iconClass: "text-accent-blue",
       iconBgClass: "bg-accent-blue/15",
       match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+    },
+    {
+      to: "/quadras",
+      label: "Quadras",
+      description: "Ativar no site",
+      Icon: GiSoccerField,
+      iconClass: "text-accent-blue",
+      iconBgClass: "bg-accent-blue/15",
+      match: (path) => path.startsWith("/quadras"),
     },
     {
       to: "/minhas-infos",

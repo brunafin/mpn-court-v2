@@ -1,6 +1,7 @@
 import { BsQuestionCircle, BsWhatsapp } from "react-icons/bs";
+import type { ReactNode } from "react";
 import { ReservationStatusEnum } from "../enum";
-import { MdNotInterested, MdOutlineEdit, MdOutlinePostAdd } from "react-icons/md";
+import { MdNotInterested, MdOutlineEdit } from "react-icons/md";
 import { formatPhoneMask } from "../../../utils/formatPhone";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 import { getStatusIcon, StatusIcons } from "../statusIcons";
@@ -132,15 +133,24 @@ function ContactCard({
   contactName,
   contactPhone,
   onEditContact,
+  embedded = false,
 }: {
   contactName?: string;
   contactPhone?: string;
   onEditContact?: () => void;
+  /** Dentro do card de status (sem fundo/raio próprios). */
+  embedded?: boolean;
 }) {
   if (!contactName && !contactPhone) return null;
 
   return (
-    <div className="flex min-h-14 items-center gap-3 rounded-2xl bg-master-light px-4 py-3.5">
+    <div
+      className={
+        embedded
+          ? "flex min-h-14 items-center gap-3 border-t border-text-light/10 px-4 py-3.5"
+          : "flex min-h-14 items-center gap-3 rounded-2xl bg-master-light px-4 py-3.5"
+      }
+    >
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg font-semibold leading-snug text-text-light">
           {contactName || "Sem nome"}
@@ -190,7 +200,6 @@ export function getMeanByStatus(
     contactPhone?: string;
     courtName?: string;
     price?: string;
-    onCreateReminder?: () => void;
   }
 ) {
   if (!status) return null;
@@ -201,7 +210,6 @@ export function getMeanByStatus(
     contactPhone,
     courtName,
     price,
-    onCreateReminder,
   } = details || {};
 
   const accent = getStatusAccent(status);
@@ -218,21 +226,6 @@ export function getMeanByStatus(
       : "";
   const metaLine = [sportName, courtName, priceLabel].filter(Boolean).join(" · ");
 
-  const reminderButton = onCreateReminder ? (
-    <button
-      type="button"
-      onClick={onCreateReminder}
-      className={buttonClassName({
-        variant: "secondary",
-        size: "md",
-        className: "justify-center",
-      })}
-    >
-      <MdOutlinePostAdd size={20} className="shrink-0" aria-hidden />
-      Criar lembrete
-    </button>
-  ) : null;
-
   const isCompactStatus =
     status === ReservationStatusEnum.AVAILABLE ||
     status === ReservationStatusEnum.RESERVED ||
@@ -240,18 +233,22 @@ export function getMeanByStatus(
 
   if (isCompactStatus) {
     const statusLabel = getStatusLabel(status);
-    const ariaSummary = metaLine
-      ? `${statusLabel}. ${metaLine}`
-      : statusLabel;
-    const hasExtras = showContact || Boolean(reminderButton);
+    const ariaSummary = [
+      statusLabel,
+      metaLine,
+      contactName,
+      contactPhone ? formatPhoneMask(contactPhone) : "",
+    ]
+      .filter(Boolean)
+      .join(". ");
 
     return (
-      <div className={hasExtras ? "mb-5 space-y-3" : "mb-4"}>
-        <div
-          role="group"
-          aria-label={ariaSummary}
-          className={`flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 ${accent.surface}`}
-        >
+      <div
+        role="group"
+        aria-label={ariaSummary}
+        className={`mb-5 overflow-hidden rounded-2xl ${accent.surface}`}
+      >
+        <div className="flex min-h-14 items-center gap-3 px-4 py-3">
           <div
             className={`flex size-11 shrink-0 items-center justify-center rounded-full ${accent.iconBg}`}
             aria-hidden
@@ -277,10 +274,9 @@ export function getMeanByStatus(
             contactName={contactName}
             contactPhone={contactPhone}
             onEditContact={onEditContact}
+            embedded
           />
         )}
-
-        {reminderButton}
       </div>
     );
   }
@@ -336,6 +332,10 @@ export function renderButtonByStatus(
 ) {
   if (!status) return null;
 
+  const wrap = (button: ReactNode) => (
+    <div className="mb-5 flex justify-end">{button}</div>
+  );
+
   switch (status) {
     case ReservationStatusEnum.FIXED:
       return (
@@ -346,7 +346,7 @@ export function renderButtonByStatus(
             variant: "secondary",
             size: "md",
             className:
-              "mx-auto mb-5 justify-center border-accent-green text-accent-green hover:bg-accent-green/10 focus-visible:outline-accent-green",
+              "border-accent-green text-accent-green hover:bg-accent-green/10 focus-visible:outline-accent-green",
           })}
         >
           <StatusIcons.unlock size={20} className="shrink-0" aria-hidden />
@@ -354,13 +354,13 @@ export function renderButtonByStatus(
         </button>
       );
     case ReservationStatusEnum.INACTIVE:
-      return (
+      return wrap(
         <button
           type="button"
           onClick={handlers.onAtivar}
           className={buttonClassName({
             variant: "success",
-            className: "mx-auto mb-5 justify-center",
+            fullWidth: false,
           })}
         >
           <StatusIcons.available size={20} className="shrink-0" aria-hidden />
@@ -376,7 +376,7 @@ export function renderButtonByStatus(
             variant: "secondary",
             size: "md",
             className:
-              "mx-auto mb-5 justify-center border-accent-purple text-accent-purple hover:bg-accent-purple/10 focus-visible:outline-accent-purple",
+              "border-accent-purple text-accent-purple hover:bg-accent-purple/10 focus-visible:outline-accent-purple",
           })}
         >
           <StatusIcons.fixed size={20} className="shrink-0" aria-hidden />
@@ -384,15 +384,16 @@ export function renderButtonByStatus(
         </button>
       );
     case ReservationStatusEnum.AVAILABLE:
-      return (
+      return wrap(
         <button
           type="button"
           onClick={handlers.onInativar}
           className={buttonClassName({
             variant: "secondary",
             size: "md",
+            fullWidth: false,
             className:
-              "mx-auto mb-5 justify-center border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
+              "border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
           })}
         >
           <MdNotInterested size={18} className="shrink-0" aria-hidden />

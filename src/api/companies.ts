@@ -47,6 +47,8 @@ export interface IInfo {
     name: string;
     price: number;
     day_due: number | null;
+    isTrial?: boolean;
+    trialEndsAt?: string | null;
     history: {
       date: string;
       value: number;
