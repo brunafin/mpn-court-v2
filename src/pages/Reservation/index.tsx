@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReservationItem from "./ReservationItem";
-import { ReservationStatusEnum } from "./enum";
+import {
+  normalizeReservationStatus,
+  ReservationStatusEnum,
+} from "./enum";
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
@@ -40,13 +43,12 @@ import {
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import { buttonClassName } from "../../components/Button";
 
-const WHATSAPP_CONTRACT =
-  import.meta.env.VITE_WHATSAPP_CONTRACT_URL ||
-  "https://wa.me/5551989589197?text=Ol%C3%A1%2C%20quero%20contratar%20o%20plano%20mensal%20da%20Marca%20Pra%20N%C3%B3s";
-
 type ReservationLocationState = {
   date?: string;
   showActivateGuide?: boolean;
+  status?: ReservationStatusEnum | null;
+  court?: string;
+  customerQuery?: string;
 };
 
 function toDateKey(value: Date) {
@@ -75,9 +77,15 @@ function Reservation() {
       : new Date(new Date().setHours(0, 0, 0, 0))
   );
   const [statusSelected, setStatusSelected] =
-    useState<ReservationStatusEnum | null>(null);
-  const [courtSelected, setCourtSelected] = useState<string>("all");
-  const [customerQuery, setCustomerQuery] = useState("");
+    useState<ReservationStatusEnum | null>(
+      () => normalizeReservationStatus(locationState?.status) ?? null,
+    );
+  const [courtSelected, setCourtSelected] = useState<string>(
+    () => locationState?.court || "all",
+  );
+  const [customerQuery, setCustomerQuery] = useState(
+    () => locationState?.customerQuery || "",
+  );
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
@@ -103,9 +111,18 @@ function Reservation() {
     setShowActivateGuide(true);
     navigate(location.pathname, {
       replace: true,
-      state: dateFrom ? { date: dateFrom } : null,
+      state: {
+        ...(dateFrom ? { date: dateFrom } : {}),
+        ...(locationState?.status != null
+          ? { status: locationState.status }
+          : {}),
+        ...(locationState?.court ? { court: locationState.court } : {}),
+        ...(locationState?.customerQuery
+          ? { customerQuery: locationState.customerQuery }
+          : {}),
+      },
     });
-  }, [dateFrom, location.pathname, locationState?.showActivateGuide, navigate]);
+  }, [dateFrom, location.pathname, locationState, navigate]);
 
   useEffect(() => {
     if (!companyPublicId) return;
@@ -327,6 +344,11 @@ function Reservation() {
           isBarbecueIncluded={item.isBarbecueIncluded}
           isEvent={item.isEvent}
           isNeedsNetting={item.isNeedsNetting}
+          listFilters={{
+            status: statusSelected,
+            court: courtSelected,
+            customerQuery,
+          }}
           key={item.scheduleId}
         />
       ))}
@@ -374,13 +396,11 @@ function Reservation() {
       {!caps.canViewAgenda ? (
         <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-master px-4 text-text-light">
           <EmptyState
-            title="Agenda indisponível"
-            description="Seu período de teste acabou. Contrate um plano mensal para voltar a ver e gerenciar a agenda."
+            title="Teste grátis encerrado"
+            description="Contrate um plano mensal para voltar a ver a agenda e publicar no site."
             action={
-              <a
-                href={WHATSAPP_CONTRACT}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to="/planos"
                 className={buttonClassName({
                   variant: "primary",
                   size: "md",
@@ -388,8 +408,8 @@ function Reservation() {
                   fullWidth: false,
                 })}
               >
-                Contratar plano
-              </a>
+                Contrate um plano
+              </Link>
             }
           />
         </section>
@@ -462,7 +482,7 @@ function Reservation() {
 
             {portalActive === false && (
               <Link
-                to="/minhas-infos"
+                to="/minhas-infos#quadras"
                 className="mpn-tap mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-accent-blue px-4 py-3 text-left text-base font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 <span className="flex min-w-0 items-center gap-2.5">

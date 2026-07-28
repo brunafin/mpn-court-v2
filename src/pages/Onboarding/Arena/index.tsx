@@ -265,10 +265,11 @@ function OnboardingArena() {
                 title="Número"
                 placeholder="123"
                 type="text"
+                inputMode="numeric"
                 mode="dark"
                 value={number}
                 onChange={(e) => {
-                  setNumber(e.target.value);
+                  setNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
                   if (formError) setFormError("");
                 }}
                 required

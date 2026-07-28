@@ -21,17 +21,19 @@ type CompanyBrandingContextValue = {
   logoUrl: string | null;
   setLogoUrl: (url: string | null) => void;
   setCompanyName: (name: string) => void;
+  /** `null` até o infos carregar — não assumir paid/teste grátis. */
   capabilities: CompanyCapabilities | null;
   refreshCapabilities: () => Promise<void>;
 };
 
+/** Fallback só para flags de UI; entitlement real exige `capabilities` carregado. */
 const defaultCapabilities: CompanyCapabilities = {
-  entitlement: "paid",
+  entitlement: "trial",
   accessMode: "full",
   accessReason: null,
   canViewAgenda: true,
   canMutate: true,
-  canPayBilling: true,
+  canPayBilling: false,
   portalEligible: true,
 };
 
@@ -110,7 +112,15 @@ export function useCompanyBranding() {
   return ctx;
 }
 
-export function useCompanyCapabilities(): CompanyCapabilities {
+export type CompanyCapabilitiesState = CompanyCapabilities & {
+  /** `false` enquanto infos/capabilities ainda não chegaram da API. */
+  ready: boolean;
+};
+
+export function useCompanyCapabilities(): CompanyCapabilitiesState {
   const { capabilities } = useCompanyBranding();
-  return capabilities ?? defaultCapabilities;
+  if (!capabilities) {
+    return { ...defaultCapabilities, ready: false };
+  }
+  return { ...capabilities, ready: true };
 }

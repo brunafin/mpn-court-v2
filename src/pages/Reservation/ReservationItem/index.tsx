@@ -102,7 +102,14 @@ function ReservationItem({
   isBarbecueIncluded = false,
   isEvent = false,
   isNeedsNetting = false,
-}: IReservationItemProps) {
+  listFilters,
+}: IReservationItemProps & {
+  listFilters?: {
+    status?: ReservationStatusEnum | null;
+    court?: string;
+    customerQuery?: string;
+  };
+}) {
   const isPastDate =
     new Date(`${date}T${time}`) < new Date(new Date().setSeconds(0, 0));
   const statusMeta = getStatusMeta(status);
@@ -215,7 +222,12 @@ function ReservationItem({
       ) : (
         <Link
           to={`/reservas/${scheduleId}`}
-          state={{ date }}
+          state={{
+            date,
+            status: listFilters?.status ?? null,
+            court: listFilters?.court ?? "all",
+            customerQuery: listFilters?.customerQuery ?? "",
+          }}
           aria-label={ariaLabel}
           className={cardClassName}
         >

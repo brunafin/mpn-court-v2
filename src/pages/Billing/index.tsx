@@ -20,6 +20,8 @@ import {
   getAccessTokenPayload,
 } from "../../utils/authCookie";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import { isPaidEntitlement } from "../../utils/billingNav";
 
 function statusLabel(status: BillingPaymentItem["status"]): string {
   switch (status) {
@@ -56,6 +58,7 @@ function BillingPage() {
   const navigate = useNavigate();
   const { notifyError } = useErrors();
   const { loading, withLoading } = useLoading();
+  const caps = useCompanyCapabilities();
   const [companyPublicId, setCompanyPublicId] = useState("");
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [paying, setPaying] = useState(false);
@@ -70,6 +73,12 @@ function BillingPage() {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (caps.ready && !isPaidEntitlement(caps.entitlement)) {
+      navigate("/planos", { replace: true });
+    }
+  }, [caps.ready, caps.entitlement, navigate]);
 
   useEffect(() => {
     const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
@@ -198,12 +207,12 @@ function BillingPage() {
         {summary?.isTrial ? (
           <section className="rounded-2xl bg-master-light px-4 py-5">
             <p className="text-base font-semibold text-text-light">
-              Período de teste ativo
+              Teste grátis ativo
             </p>
             <p className="mt-1 text-sm text-text-light/65">
-              Nenhuma cobrança enquanto o trial estiver válido.
+              Nenhuma cobrança enquanto o teste grátis estiver válido.
               {summary.dayDue
-                ? ` Após o trial, o vencimento fica no dia ${summary.dayDue}.`
+                ? ` Depois do teste grátis, o vencimento fica no dia ${summary.dayDue}.`
                 : null}
             </p>
           </section>

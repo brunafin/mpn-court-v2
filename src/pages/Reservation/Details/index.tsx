@@ -8,8 +8,7 @@ import {
   MdOutlineRestaurant,
 } from "react-icons/md";
 import { IReservationDetailsItemProps } from "../interface";
-import { useEffect, useId, useMemo, useState } from "react";
-import { isSameDay } from "date-fns";
+import { useEffect, useId, useState } from "react";
 import Input from "../../../components/Input";
 import {
   cancelReservation,
@@ -38,6 +37,7 @@ import ConfirmSheet, {
 } from "../../../components/ConfirmSheet";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { useErrors } from "../../../contexts/ErrorsContext";
+import { useCompanyCapabilities } from "../../../contexts/CompanyBrandingContext";
 import { createNote } from "../../../api/notes";
 import { StatusIcons } from "../statusIcons";
 import { buttonClassName } from "../../../components/Button";
@@ -59,17 +59,31 @@ function ReservationDetails() {
   const { loading, withLoading } = useLoading();
   const { refreshUnreadCount } = useNotification();
   const { notifyError } = useErrors();
+  const caps = useCompanyCapabilities();
+  const canMutate = caps.canMutate;
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const dateFrom = location.state?.date;
+  const listNavState = (location.state as {
+    date?: string;
+    status?: string | null;
+    court?: string;
+    customerQuery?: string;
+  } | null) ?? null;
+  const dateFrom = listNavState?.date;
+
+  const buildListReturnState = () => ({
+    date: dateFrom,
+    status: listNavState?.status ?? null,
+    court: listNavState?.court ?? "all",
+    customerQuery: listNavState?.customerQuery ?? "",
+  });
 
   const [showInfoCustomer, setShowInfoCustomer] = useState<boolean>(false);
   const contactTitleId = useId();
   const [showNewReminderModal, setShowNewReminderModal] =
     useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
-  const [is24before, setIs24before] = useState<boolean>(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null
   );
@@ -189,9 +203,7 @@ function ReservationDetails() {
       if (response) {
         invalidateAgendaCache();
         navigate("/reservas", {
-          state: {
-            date: dateFrom,
-          },
+          state: buildListReturnState(),
         });
       }
     } catch (error) {
@@ -270,14 +282,6 @@ function ReservationDetails() {
     });
   };
 
-  const canRemindDayBefore = useMemo(() => {
-    if (!court?.date) return false;
-    const [day, month, year] = court.date.split("/");
-    const noteDate = new Date(Number(year), Number(month) - 1, Number(day));
-    if (Number.isNaN(noteDate.getTime())) return false;
-    return !isSameDay(noteDate, new Date());
-  }, [court?.date]);
-
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
     if (creatingNote) return;
@@ -303,11 +307,9 @@ function ReservationDetails() {
           ]
             .filter(Boolean)
             .join(" - "),
-        is24HoursBefore: canRemindDayBefore && is24before,
       });
       setShowNewReminderModal(false);
       setMessage("");
-      setIs24before(false);
       await refreshUnreadCount();
     } finally {
       setCreatingNote(false);
@@ -329,7 +331,7 @@ function ReservationDetails() {
       invalidateAgendaCache();
     }
     navigate("/reservas", {
-      state: { date: dateFrom },
+      state: buildListReturnState(),
     });
   };
 
@@ -437,10 +439,13 @@ function ReservationDetails() {
 
   const booked = isBookedStatus(court?.status);
   const isPastConsultation = Boolean(isPastSchedule && booked);
-  // Passado abre em leitura; cancelamento continua permitido para limpar a grade.
-  const showCancelSticky = Boolean(booked);
+  const consultationOnly = isPastConsultation || !canMutate;
+  // Passado abre em leitura; cancelamento só com escrita liberada.
+  const showCancelSticky = Boolean(booked && canMutate);
   const showCreateSticky = Boolean(
-    court?.status === ReservationStatusEnum.AVAILABLE && !isPastSchedule
+    canMutate &&
+      court?.status === ReservationStatusEnum.AVAILABLE &&
+      !isPastSchedule,
   );
   const showStickyFooter = showCancelSticky || showCreateSticky;
 
@@ -479,12 +484,20 @@ function ReservationDetails() {
           <>
             {isPastConsultation && (
               <p className="mb-4 text-base font-medium text-text-light/65">
-                Horário passado — somente consulta (cancelar ainda disponível)
+                {canMutate
+                  ? "Horário passado — somente consulta (cancelar ainda disponível)"
+                  : "Horário passado — somente consulta"}
+              </p>
+            )}
+            {!canMutate && caps.ready && !isPastConsultation && (
+              <p className="mb-4 text-base font-medium text-text-light/65">
+                Conta em somente leitura — não é possível reservar, cancelar
+                nem criar lembretes.
               </p>
             )}
 
             {getMeanByStatus(
-              isPastConsultation ? undefined : openEditContact,
+              consultationOnly ? undefined : openEditContact,
               court?.status,
               {
                 sportName: court?.reservation?.sportName,
@@ -493,7 +506,7 @@ function ReservationDetails() {
                 courtName: court?.court,
                 price: court?.price,
                 onCreateReminder:
-                  !isPastConsultation &&
+                  !consultationOnly &&
                   court.reservation?.publicId &&
                   (court.status === ReservationStatusEnum.FIXED ||
                     court.status === ReservationStatusEnum.RESERVED)
@@ -502,15 +515,14 @@ function ReservationDetails() {
               }
             )}
 
-            {(court.status === ReservationStatusEnum.INACTIVE ||
-              (court.status === ReservationStatusEnum.AVAILABLE &&
-                !isPastSchedule)) &&
+            {canMutate &&
+              court.status === ReservationStatusEnum.INACTIVE &&
               renderButtonByStatus(court?.status, statusActionHandlers)}
 
             {court.status !== ReservationStatusEnum.INACTIVE &&
               court.status !== ReservationStatusEnum.AVAILABLE &&
               court.reservation?.publicId &&
-              (isPastConsultation ? (
+              (consultationOnly ? (
                 <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
                   <p className="mb-4 text-lg font-semibold text-text-light">
                     Informações adicionais
@@ -628,8 +640,9 @@ function ReservationDetails() {
                     </button>
                   </div>
 
-                  {(court.status === ReservationStatusEnum.FIXED ||
-                    court.status === ReservationStatusEnum.RESERVED) &&
+                  {(canMutate &&
+                    (court.status === ReservationStatusEnum.FIXED ||
+                      court.status === ReservationStatusEnum.RESERVED)) &&
                     renderButtonByStatus(court.status, statusActionHandlers)}
                 </>
               ))}
@@ -647,7 +660,22 @@ function ReservationDetails() {
               )}
 
             {court?.status === ReservationStatusEnum.AVAILABLE &&
-              !isPastSchedule && (
+              !isPastSchedule &&
+              !canMutate && (
+                <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+                  <p className="text-lg font-semibold text-text-light">
+                    Reserva indisponível
+                  </p>
+                  <p className="mt-2 text-base leading-6 text-text-light/75">
+                    Sua conta está em somente leitura. Regularize a pendência
+                    para voltar a reservar horários.
+                  </p>
+                </div>
+              )}
+
+            {court?.status === ReservationStatusEnum.AVAILABLE &&
+              !isPastSchedule &&
+              canMutate && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -667,6 +695,12 @@ function ReservationDetails() {
                     onChange={(e) => {
                       setCustomerReservationName(e.target.value);
                       if (nameError) setNameError("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        document.getElementById("phone")?.focus();
+                      }
                     }}
                     required
                     mode="dark"
@@ -690,6 +724,15 @@ function ReservationDetails() {
                       setCustomerReservationPhone(
                         onlyPhoneDigits(e.target.value) || null
                       );
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      if (courtSports.length > 1) {
+                        document.getElementById("court-sport")?.focus();
+                        return;
+                      }
+                      (e.target as HTMLInputElement).blur();
                     }}
                     mode="dark"
                     autoComplete="tel"
@@ -758,6 +801,11 @@ function ReservationDetails() {
                     className="mb-0"
                   />
                 </div>
+
+                {renderButtonByStatus(
+                  ReservationStatusEnum.AVAILABLE,
+                  statusActionHandlers,
+                )}
 
                 <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
                   <div className="mx-auto w-full max-w-lg lg:max-w-3xl">
@@ -838,7 +886,7 @@ function ReservationDetails() {
               </button>
             </div>
             <Input
-              name="name"
+              name="contact-name"
               title="Nome"
               placeholder="João Silva"
               type="text"
@@ -846,13 +894,20 @@ function ReservationDetails() {
                 customerReservationName ?? court?.reservation?.contactName ?? ""
               }
               onChange={(e) => setCustomerReservationName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  document.getElementById("contact-phone")?.focus();
+                }
+              }}
               required
               mode="dark"
               autoComplete="name"
               autoCapitalize="words"
+              enterKeyHint="next"
             />
             <Input
-              name="phone"
+              name="contact-phone"
               title="Telefone com DDD"
               placeholder={PHONE_MASK_PLACEHOLDER}
               type="tel"
@@ -867,8 +922,17 @@ function ReservationDetails() {
                   onlyPhoneDigits(e.target.value) || null
                 );
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  (e.target as HTMLInputElement).blur();
+                  void handleUpdatePhoneContact();
+                }
+              }}
               mode="dark"
               required
+              enterKeyHint="done"
+              autoComplete="tel"
             />
             <button
               type="button"
@@ -916,9 +980,6 @@ function ReservationDetails() {
         date={court?.date || ""}
         message={message}
         setMessage={setMessage}
-        is24HoursBefore={is24before}
-        setIs24HoursBefore={setIs24before}
-        showRemind24HoursBefore={canRemindDayBefore}
         defaultMessage={[
           court?.date && `Reserva para o dia ${court.date}`,
           court?.time,

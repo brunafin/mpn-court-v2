@@ -8,6 +8,10 @@ import Input from "../../../components/Input";
 import { BsX } from "react-icons/bs";
 import { MdOutlineAdd } from "react-icons/md";
 import { buttonClassName } from "../../../components/Button";
+import { invalidateSchedulesDayCache } from "../../../utils/schedulesDayCache";
+import {
+  getAccessTokenPayload,
+} from "../../../utils/authCookie";
 
 interface IAddCourtScheduleProps {
   show: boolean;
@@ -51,6 +55,9 @@ function AddCourtSchedule({
     document.body.style.overflow = "hidden";
 
     setError("");
+    setSelectedCourt(courts.length === 1 ? courts[0] : null);
+    setSelectedHour(null);
+    setPrice(null);
 
     const focusTimer = window.setTimeout(() => {
       const field = dialogRef.current?.querySelector<HTMLElement>(
@@ -72,6 +79,8 @@ function AddCourtSchedule({
       document.removeEventListener("keydown", onKeyDown);
       window.clearTimeout(focusTimer);
     };
+    // Reset só ao abrir o modal; `courts` é lido nesse momento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show]);
 
   if (!show) return null;
@@ -106,11 +115,20 @@ function AddCourtSchedule({
       const response = await createNewCourtSchedule(obj);
 
       if (response !== undefined) {
+        const dateKey = format(date, "yyyy-MM-dd");
+        const companyPublicId =
+          getAccessTokenPayload<{ companyPublicId?: string }>()
+            ?.companyPublicId;
+        if (companyPublicId) {
+          invalidateSchedulesDayCache(companyPublicId, dateKey);
+        } else {
+          invalidateSchedulesDayCache();
+        }
         onClose();
         onSuccess?.();
         navigate("/reservas", {
           state: {
-            date: format(date, "yyyy-MM-dd"),
+            date: dateKey,
           },
         });
       }
@@ -125,7 +143,7 @@ function AddCourtSchedule({
       <button
         type="button"
         aria-label="Fechar modal"
-        className="absolute inset-0 bg-black/75"
+        className="absolute inset-0 bg-black/80"
         onClick={onClose}
         disabled={loading}
       />
@@ -137,9 +155,7 @@ function AddCourtSchedule({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         aria-busy={loading}
-        className={`relative z-10 flex w-full max-h-[92dvh] flex-col rounded-t-3xl bg-master-light text-text-light shadow-2xl transition-opacity sm:max-w-md sm:rounded-3xl ${
-          loading ? "opacity-80" : ""
-        }`}
+        className="relative z-10 flex w-full max-h-[92dvh] flex-col rounded-t-3xl bg-master-light text-text-light shadow-2xl sm:max-w-md sm:rounded-3xl"
       >
         <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
 
@@ -190,6 +206,7 @@ function AddCourtSchedule({
                 const selectedId = Number(e.target.value);
                 const court = courtOptions.find((c) => c.id === selectedId);
                 setSelectedCourt(court || null);
+                setError("");
               }}
             />
           )}

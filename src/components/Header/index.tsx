@@ -8,8 +8,16 @@ import {
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { logoutAndRedirect } from "../../utils/authCookie";
-import { useCompanyBranding, useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import {
+  useCompanyBranding,
+  useCompanyCapabilities,
+} from "../../contexts/CompanyBrandingContext";
 import CompanyAvatar from "../CompanyAvatar";
+import {
+  billingNavDescription,
+  billingNavLabel,
+  billingNavPath,
+} from "../../utils/billingNav";
 
 type NavItem = {
   to: string;
@@ -21,35 +29,45 @@ type NavItem = {
   match: (path: string) => boolean;
 };
 
-const navItems: NavItem[] = [
-  {
-    to: "/reservas",
-    label: "Início",
-    description: "Reservas do dia",
-    Icon: MdOutlineHome,
-    iconClass: "text-accent-blue",
-    iconBgClass: "bg-accent-blue/15",
-    match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
-  },
-  {
-    to: "/mensalidades",
-    label: "Mensalidades",
-    description: "Cobrança da plataforma",
-    Icon: MdOutlinePayments,
-    iconClass: "text-accent-green",
-    iconBgClass: "bg-accent-green/15",
-    match: (path) => path.startsWith("/mensalidades"),
-  },
-  {
-    to: "/minhas-infos",
-    label: "Minhas informações",
-    description: "Dados da conta",
-    Icon: MdOutlineInfo,
-    iconClass: "text-accent-blue-soft",
-    iconBgClass: "bg-accent-blue/10",
-    match: (path) => path.startsWith("/minhas-infos"),
-  },
-];
+function buildNavItems(
+  entitlement: string | null | undefined,
+  ready: boolean,
+): NavItem[] {
+  const effective = ready
+    ? (entitlement as "trial" | "paid" | "none" | undefined)
+    : undefined;
+  const billingPath = billingNavPath(effective);
+  return [
+    {
+      to: "/reservas",
+      label: "Início",
+      description: "Reservas do dia",
+      Icon: MdOutlineHome,
+      iconClass: "text-accent-blue",
+      iconBgClass: "bg-accent-blue/15",
+      match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+    },
+    {
+      to: "/minhas-infos",
+      label: "Minhas informações",
+      description: "Dados da conta",
+      Icon: MdOutlineInfo,
+      iconClass: "text-accent-blue",
+      iconBgClass: "bg-accent-blue/15",
+      match: (path) => path.startsWith("/minhas-infos"),
+    },
+    {
+      to: billingPath,
+      label: billingNavLabel(effective),
+      description: billingNavDescription(effective),
+      Icon: MdOutlinePayments,
+      iconClass: "text-accent-blue",
+      iconBgClass: "bg-accent-blue/15",
+      match: (path) =>
+        path.startsWith("/mensalidades") || path.startsWith("/planos"),
+    },
+  ];
+}
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,7 +76,7 @@ function Header() {
   const location = useLocation();
   const { companyName } = useCompanyBranding();
   const caps = useCompanyCapabilities();
-
+  const navItems = buildNavItems(caps.entitlement, caps.ready);
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
@@ -95,7 +113,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
       <Link
-        to={caps.canViewAgenda ? "/reservas" : "/mensalidades"}
+        to="/reservas"
         className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
       >
         <CompanyAvatar sizeClass="size-12" roundedClass="rounded-md" />
@@ -181,11 +199,7 @@ function Header() {
                 Navegação
               </p>
               <ul className="flex flex-col gap-2">
-                {navItems
-                  .filter((item) =>
-                    caps.entitlement === "none" ? item.to !== "/reservas" : true,
-                  )
-                  .map(
+                {navItems.map(
                   ({
                     to,
                     label,

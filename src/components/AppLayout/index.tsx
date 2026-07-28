@@ -16,6 +16,7 @@ import {
 } from "../../contexts/CompanyBrandingContext";
 import PendingBillingModal from "../PendingBillingModal";
 import { buttonClassName } from "../Button";
+import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
 
 type NavItem = {
   to: string;
@@ -24,30 +25,36 @@ type NavItem = {
   match: (path: string) => boolean;
 };
 
-const navItems: NavItem[] = [
-  {
-    to: "/reservas",
-    label: "Início",
-    Icon: MdOutlineCalendarMonth,
-    match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
-  },
-  {
-    to: "/mensalidades",
-    label: "Mensalidades",
-    Icon: MdOutlinePayments,
-    match: (path) => path.startsWith("/mensalidades"),
-  },
-  {
-    to: "/minhas-infos",
-    label: "Minhas informações",
-    Icon: MdOutlineInfo,
-    match: (path) => path.startsWith("/minhas-infos"),
-  },
-];
-
-const WHATSAPP_CONTRACT =
-  import.meta.env.VITE_WHATSAPP_CONTRACT_URL ||
-  "https://wa.me/5551989589197?text=Ol%C3%A1%2C%20quero%20contratar%20o%20plano%20mensal%20da%20Marca%20Pra%20N%C3%B3s";
+function buildNavItems(
+  entitlement: string | null | undefined,
+  ready: boolean,
+): NavItem[] {
+  const effective = ready
+    ? (entitlement as "trial" | "paid" | "none" | undefined)
+    : undefined;
+  const billingPath = billingNavPath(effective);
+  return [
+    {
+      to: "/reservas",
+      label: "Início",
+      Icon: MdOutlineCalendarMonth,
+      match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+    },
+    {
+      to: "/minhas-infos",
+      label: "Minhas informações",
+      Icon: MdOutlineInfo,
+      match: (path) => path.startsWith("/minhas-infos"),
+    },
+    {
+      to: billingPath,
+      label: billingNavLabel(effective),
+      Icon: MdOutlinePayments,
+      match: (path) =>
+        path.startsWith("/mensalidades") || path.startsWith("/planos"),
+    },
+  ];
+}
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -56,36 +63,6 @@ type AppLayoutProps = {
 function AccessBanners() {
   const caps = useCompanyCapabilities();
   const location = useLocation();
-
-  if (caps.entitlement === "none") {
-    return (
-      <div
-        role="status"
-        className="shrink-0 border-b border-warning-500/35 bg-warning-500/15 px-4 py-3"
-      >
-        <p className="text-sm font-semibold text-text-light">
-          Período de teste encerrado
-        </p>
-        <p className="mt-1 text-sm text-text-light/80">
-          Contrate um plano mensal para voltar a ver a agenda e publicar no
-          site.
-        </p>
-        <a
-          href={WHATSAPP_CONTRACT}
-          target="_blank"
-          rel="noreferrer"
-          className={buttonClassName({
-            variant: "primary",
-            size: "md",
-            className: "mt-3 inline-flex w-auto",
-            fullWidth: false,
-          })}
-        >
-          Contratar plano
-        </a>
-      </div>
-    );
-  }
 
   if (caps.accessMode === "read_only") {
     const onBilling = location.pathname.startsWith("/mensalidades");
@@ -99,7 +76,8 @@ function AccessBanners() {
         </p>
         <p className="mt-1 text-sm text-text-light/80">
           Você pode visualizar a agenda, mas não criar, alterar ou excluir.
-          Regularize a mensalidade para liberar.
+          Suas quadras ficam ocultas no site até a regularização (sem alterar
+          quais estavam publicadas).
         </p>
         {!onBilling ? (
           <Link
@@ -125,18 +103,13 @@ function AppLayoutShell({ children }: AppLayoutProps) {
   const location = useLocation();
   const { companyName } = useCompanyBranding();
   const caps = useCompanyCapabilities();
-
-  const visibleNav = navItems.filter((item) => {
-    if (caps.entitlement === "none" && item.to === "/reservas") return false;
-    return true;
-  });
-
+  const navItems = buildNavItems(caps.entitlement, caps.ready);
   return (
     <div className="flex h-full min-h-0 flex-1">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-text-light/10 bg-master-light lg:flex">
         <div className="flex items-center gap-3 px-4 py-5">
           <Link
-            to={caps.canViewAgenda ? "/reservas" : "/mensalidades"}
+            to="/reservas"
             className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
             <CompanyAvatar sizeClass="size-11" roundedClass="rounded-xl" />
@@ -153,7 +126,7 @@ function AppLayoutShell({ children }: AppLayoutProps) {
 
         <nav aria-label="Navegação principal" className="flex-1 px-3 py-2">
           <ul className="flex flex-col gap-1">
-            {visibleNav.map(({ to, label, Icon, match }) => {
+            {navItems.map(({ to, label, Icon, match }) => {
               const isActive = match(location.pathname);
               return (
                 <li key={to}>

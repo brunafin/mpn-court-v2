@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
 import { MdClose, MdOutlineInfo, MdOutlinePhotoCamera } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
@@ -109,6 +109,7 @@ function CourtCard({
 
 function RealInfo() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, withLoading } = useLoading();
   const { notifyError } = useErrors();
   const { setLogoUrl, setCompanyName: setBrandingCompanyName } =
@@ -162,6 +163,17 @@ function RealInfo() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [publicId]);
+
+  useEffect(() => {
+    if (!info || location.hash !== "#quadras") return;
+    const timer = window.setTimeout(() => {
+      document.getElementById("quadras")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [info, location.hash]);
 
   const updatePreferences = async (
     isHiddenInactiveHoursInput: boolean
@@ -476,49 +488,10 @@ function RealInfo() {
               </div>
             </div>
 
-            {(info?.owner?.name ||
-              info?.owner?.email ||
-              info?.owner?.phone) && (
-              <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
-                <p className="mb-3 text-lg font-semibold text-text-light">
-                  Contato do dono
-                </p>
-                <dl className="space-y-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0">
-                  {info.owner?.name && (
-                    <div>
-                      <dt className="text-base font-medium text-text-light/55">
-                        Nome
-                      </dt>
-                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
-                        {info.owner.name}
-                      </dd>
-                    </div>
-                  )}
-                  {info.owner?.email && (
-                    <div>
-                      <dt className="text-base font-medium text-text-light/55">
-                        E-mail
-                      </dt>
-                      <dd className="mt-0.5 break-all text-lg font-semibold text-text-light">
-                        {info.owner.email}
-                      </dd>
-                    </div>
-                  )}
-                  {info.owner?.phone && (
-                    <div>
-                      <dt className="text-base font-medium text-text-light/55">
-                        Telefone
-                      </dt>
-                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
-                        {formatPhoneMask(info.owner.phone)}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
-
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
+            <div
+              id="quadras"
+              className="scroll-mt-4 rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6"
+            >
               <div className="mb-3 flex items-end justify-between gap-3">
                 <p className="text-lg font-semibold text-text-light">
                   Quadras
@@ -570,7 +543,7 @@ function RealInfo() {
               )}
             </div>
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:p-6">
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">
                 Preferências
               </p>
@@ -610,7 +583,49 @@ function RealInfo() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:p-6">
+            {(info?.owner?.name ||
+              info?.owner?.email ||
+              info?.owner?.phone) && (
+              <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
+                <p className="mb-3 text-lg font-semibold text-text-light">
+                  Meu contato
+                </p>
+                <dl className="space-y-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0">
+                  {info.owner?.name && (
+                    <div>
+                      <dt className="text-base font-medium text-text-light/55">
+                        Nome
+                      </dt>
+                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                        {info.owner.name}
+                      </dd>
+                    </div>
+                  )}
+                  {info.owner?.email && (
+                    <div>
+                      <dt className="text-base font-medium text-text-light/55">
+                        E-mail
+                      </dt>
+                      <dd className="mt-0.5 break-all text-lg font-semibold text-text-light">
+                        {info.owner.email}
+                      </dd>
+                    </div>
+                  )}
+                  {info.owner?.phone && (
+                    <div>
+                      <dt className="text-base font-medium text-text-light/55">
+                        Telefone
+                      </dt>
+                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                        {formatPhoneMask(info.owner.phone)}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
+
+            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">
                 Plano
               </p>

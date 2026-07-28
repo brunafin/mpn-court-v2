@@ -12,12 +12,14 @@ import ReservationDetails from "./pages/Reservation/Details";
 import ChangePassword from "./pages/ChangePassword";
 import Info from "./pages/Info";
 import Billing from "./pages/Billing";
+import Plans from "./pages/Plans";
 import ConfigDay from "./pages/ConfigDay";
 import Notifications from "./pages/Notifications";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
 import { setAxiosErrorNotifier } from "./api/axios";
+import ProductInactiveModal from "./components/ProductInactiveModal";
 
 function App() {
   useEffect(() => {
@@ -59,6 +61,7 @@ function App() {
       <div className="flex min-h-0 flex-1 flex-col">
         <ErrorsProvider>
           <InitAxiosNotifier />
+          <ProductInactiveModal />
           <NotificationProvider>
             <Routes>
               <Route index element={<Login />} />
@@ -80,6 +83,7 @@ function App() {
                 <Route path="/alterar-senha" element={<ChangePassword />} />
                 <Route path="/minhas-infos" element={<Info />} />
                 <Route path="/mensalidades" element={<Billing />} />
+                <Route path="/planos" element={<Plans />} />
                 <Route
                   path="/configuracoes-horarios"
                   element={<ConfigDay />}

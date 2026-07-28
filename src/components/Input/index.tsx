@@ -49,6 +49,10 @@ function Input({
   onBlur,
   onChange,
   onClick,
+  onFocus,
+  onKeyDown,
+  onKeyUp,
+  onKeyPress,
   required,
   readOnly = false,
   mode = "light",
@@ -121,6 +125,10 @@ function Input({
           data-clarity-mask={maskClarity ? "true" : undefined}
           onChange={onChange}
           onBlur={onBlur}
+          onFocus={onFocus}
+          onKeyDown={onKeyDown}
+          onKeyUp={onKeyUp}
+          onKeyPress={onKeyPress}
           onClick={onClick}
           required={required}
           readOnly={readOnly}

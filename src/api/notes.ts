@@ -4,7 +4,6 @@ export interface ICreateNote {
   companyPublicId: string;
   date: string;
   message: string;
-  is24HoursBefore?: boolean;
 }
 
 export interface INote {

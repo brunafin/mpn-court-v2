@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { format, isSameDay, isValid, parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { useLoading } from "../../hooks/useLoading";
 import { MdOutlineArrowBackIos, MdOutlineCheck, MdOutlinePostAdd } from "react-icons/md";
 import NewReminderModal from "../../components/NewNote";
@@ -16,6 +16,7 @@ import { buttonClassName } from "../../components/Button";
 import { useErrors } from "../../contexts/ErrorsContext";
 import EmptyState from "../../components/EmptyState";
 import { PageTitle } from "../../components/PageTitle";
+import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 
 function parseIncomingDate(value: unknown): Date {
   if (value instanceof Date && isValid(value)) {
@@ -37,6 +38,8 @@ function DayReminders() {
   const { refreshUnreadCount } = useNotification();
   const { notifyError } = useErrors();
   const { loading, withLoading } = useLoading();
+  const caps = useCompanyCapabilities();
+  const canMutate = caps.canMutate;
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [showNewReminderModal, setShowNewReminderModal] = useState(false);
   const [date, setDate] = useState<Date>(() =>
@@ -44,7 +47,6 @@ function DayReminders() {
   );
   const [notifications, setNotifications] = useState<INote[]>([]);
   const [message, setMessage] = useState<string>("");
-  const [is24before, setIs24before] = useState<boolean>(false);
   const [creatingNote, setCreatingNote] = useState(false);
   const [markingId, setMarkingId] = useState<string | null>(null);
 
@@ -114,11 +116,9 @@ function DayReminders() {
         companyPublicId,
         date: format(date, "yyyy-MM-dd"),
         message,
-        is24HoursBefore: !isSameDay(date, new Date()) && is24before,
       });
       setShowNewReminderModal(false);
       setMessage("");
-      setIs24before(false);
       await fetchNotifications();
     } finally {
       setCreatingNote(false);
@@ -164,15 +164,23 @@ function DayReminders() {
               <div className="mb-3 min-w-0 flex-1 lg:mb-0">
                 <DateStrip selectedDate={date} setSelectedDate={setDate} />
               </div>
-              <button
-                type="button"
-                onClick={() => setShowNewReminderModal(true)}
-                className={`${createBtnClass} lg:w-auto lg:min-w-[12rem] lg:shrink-0`}
-              >
-                <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
-                Criar lembrete
-              </button>
+              {canMutate ? (
+                <button
+                  type="button"
+                  onClick={() => setShowNewReminderModal(true)}
+                  className={`${createBtnClass} lg:w-auto lg:min-w-[12rem] lg:shrink-0`}
+                >
+                  <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
+                  Criar lembrete
+                </button>
+              ) : null}
             </div>
+            {!canMutate && caps.ready ? (
+              <p className="mt-2 text-sm text-text-light/65">
+                Conta em somente leitura — não é possível criar ou marcar
+                lembretes.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -212,7 +220,9 @@ function DayReminders() {
                   <button
                     type="button"
                     aria-label="Marcar lembrete como lido"
-                    disabled={markingId === notification.id.toString()}
+                    disabled={
+                      !canMutate || markingId === notification.id.toString()
+                    }
                     onClick={() =>
                       handleCheckIsRead(notification.id.toString())
                     }
@@ -230,7 +240,11 @@ function DayReminders() {
         ) : (
           <EmptyState
             title="Nenhum lembrete neste dia"
-            description="Use Criar lembrete acima ou escolha outra data."
+            description={
+              canMutate
+                ? "Use Criar lembrete acima ou escolha outra data."
+                : "Escolha outra data ou regularize a conta para criar lembretes."
+            }
             className="pb-16"
           />
         )}
@@ -250,9 +264,6 @@ function DayReminders() {
         })}
         message={message}
         setMessage={setMessage}
-        is24HoursBefore={is24before}
-        setIs24HoursBefore={setIs24before}
-        showRemind24HoursBefore={!isSameDay(date, new Date())}
       />
     </div>
   );

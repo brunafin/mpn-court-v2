@@ -171,19 +171,19 @@ function ConfigDay() {
   const dayConfirm =
     dayAction === "close"
       ? {
-          title: "Fechar o dia?",
+          title: "Inativar o dia inteiro?",
           description:
             counts.reserved + counts.fixed > 0
               ? `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}. ${counts.reserved} reserva${counts.reserved === 1 ? "" : "s"} e ${counts.fixed} fixo${counts.fixed === 1 ? "" : "s"} não serão alterados.`
               : `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}.`,
-          confirmLabel: "Fechar o dia",
+          confirmLabel: "Inativar o dia inteiro",
           tone: "danger" as ConfirmTone,
         }
       : dayAction === "reopen"
         ? {
-            title: "Reabrir o dia?",
-            description: `Isso reativa os horários fechados em lote em ${dateLabel}. Inativações manuais de horários isolados não são alteradas.`,
-            confirmLabel: "Reabrir o dia",
+            title: "Reativar horários do dia?",
+            description: `Isso reativa os horários inativados em lote em ${dateLabel}. Inativações manuais de horários isolados não são alteradas.`,
+            confirmLabel: "Reativar horários do dia",
             tone: "primary" as ConfirmTone,
           }
         : null;
@@ -207,11 +207,11 @@ function ConfigDay() {
         message:
           action === "close"
             ? result.updated === 0
-              ? "Nenhum horário livre para fechar."
-              : `Dia fechado: ${result.updated} horário${result.updated === 1 ? "" : "s"} inativado${result.updated === 1 ? "" : "s"}.`
+              ? "Nenhum horário livre para inativar."
+              : `Dia inativado: ${result.updated} horário${result.updated === 1 ? "" : "s"} inativado${result.updated === 1 ? "" : "s"}.`
             : result.updated === 0
-              ? "Nenhum horário inativo para reabrir."
-              : `Dia reaberto: ${result.updated} horário${result.updated === 1 ? "" : "s"} reativado${result.updated === 1 ? "" : "s"}.`,
+              ? "Nenhum horário inativo do lote para reativar."
+              : `Horários reativados: ${result.updated} horário${result.updated === 1 ? "" : "s"} reativado${result.updated === 1 ? "" : "s"}.`,
       });
     } catch (error) {
       if ((error as { response?: { status?: number } })?.response?.status !== 401) {
@@ -325,20 +325,34 @@ function ConfigDay() {
             )}
           </div>
 
+          <button
+            type="button"
+            onClick={() => setShowAddCourtSchedule(true)}
+            disabled={loading && courts.length === 0}
+            className={buttonClassName({
+              variant: "primary",
+              className: "mb-4 lg:w-auto lg:min-w-[16rem]",
+            })}
+          >
+            <BsPlus size={26} aria-hidden />
+            Adicionar horário
+          </button>
+
           {(counts.available > 0 || isDayClosed) && (
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {counts.available > 0 && (
                 <button
                   type="button"
                   disabled={showSummaryLoading || dayActionLoading}
                   onClick={() => setDayAction("close")}
                   className={buttonClassName({
-                    variant: "danger",
-                    className: "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
+                    variant: "secondary",
+                    className:
+                      "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
                   })}
                 >
                   <MdOutlineEventBusy size={22} className="shrink-0" aria-hidden />
-                  Fechar o dia
+                  Inativar o dia inteiro
                 </button>
               )}
               {isDayClosed && (
@@ -348,28 +362,20 @@ function ConfigDay() {
                   onClick={() => setDayAction("reopen")}
                   className={buttonClassName({
                     variant: "secondary",
-                    className: "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
+                    className:
+                      "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
                   })}
                 >
-                  <MdOutlineEventAvailable size={22} className="shrink-0" aria-hidden />
-                  Reabrir o dia
+                  <MdOutlineEventAvailable
+                    size={22}
+                    className="shrink-0"
+                    aria-hidden
+                  />
+                  Reativar horários do dia
                 </button>
               )}
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() => setShowAddCourtSchedule(true)}
-            disabled={loading && courts.length === 0}
-            className={buttonClassName({
-              variant: "primary",
-              className: "mb-6 lg:w-auto lg:min-w-[16rem]",
-            })}
-          >
-            <BsPlus size={26} aria-hidden />
-            Adicionar horário
-          </button>
 
           {hiddenInactiveHours.length > 0 && (
             <section>

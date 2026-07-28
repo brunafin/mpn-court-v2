@@ -10,10 +10,17 @@ declare module 'axios' {
 }
 
 let notifyError: ((error: IError) => void) | null = null;
+let onProductInactive: ((message: string) => void) | null = null;
 let sessionExpiredHandling = false;
 
 export const setAxiosErrorNotifier = (notifier: (error: IError) => void) => {
   notifyError = notifier;
+};
+
+export const setProductInactiveHandler = (
+  handler: ((message: string) => void) | null,
+) => {
+  onProductInactive = handler;
 };
 
 const api = axios.create({
@@ -33,7 +40,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 function isAuthEndpoint(error: unknown): boolean {
@@ -47,11 +54,50 @@ function handleSessionExpired() {
   void logoutAndRedirect();
 }
 
-function userFacingErrorMessage(error: unknown): string {
+type ApiErrorBody = {
+  code?: string;
+  message?: string | { code?: string; message?: string };
+  error?: string;
+};
+
+function parseApiError(error: unknown): {
+  status?: number;
+  code?: string;
+  message?: string;
+} {
   const status = (error as { response?: { status?: number } })?.response
     ?.status;
+  const data = (error as { response?: { data?: ApiErrorBody } })?.response
+    ?.data;
+
+  const nested =
+    data?.message && typeof data.message === 'object' ? data.message : null;
+  const code = data?.code || nested?.code;
+  const message =
+    typeof data?.message === 'string'
+      ? data.message
+      : typeof nested?.message === 'string'
+        ? nested.message
+        : undefined;
+
+  return { status, code, message };
+}
+
+/** Mensagens conhecidas da API são exibidas; demais 4xx/5xx ficam genéricas. */
+function userFacingErrorMessage(error: unknown): string {
+  const { status, code, message } = parseApiError(error);
+
+  if (code === 'PRODUCT_INACTIVE' || code === 'ACCOUNT_READ_ONLY') {
+    return (
+      message ||
+      (code === 'ACCOUNT_READ_ONLY'
+        ? 'Sua conta está em modo somente leitura. Regularize a pendência para editar a agenda.'
+        : 'Seu teste grátis expirou. Contrate um plano para continuar usando a agenda.')
+    );
+  }
+
   if (status === 403) {
-    return 'Você não tem permissão para esta ação.';
+    return message || 'Você não tem permissão para esta ação.';
   }
   if (status === 404) {
     return 'Recurso não encontrado.';
@@ -62,24 +108,16 @@ function userFacingErrorMessage(error: unknown): string {
   if (typeof status === 'number' && status >= 500) {
     return 'Serviço temporariamente indisponível. Tente novamente.';
   }
-  // Não ecoar message/stack da API (pode vazar detalhes internos)
   return 'Não foi possível concluir a operação. Tente novamente.';
 }
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const status = error?.response?.status as number | undefined;
-    const data = error?.response?.data as
-      | {
-          code?: string;
-          message?: string | { code?: string; message?: string };
-        }
-      | undefined;
-    const messageText =
-      typeof data?.message === 'string'
-        ? data.message
-        : String(data?.message?.message ?? '');
+    const { status, code, message } = parseApiError(error);
+    const messageText = message ?? '';
+    const data = (error as { response?: { data?: ApiErrorBody } })?.response
+      ?.data;
     const isCpfRequired =
       data?.code === 'CPF_REQUIRED' ||
       (typeof data?.message === 'object' &&
@@ -87,10 +125,19 @@ api.interceptors.response.use(
       (error?.response?.status === 422 && /CPF/i.test(messageText));
     const silent = Boolean(error?.config?.silentError);
 
-    // 401: login trata na tela; demais rotas → um único redirect, sem toast
     if (status === 401) {
       if (!isAuthEndpoint(error)) {
         handleSessionExpired();
+      }
+      return Promise.reject(error);
+    }
+
+    if (code === 'PRODUCT_INACTIVE' && !silent) {
+      const msg = userFacingErrorMessage(error);
+      if (onProductInactive) {
+        onProductInactive(msg);
+      } else if (notifyError) {
+        notifyError({ message: msg, type: 'error' });
       }
       return Promise.reject(error);
     }
@@ -99,7 +146,7 @@ api.interceptors.response.use(
       notifyError({ message: userFacingErrorMessage(error), type: 'error' });
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

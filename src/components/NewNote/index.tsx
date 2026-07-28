@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef } from "react";
 import Textarea from "../Textarea";
 import { BsX } from "react-icons/bs";
-import { MdOutlineNotificationsActive, MdOutlinePostAdd } from "react-icons/md";
+import { MdOutlinePostAdd } from "react-icons/md";
 import { buttonClassName } from "../Button";
 
 interface NewReminderModalProps {
@@ -12,9 +12,6 @@ interface NewReminderModalProps {
   defaultMessage?: string;
   message: string;
   setMessage: (message: string) => void;
-  is24HoursBefore?: boolean;
-  setIs24HoursBefore?: (is24before: boolean) => void;
-  showRemind24HoursBefore?: boolean;
   isSubmitting?: boolean;
 }
 
@@ -36,9 +33,6 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
   defaultMessage = "",
   message = "",
   setMessage,
-  is24HoursBefore = false,
-  setIs24HoursBefore,
-  showRemind24HoursBefore = false,
   isSubmitting = false,
 }) => {
   const titleId = useId();
@@ -86,12 +80,6 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
       window.clearTimeout(focusTimer);
     };
   }, [isOpen, isSubmitting]);
-
-  useEffect(() => {
-    if (!showRemind24HoursBefore && is24HoursBefore) {
-      setIs24HoursBefore?.(false);
-    }
-  }, [showRemind24HoursBefore, is24HoursBefore, setIs24HoursBefore]);
 
   if (!isOpen) return null;
 
@@ -162,37 +150,6 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
             rows={4}
             required
           />
-
-          {showRemind24HoursBefore && (
-            <label
-              htmlFor="is-24-hours-before"
-              className={`mb-5 flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
-                is24HoursBefore
-                  ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
-                  : "bg-master"
-              } ${isSubmitting ? "pointer-events-none opacity-60" : ""}`}
-            >
-              <span className="flex items-center gap-3 text-lg font-medium text-text-light">
-                <MdOutlineNotificationsActive
-                  size={22}
-                  className="shrink-0 text-text-light"
-                  aria-hidden
-                />
-                Lembrar um dia antes
-              </span>
-              <input
-                type="checkbox"
-                id="is-24-hours-before"
-                checked={is24HoursBefore}
-                disabled={isSubmitting}
-                onChange={(e) => {
-                  if (!setIs24HoursBefore) return;
-                  setIs24HoursBefore(e.target.checked);
-                }}
-                className="size-7 shrink-0 rounded accent-accent-blue"
-              />
-            </label>
-          )}
 
           <div className="mt-auto flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button

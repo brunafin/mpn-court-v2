@@ -146,8 +146,18 @@ function ContactCard({
           {contactName || "Sem nome"}
         </p>
         {contactPhone ? (
-          <p className="mt-0.5 truncate text-base font-medium leading-snug text-text-light">
-            {formatPhoneMask(contactPhone)}
+          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-base font-medium leading-snug text-text-light">
+            <span className="truncate">{formatPhoneMask(contactPhone)}</span>
+            <a
+              href={`${import.meta.env.VITE_WHATSAPP_URL_BASE}${contactPhone}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`WhatsApp de ${contactName || "contato"}`}
+              title="Abrir WhatsApp"
+              className="inline-flex shrink-0 items-center justify-center rounded-md p-0.5 text-accent-green/85 transition hover:bg-accent-green/10 hover:text-accent-green focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green"
+            >
+              <BsWhatsapp size={16} aria-hidden />
+            </a>
           </p>
         ) : (
           <p className="mt-0.5 text-base font-medium leading-snug text-text-light/80">
@@ -156,30 +166,17 @@ function ContactCard({
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2">
-        {onEditContact && (
-          <button
-            type="button"
-            onClick={onEditContact}
-            title="Editar contato"
-            aria-label="Editar contato"
-            className="flex size-12 items-center justify-center rounded-xl bg-master text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-          >
-            <MdOutlineEdit size={22} aria-hidden />
-          </button>
-        )}
-        {contactPhone && (
-          <a
-            href={`${import.meta.env.VITE_WHATSAPP_URL_BASE}${contactPhone}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`WhatsApp de ${contactName || "contato"}`}
-            className="flex size-12 items-center justify-center rounded-xl bg-accent-green text-master transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green"
-          >
-            <BsWhatsapp size={22} aria-hidden />
-          </a>
-        )}
-      </div>
+      {onEditContact && (
+        <button
+          type="button"
+          onClick={onEditContact}
+          title="Editar contato"
+          aria-label="Editar contato"
+          className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-master text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+        >
+          <MdOutlineEdit size={22} aria-hidden />
+        </button>
+      )}
     </div>
   );
 }
@@ -225,11 +222,14 @@ export function getMeanByStatus(
     <button
       type="button"
       onClick={onCreateReminder}
-      title="Criar lembrete"
-      aria-label="Criar lembrete"
-      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-master/55 text-text-light transition hover:bg-master/80 active:bg-master focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+      className={buttonClassName({
+        variant: "secondary",
+        size: "md",
+        className: "justify-center",
+      })}
     >
-      <MdOutlinePostAdd size={22} aria-hidden />
+      <MdOutlinePostAdd size={20} className="shrink-0" aria-hidden />
+      Criar lembrete
     </button>
   ) : null;
 
@@ -243,7 +243,7 @@ export function getMeanByStatus(
     const ariaSummary = metaLine
       ? `${statusLabel}. ${metaLine}`
       : statusLabel;
-    const hasExtras = showContact;
+    const hasExtras = showContact || Boolean(reminderButton);
 
     return (
       <div className={hasExtras ? "mb-5 space-y-3" : "mb-4"}>
@@ -270,7 +270,6 @@ export function getMeanByStatus(
               </p>
             )}
           </div>
-          {reminderButton}
         </div>
 
         {showContact && (
@@ -280,6 +279,8 @@ export function getMeanByStatus(
             onEditContact={onEditContact}
           />
         )}
+
+        {reminderButton}
       </div>
     );
   }

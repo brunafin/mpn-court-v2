@@ -25,6 +25,7 @@ export type BillingSummary = {
   monthlyFee: number;
   dayDue: number | null;
   isTrial: boolean;
+  trialEndsAt: string;
   pixEnabled: boolean;
 };
 
@@ -72,6 +73,18 @@ export async function generateBillingPix(
   return response.data;
 }
 
+/** Contrata o plano Promocional: cria parcela + PIX (1ª vinculação). */
+export async function startBillingContract(
+  companyPublicId: string,
+  body?: { cpf?: string },
+) {
+  const response = await api.post<BillingPixPayload>(
+    `/companies/${companyPublicId}/billing/contract`,
+    body ?? {},
+  );
+  return response.data;
+}
+
 export function isCpfRequiredError(error: unknown): boolean {
   if (!axios.isAxiosError(error)) return false;
   const data = error.response?.data as
@@ -92,4 +105,22 @@ export function isCpfRequiredError(error: unknown): boolean {
       ? data.message
       : String(data?.message?.message ?? '');
   return /CPF/i.test(msg) && error.response?.status === 422;
+}
+
+export function isPixUnavailableError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const data = error.response?.data as
+    | {
+        code?: string;
+        message?: string | { code?: string; message?: string };
+      }
+    | undefined;
+  if (data?.code === 'PIX_UNAVAILABLE') return true;
+  if (
+    typeof data?.message === 'object' &&
+    data.message?.code === 'PIX_UNAVAILABLE'
+  ) {
+    return true;
+  }
+  return false;
 }
