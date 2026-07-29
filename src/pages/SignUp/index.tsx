@@ -11,6 +11,7 @@ import {
   isValidPassword,
   PASSWORD_HINT,
 } from "../../utils/passwordPolicy";
+import { MPN_PRIVACY_URL, MPN_TERMS_URL } from "../../constants/legal";
 
 type FieldError =
   | "email"
@@ -18,6 +19,7 @@ type FieldError =
   | "ownerPhone"
   | "ownerCpf"
   | "password"
+  | "terms"
   | null;
 
 function SignUp() {
@@ -27,6 +29,7 @@ function SignUp() {
   const [ownerPhone, setOwnerPhone] = useState("");
   const [ownerCpf, setOwnerCpf] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formError, setFormError] = useState("");
   const [errorField, setErrorField] = useState<FieldError>(null);
   const [loading, setLoading] = useState(false);
@@ -63,7 +66,8 @@ function SignUp() {
         ownerName.trim() &&
         phoneDigits.length === 11 &&
         cpfDigits.length === 11 &&
-        passwordOk
+        passwordOk &&
+        acceptedTerms
     ) && !loading;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -106,6 +110,14 @@ function SignUp() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setFieldError(
+        "terms",
+        "Aceite os Termos de Uso e a Política de Privacidade para continuar.",
+      );
+      return;
+    }
+
     setLoading(true);
     const normalizedEmail = email.trim().toLowerCase();
     try {
@@ -115,6 +127,7 @@ function SignUp() {
         phone: phoneDigits,
         cpf: cpfDigits,
         password,
+        acceptedTerms: true,
       });
       navigate("/cadastro/codigo", { state: { email: normalizedEmail } });
     } catch (error) {
@@ -276,6 +289,45 @@ function SignUp() {
             </p>
           )}
 
+          <label className="mt-4 flex cursor-pointer items-start gap-3 text-base leading-6 text-text-light/80">
+            <input
+              type="checkbox"
+              name="acceptedTerms"
+              checked={acceptedTerms}
+              onChange={(e) => {
+                setAcceptedTerms(e.target.checked);
+                clearErrors();
+              }}
+              className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue"
+            />
+            <span>
+              Li e aceito os{" "}
+              <a
+                href={MPN_TERMS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+              >
+                Termos de Uso
+              </a>{" "}
+              e a{" "}
+              <a
+                href={MPN_PRIVACY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+              >
+                Política de Privacidade
+              </a>
+              .
+            </span>
+          </label>
+          {errorField === "terms" && formError && (
+            <p className="mt-2 text-base font-medium text-danger-400" role="alert">
+              {formError}
+            </p>
+          )}
+
           {generalError && (
             <p className="mt-2 text-base font-medium text-danger-400" role="alert">
               {generalError}
@@ -303,6 +355,28 @@ function SignUp() {
             </Link>
           </p>
         </form>
+
+        <nav
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-text-light/55"
+          aria-label="Documentos legais"
+        >
+          <a
+            href={MPN_PRIVACY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-2 hover:text-text-light/70 hover:underline"
+          >
+            Privacidade
+          </a>
+          <a
+            href={MPN_TERMS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-2 hover:text-text-light/70 hover:underline"
+          >
+            Termos de Uso
+          </a>
+        </nav>
       </div>
     </div>
   );

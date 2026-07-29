@@ -7,6 +7,7 @@ import { login } from "../../api/auth";
 import { getAccessToken, setAccessToken } from "../../utils/authCookie";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { buttonClassName } from "../../components/Button";
+import { MPN_PRIVACY_URL, MPN_TERMS_URL } from "../../constants/legal";
 
 type LoginTokenPayload = {
   updatedPassword?: boolean;
@@ -30,6 +31,9 @@ function Login() {
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const signupOk = Boolean(
     (location.state as { signupOk?: boolean } | null)?.signupOk
+  );
+  const passwordResetOk = Boolean(
+    (location.state as { passwordResetOk?: boolean } | null)?.passwordResetOk
   );
   const signupEmail = (location.state as { email?: string } | null)?.email;
 
@@ -125,6 +129,11 @@ function Login() {
               Conta criada. Entre para configurar o estabelecimento.
             </p>
           )}
+          {passwordResetOk && (
+            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-sm font-medium text-accent-green">
+              Senha redefinida. Entre com a nova senha.
+            </p>
+          )}
           {unverifiedEmail && (
             <div className="mt-3 rounded-lg bg-accent-blue/15 px-3 py-2 text-sm text-text-light">
               <p className="font-medium">
@@ -183,12 +192,21 @@ function Login() {
             className="mt-1"
           />
 
+          <p className="mt-3 text-right text-base">
+            <Link
+              to="/esqueci-senha"
+              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            >
+              Esqueci minha senha
+            </Link>
+          </p>
+
           <button
             type="submit"
             disabled={!canSubmit}
             className={buttonClassName({
               variant: "primary",
-              className: "mt-6",
+              className: "mt-4",
             })}
           >
             {loading ? "Entrando…" : "Entrar"}
@@ -204,6 +222,28 @@ function Login() {
             </Link>
           </p>
         </form>
+
+        <nav
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-text-light/55"
+          aria-label="Documentos legais"
+        >
+          <a
+            href={MPN_PRIVACY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-2 hover:text-text-light/70 hover:underline"
+          >
+            Privacidade
+          </a>
+          <a
+            href={MPN_TERMS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-2 hover:text-text-light/70 hover:underline"
+          >
+            Termos de Uso
+          </a>
+        </nav>
       </div>
     </div>
   );

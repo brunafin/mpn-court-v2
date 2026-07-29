@@ -3,6 +3,8 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import SignUpVerifyCode from "./pages/SignUp/VerifyCode";
+import ForgotPassword from "./pages/ForgotPassword";
+import ForgotPasswordReset from "./pages/ForgotPassword/Reset";
 import OnboardingArena from "./pages/Onboarding/Arena";
 import OnboardingChecklist from "./pages/Onboarding";
 import OnboardingSchedule from "./pages/Onboarding/Schedule";
@@ -68,6 +70,11 @@ function App() {
               <Route index element={<Login />} />
               <Route path="/cadastro" element={<SignUp />} />
               <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />
+              <Route path="/esqueci-senha" element={<ForgotPassword />} />
+              <Route
+                path="/esqueci-senha/redefinir"
+                element={<ForgotPasswordReset />}
+              />
               <Route element={<ProtectedRoute />}>
                 <Route path="/comecar" element={<OnboardingChecklist />} />
                 <Route
