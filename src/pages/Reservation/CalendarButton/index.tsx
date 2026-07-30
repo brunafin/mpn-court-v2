@@ -102,6 +102,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
               <DayPicker
                 mode="single"
                 required
+                fixedWeeks
                 month={month}
                 onMonthChange={setMonth}
                 selected={selectedDate}

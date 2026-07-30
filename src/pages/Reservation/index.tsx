@@ -36,6 +36,7 @@ import {
   isSchedulesDayCacheFresh,
   setSchedulesDayCache,
 } from "../../utils/schedulesDayCache";
+import { normalizeText } from "../../utils/normalizeText";
 import {
   hasSeenActivateCourtGuide,
   markActivateCourtGuideSeen,
@@ -273,7 +274,7 @@ function Reservation() {
   }, [companyPublicId, date]);
 
   const filteredList = useMemo(() => {
-    const query = customerQuery.trim().toLocaleLowerCase("pt-BR");
+    const query = normalizeText(customerQuery.trim());
     return list
       .filter((elementDate) => {
         if (!date) return elementDate;
@@ -294,9 +295,9 @@ function Reservation() {
       })
       .filter((elementCustomer) => {
         if (!query) return true;
-        return (elementCustomer.customerName || "")
-          .toLocaleLowerCase("pt-BR")
-          .includes(query);
+        return normalizeText(elementCustomer.customerName || "").includes(
+          query
+        );
       });
   }, [list, date, statusSelected, courtSelected, customerQuery]);
 
