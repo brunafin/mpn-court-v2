@@ -117,17 +117,16 @@ function ReservationItem({
   const isInactive = status === ReservationStatusEnum.INACTIVE;
   const isPastAvailable = isAvailable && isPastDate;
 
-  // Horário que ficou disponível e passou sem reserva: visual neutro, menor peso que reservados.
-  const { label, barClass, iconWrapClass, Icon, markerIconClass } =
-    isPastAvailable
-      ? {
-          label: "Encerrado",
-          barClass: "bg-text-light/25",
-          iconWrapClass: "bg-text-light/8 text-text-light/45",
-          Icon: statusMeta.Icon,
-          markerIconClass: statusMeta.markerIconClass,
-        }
-      : statusMeta;
+  // Passados (disponível, reservado, fixo…): cinza legível, sem opacity no item.
+  const { label, barClass, iconWrapClass, Icon, markerIconClass } = isPastDate
+    ? {
+        label: isPastAvailable ? "Encerrado" : statusMeta.label,
+        barClass: "bg-text-light/35",
+        iconWrapClass: "bg-text-light/10 text-text-light/55",
+        Icon: statusMeta.Icon,
+        markerIconClass: statusMeta.markerIconClass,
+      }
+    : statusMeta;
 
   const ariaLabel = `${label}. ${time}. ${court}${customerName ? `. ${customerName}` : ""}`;
 
@@ -168,19 +167,13 @@ function ReservationItem({
           <div className="flex min-w-0 items-center gap-2">
             <span
               className={`min-w-0 flex-1 truncate tabular-nums ${
-                isPastAvailable
-                  ? "text-sm font-medium text-text-light/55"
+                isPastDate
+                  ? "text-sm font-medium text-text-light/85"
                   : "text-base font-semibold text-text-light"
               }`}
             >
               {time}
-              <span
-                className={
-                  isPastAvailable
-                    ? "font-medium text-text-light/40"
-                    : "font-medium text-text-light/70"
-                }
-              >
+              <span className="font-medium text-text-light/70">
                 {" "}
                 — {court}
               </span>
@@ -188,8 +181,8 @@ function ReservationItem({
 
             <span
               className={`max-w-[42%] shrink-0 truncate text-right ${
-                isPastAvailable
-                  ? "text-sm font-normal text-text-light/45"
+                isPastDate
+                  ? "text-sm font-medium text-text-light/80"
                   : isAvailable
                     ? "text-base font-semibold text-accent-green"
                     : "text-base font-semibold text-text-light"
@@ -201,7 +194,9 @@ function ReservationItem({
             {!isPastAvailable && (
               <MdChevronRight
                 size={20}
-                className="shrink-0 text-text-light/40"
+                className={`shrink-0 ${
+                  isPastDate ? "text-text-light/55" : "text-text-light/40"
+                }`}
                 aria-hidden
               />
             )}
@@ -220,7 +215,7 @@ function ReservationItem({
   );
 
   return (
-    <li className={isPastDate ? "opacity-55" : undefined}>
+    <li className={isPastDate ? "opacity-80" : undefined}>
       {isPastAvailable ? (
         <div className={cardClassName} aria-label={ariaLabel}>
           {cardBody}
