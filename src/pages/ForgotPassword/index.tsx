@@ -58,7 +58,7 @@ function ForgotPassword() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
-          <div className="mb-3 flex w-36 items-center justify-center sm:mb-4 sm:w-44">
+          <div className="mb-3 flex w-32 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-4 sm:w-40 sm:rounded-2xl sm:p-2">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"

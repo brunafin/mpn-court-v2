@@ -112,7 +112,7 @@ function Login() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-6 flex w-48 items-center justify-center sm:w-56">
+          <div className="mb-6 flex w-48 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 sm:w-56 sm:p-2.5">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
