@@ -6,15 +6,18 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 
-# Definindo as variáveis de ambiente para o build (Vite irá usá-las durante o build)
+# Vite embute VITE_* no bundle no build — runtime env no container não basta.
 ARG VITE_WHATSAPP_URL_BASE
 ARG VITE_API_URL_BASE
 ARG VITE_ENVIRONMENT
+ARG VITE_PUBLIC_SITE_URL
+ARG VITE_GOOGLE_CLIENT_ID
 
-# Passando as variáveis para o ambiente
 ENV VITE_WHATSAPP_URL_BASE=$VITE_WHATSAPP_URL_BASE
 ENV VITE_API_URL_BASE=$VITE_API_URL_BASE
 ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
+ENV VITE_PUBLIC_SITE_URL=$VITE_PUBLIC_SITE_URL
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 COPY . .
 RUN npm run build
