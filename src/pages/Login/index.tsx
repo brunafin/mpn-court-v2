@@ -8,6 +8,7 @@ import { getAccessToken, setAccessToken } from "../../utils/authCookie";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { buttonClassName } from "../../components/Button";
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from "../../constants/legal";
+import { MPN_LOGO_URL } from "../../constants/brand";
 
 type LoginTokenPayload = {
   updatedPassword?: boolean;
@@ -111,11 +112,11 @@ function Login() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-6 flex size-28 items-center justify-center overflow-hidden rounded-2xl bg-neutral-100 p-3 sm:size-32">
+          <div className="mb-6 flex w-48 items-center justify-center sm:w-56">
             <img
-              src={import.meta.env.VITE_LOGO_URL}
+              src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
-              className="size-full object-contain"
+              className="h-auto w-full object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-text-light">

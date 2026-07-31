@@ -12,6 +12,7 @@ import {
   PASSWORD_HINT,
 } from "../../utils/passwordPolicy";
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from "../../constants/legal";
+import { MPN_LOGO_URL } from "../../constants/brand";
 
 type FieldError =
   | "email"
@@ -178,11 +179,11 @@ function SignUp() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
-          <div className="mb-3 flex size-16 items-center justify-center overflow-hidden rounded-xl bg-neutral-100 p-2 sm:mb-4 sm:size-20 sm:rounded-2xl sm:p-2.5">
+          <div className="mb-3 flex w-36 items-center justify-center sm:mb-4 sm:w-44">
             <img
-              src={import.meta.env.VITE_LOGO_URL}
+              src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
-              className="size-full object-contain"
+              className="h-auto w-full object-contain"
             />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-text-light sm:text-2xl">

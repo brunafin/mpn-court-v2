@@ -33,19 +33,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: isProduction
-        ? [
-          'favicon.svg',
-          'favicon.ico',
-          'robots.txt',
-          'apple-touch-icon.png',
-        ]
-        : [
-          'favicon-test.svg',
-          'favicon-test.ico',
-          'robots.txt',
-          'apple-touch-icon.png',
-        ],
+      includeAssets: ['logo-mpn.png', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'Marca Pra Nós',
         short_name: 'MPN',
