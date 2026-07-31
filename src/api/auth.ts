@@ -2,7 +2,32 @@ import api from './axios';
 
 export async function login(username: string, password: string) {
   const response = await api.post('/auth/login', { username, password });
-  return response.data;
+  return response.data as {
+    access_token: string;
+    needsProfileCompletion?: boolean;
+  };
+}
+
+export async function googleAuth(input: {
+  idToken: string;
+  password?: string;
+}) {
+  const response = await api.post('/auth/google', input);
+  return response.data as {
+    access_token: string;
+    needsProfileCompletion: boolean;
+  };
+}
+
+export async function completeProfile(input: {
+  phone?: string;
+  acceptedTerms: true;
+}) {
+  const response = await api.post('/auth/complete-profile', input);
+  return response.data as {
+    access_token: string;
+    needsProfileCompletion: boolean;
+  };
 }
 
 export async function changePassword(
@@ -51,4 +76,3 @@ export async function resetPassword(input: {
   const response = await api.post('/auth/reset-password', input);
   return response.data as { message: string };
 }
-

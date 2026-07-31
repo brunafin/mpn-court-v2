@@ -1,24 +1,37 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
-import { jwtDecode } from "jwt-decode";
-import Input from "../../components/Input";
-import { useEffect, useState } from "react";
-import { login } from "../../api/auth";
-import { getAccessToken, setAccessToken } from "../../utils/authCookie";
-import { useErrors } from "../../contexts/ErrorsContext";
-import { buttonClassName } from "../../components/Button";
-import { MPN_PRIVACY_URL, MPN_TERMS_URL } from "../../constants/legal";
-import { MPN_LOGO_URL } from "../../constants/brand";
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AxiosError } from 'axios';
+import { jwtDecode } from 'jwt-decode';
+import Input from '../../components/Input';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { login, googleAuth } from '../../api/auth';
+import { getAccessToken, setAccessToken } from '../../utils/authCookie';
+import { useErrors } from '../../contexts/ErrorsContext';
+import { buttonClassName } from '../../components/Button';
+import { MPN_PRIVACY_URL, MPN_TERMS_URL } from '../../constants/legal';
+import { MPN_LOGO_URL } from '../../constants/brand';
 
 type LoginTokenPayload = {
   updatedPassword?: boolean;
   companyPublicId?: string | null;
+  termsAccepted?: boolean;
+};
+
+type AuthResult = {
+  access_token: string;
+  needsProfileCompletion?: boolean;
 };
 
 function routeAfterLogin(token: string): string {
   const payload = jwtDecode<LoginTokenPayload>(token);
-  if (payload.updatedPassword === false) return "/alterar-senha";
-  return payload.companyPublicId ? "/reservas" : "/comecar";
+  if (payload.termsAccepted === false) return '/cadastro/completar';
+  if (payload.updatedPassword === false) return '/alterar-senha';
+  return payload.companyPublicId ? '/reservas' : '/comecar';
+}
+
+function finishAuth(navigate: ReturnType<typeof useNavigate>, result: AuthResult) {
+  setAccessToken(result.access_token);
+  navigate(routeAfterLogin(result.access_token), { replace: true });
 }
 
 function Login() {
@@ -26,15 +39,20 @@ function Login() {
   const location = useLocation();
   const { notifyError } = useErrors();
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [formError, setFormError] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState('');
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [linkGoogleToken, setLinkGoogleToken] = useState<string | null>(null);
+  const [linkPassword, setLinkPassword] = useState('');
+  const [linkEmail, setLinkEmail] = useState('');
+  const googleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim());
   const signupOk = Boolean(
-    (location.state as { signupOk?: boolean } | null)?.signupOk
+    (location.state as { signupOk?: boolean } | null)?.signupOk,
   );
   const passwordResetOk = Boolean(
-    (location.state as { passwordResetOk?: boolean } | null)?.passwordResetOk
+    (location.state as { passwordResetOk?: boolean } | null)?.passwordResetOk,
   );
   const signupEmail = (location.state as { email?: string } | null)?.email;
 
@@ -53,12 +71,64 @@ function Login() {
     }
   }, [navigate]);
 
+  const handleGoogleCredential = useCallback(
+    async (idToken: string, linkPass?: string) => {
+      setFormError('');
+      setUnverifiedEmail(null);
+      setGoogleLoading(true);
+      try {
+        const result = await googleAuth({
+          idToken,
+          ...(linkPass ? { password: linkPass } : {}),
+        });
+        setLinkGoogleToken(null);
+        setLinkPassword('');
+        finishAuth(navigate, result);
+      } catch (error) {
+        const axiosError = error as AxiosError<{
+          code?: string;
+          email?: string;
+          message?: string;
+        }>;
+        const data = axiosError?.response?.data;
+
+        if (data?.code === 'GOOGLE_LINK_REQUIRED') {
+          setLinkGoogleToken(idToken);
+          setLinkEmail(data.email ?? '');
+          setFormError(
+            data.message ||
+              'Já existe uma conta com este e-mail. Informe a senha para vincular o Google.',
+          );
+          return;
+        }
+
+        const message =
+          (typeof data?.message === 'string' && data.message) ||
+          'Não foi possível entrar com Google. Tente novamente.';
+        setFormError(message);
+        notifyError({ message, type: 'error' });
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    [navigate, notifyError],
+  );
+
+  const handleLinkSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!linkGoogleToken || !linkPassword) {
+      setFormError('Informe a senha da conta para vincular o Google.');
+      return;
+    }
+    await handleGoogleCredential(linkGoogleToken, linkPassword);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setFormError("");
+    setFormError('');
     setUnverifiedEmail(null);
     if (!username || !password) {
-      setFormError("Preencha usuário e senha.");
+      setFormError('Preencha usuário e senha.');
       return;
     }
     setLoading(true);
@@ -66,14 +136,13 @@ function Login() {
     try {
       const response = await login(username, password);
       const token =
-        typeof response === "object" && response !== null
-          ? (response as { access_token?: string }).access_token
+        typeof response === 'object' && response !== null
+          ? (response as AuthResult).access_token
           : undefined;
       if (!token) {
-        throw new Error("EMPTY_TOKEN");
+        throw new Error('EMPTY_TOKEN');
       }
-      setAccessToken(token);
-      navigate(routeAfterLogin(token));
+      finishAuth(navigate, response as AuthResult);
     } catch (error) {
       const axiosError = error as AxiosError<{
         code?: string;
@@ -82,23 +151,27 @@ function Login() {
       }>;
       const data = axiosError?.response?.data;
 
-      if (data?.code === "EMAIL_NOT_VERIFIED") {
+      if (data?.code === 'EMAIL_NOT_VERIFIED') {
         setUnverifiedEmail(data.email ?? username.trim());
         return;
       }
 
       const isNetwork =
-        axiosError?.code === "ERR_NETWORK" ||
-        axiosError?.message === "Network Error" ||
+        axiosError?.code === 'ERR_NETWORK' ||
+        axiosError?.message === 'Network Error' ||
         !axiosError?.response;
+      const apiMessage =
+        typeof data?.message === 'string' ? data.message : undefined;
       const message =
-        (error as Error)?.message === "EMPTY_TOKEN"
-          ? "A API não retornou o token. Confirme que o mpn-api está no ar (porta 3001)."
+        (error as Error)?.message === 'EMPTY_TOKEN'
+          ? 'A API não retornou o token. Confirme que o mpn-api está no ar (porta 3001).'
           : isNetwork && !(error as AxiosError)?.response
-            ? "Não foi possível conectar à API. Verifique se o mpn-api está rodando."
-            : "Usuário ou senha inválidos.";
+            ? 'Não foi possível conectar à API. Verifique se o mpn-api está rodando.'
+            : apiMessage && /google/i.test(apiMessage)
+              ? apiMessage
+              : 'Usuário ou senha inválidos.';
       setFormError(message);
-      notifyError({ message, type: "error" });
+      notifyError({ message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -107,12 +180,12 @@ function Login() {
   const canSubmit = Boolean(username.trim() && password) && !loading;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-master px-4 py-10 text-text-light">
+    <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-master px-4 py-10 text-text-light">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-6 flex w-48 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 sm:w-56 sm:p-2.5">
+        <div className="mb-5 flex flex-col items-center text-center">
+          <div className="mb-3 flex w-28 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:w-32 sm:rounded-2xl sm:p-2">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -123,7 +196,7 @@ function Login() {
             Entrar
           </h1>
           <p className="mt-2 text-base leading-6 text-text-light/70">
-            Acesse com seu e-mail e senha.
+            Acesse com Google ou com e-mail e senha.
           </p>
           {signupOk && (
             <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-sm font-medium text-accent-green">
@@ -143,7 +216,7 @@ function Login() {
               <button
                 type="button"
                 onClick={() =>
-                  navigate("/cadastro/codigo", {
+                  navigate('/cadastro/codigo', {
                     state: { email: unverifiedEmail },
                   })
                 }
@@ -155,74 +228,138 @@ function Login() {
           )}
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl bg-master-light p-5 sm:p-6"
-          noValidate
-        >
-          <Input
-            name="username"
-            title="E-mail ou usuário"
-            placeholder="seu@email.com"
-            type="text"
-            mode="dark"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              if (formError) setFormError("");
-            }}
-            required
-            autoComplete="username"
-            enterKeyHint="next"
-            error={formError || undefined}
-          />
-          <Input
-            name="password"
-            title="Senha"
-            placeholder="Sua senha"
-            type="password"
-            mode="dark"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (formError) setFormError("");
-            }}
-            required
-            autoComplete="current-password"
-            enterKeyHint="go"
-            className="mt-1"
-          />
+        <div className="rounded-2xl bg-master-light p-5 sm:p-6">
+          {googleEnabled && !linkGoogleToken && (
+            <>
+              <GoogleSignInButton
+                onCredential={(token) => handleGoogleCredential(token)}
+                disabled={loading || googleLoading}
+                text="continue_with"
+              />
+              <div className="my-5 flex items-center gap-3 text-sm text-text-light/45">
+                <div className="h-px flex-1 bg-text-light/15" />
+                <span>ou</span>
+                <div className="h-px flex-1 bg-text-light/15" />
+              </div>
+            </>
+          )}
 
-          <p className="mt-3 text-right text-base">
-            <Link
-              to="/esqueci-senha"
-              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-            >
-              Esqueci minha senha
-            </Link>
-          </p>
+          {linkGoogleToken ? (
+            <form onSubmit={handleLinkSubmit} noValidate>
+              <p className="mb-3 text-sm leading-5 text-text-light/80">
+                Já existe uma conta
+                {linkEmail ? (
+                  <>
+                    {' '}
+                    para <strong className="text-text-light">{linkEmail}</strong>
+                  </>
+                ) : null}
+                . Informe a senha para vincular o Google.
+              </p>
+              <Input
+                name="linkPassword"
+                title="Senha da conta"
+                placeholder="Sua senha"
+                type="password"
+                mode="dark"
+                value={linkPassword}
+                onChange={(e) => {
+                  setLinkPassword(e.target.value);
+                  if (formError) setFormError('');
+                }}
+                required
+                autoComplete="current-password"
+                error={formError || undefined}
+              />
+              <button
+                type="submit"
+                disabled={!linkPassword || googleLoading}
+                className={buttonClassName({
+                  variant: 'primary',
+                  className: 'mt-4',
+                })}
+              >
+                {googleLoading ? 'Vinculando…' : 'Vincular e entrar'}
+              </button>
+              <button
+                type="button"
+                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                onClick={() => {
+                  setLinkGoogleToken(null);
+                  setLinkPassword('');
+                  setFormError('');
+                }}
+              >
+                Cancelar
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} noValidate>
+              <Input
+                name="username"
+                title="E-mail ou usuário"
+                placeholder="seu@email.com"
+                type="text"
+                mode="dark"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (formError) setFormError('');
+                }}
+                required
+                autoComplete="username"
+                enterKeyHint="next"
+                error={formError || undefined}
+              />
+              <Input
+                name="password"
+                title="Senha"
+                placeholder="Sua senha"
+                type="password"
+                mode="dark"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (formError) setFormError('');
+                }}
+                required
+                autoComplete="current-password"
+                enterKeyHint="go"
+                className="mt-1"
+              />
 
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className={buttonClassName({
-              variant: "primary",
-              className: "mt-4",
-            })}
-          >
-            {loading ? "Entrando…" : "Entrar"}
-          </button>
+              <p className="mt-3 text-right text-base">
+                <Link
+                  to="/esqueci-senha"
+                  className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                >
+                  Esqueci minha senha
+                </Link>
+              </p>
 
-          <p className="mt-5 text-center text-base text-text-light/70">
-            Não tem conta?{" "}
-            <Link
-              to="/cadastro"
-              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-            >
-              Cadastrar
-            </Link>
-          </p>
-        </form>
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className={buttonClassName({
+                  variant: 'primary',
+                  className: 'mt-4',
+                })}
+              >
+                {loading ? 'Entrando…' : 'Entrar'}
+              </button>
+
+              <p className="mt-5 text-center text-base text-text-light/70">
+                Não tem conta?{' '}
+                <Link
+                  to="/cadastro"
+                  className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                >
+                  Cadastrar
+                </Link>
+              </p>
+            </form>
+          )}
+        </div>
 
         <nav
           className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-text-light/55"

@@ -1,10 +1,39 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { getAccessToken } from "../../utils/authCookie";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import {
+  getAccessToken,
+  getAccessTokenPayload,
+} from "../../utils/authCookie";
 
-/** Exige JWT; redireciona para login se ausente. */
+type TokenClaims = {
+  termsAccepted?: boolean;
+  updatedPassword?: boolean;
+};
+
+/**
+ * Exige JWT. Bloqueia o app até aceite de termos (ex.: pós-Google)
+ * e redireciona senha padrão para /alterar-senha.
+ */
 export default function ProtectedRoute() {
-  if (!getAccessToken()) {
+  const location = useLocation();
+  const token = getAccessToken();
+
+  if (!token) {
     return <Navigate to="/" replace />;
   }
+
+  const payload = getAccessTokenPayload<TokenClaims>();
+
+  // Contas sem terms_accepted_at (claim explícito false). Token antigo sem claim passa.
+  if (payload?.termsAccepted === false) {
+    return <Navigate to="/cadastro/completar" replace />;
+  }
+
+  if (
+    payload?.updatedPassword === false &&
+    location.pathname !== "/alterar-senha"
+  ) {
+    return <Navigate to="/alterar-senha" replace />;
+  }
+
   return <Outlet />;
 }

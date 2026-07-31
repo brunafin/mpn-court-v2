@@ -21,7 +21,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://scripts.clarity.ms; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.marcapranos.com.br https://*.up.railway.app https://www.google-analytics.com https://analytics.google.com https://*.clarity.ms https://www.clarity.ms https://viacep.com.br http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; media-src 'self' blob:"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://scripts.clarity.ms https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data:; frame-src https://accounts.google.com; connect-src 'self' https://*.marcapranos.com.br https://*.up.railway.app https://www.google-analytics.com https://analytics.google.com https://*.clarity.ms https://www.clarity.ms https://viacep.com.br https://accounts.google.com http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; media-src 'self' blob:"
         }
       ]
     }

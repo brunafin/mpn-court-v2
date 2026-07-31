@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import SignUpVerifyCode from "./pages/SignUp/VerifyCode";
+import CompleteProfile from "./pages/SignUp/CompleteProfile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ForgotPasswordReset from "./pages/ForgotPassword/Reset";
 import OnboardingArena from "./pages/Onboarding/Arena";
@@ -24,7 +25,19 @@ import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
 import { setAxiosErrorNotifier } from "./api/axios";
 import ProductInactiveModal from "./components/ProductInactiveModal";
 
+/** Login/cadastro são altos no desktop — não podem herdar overflow-hidden do shell. */
+function isPublicAuthPath(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/cadastro") ||
+    pathname.startsWith("/esqueci-senha")
+  );
+}
+
 function App() {
+  const { pathname } = useLocation();
+  const authShell = isPublicAuthPath(pathname);
+
   useEffect(() => {
     if (import.meta.env.VITE_ENVIRONMENT === "production") {
       (function (c: any, l: any, a: any, r: any, i: any, t?: any, y?: any) {
@@ -55,7 +68,13 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-master lg:h-dvh lg:overflow-hidden">
+    <div
+      className={
+        authShell
+          ? "flex min-h-dvh flex-col bg-master"
+          : "flex min-h-dvh flex-col bg-master lg:h-dvh lg:overflow-hidden"
+      }
+    >
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (
         <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
           Versão para testes
@@ -70,6 +89,10 @@ function App() {
               <Route index element={<Login />} />
               <Route path="/cadastro" element={<SignUp />} />
               <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />
+              <Route
+                path="/cadastro/completar"
+                element={<CompleteProfile />}
+              />
               <Route path="/esqueci-senha" element={<ForgotPassword />} />
               <Route
                 path="/esqueci-senha/redefinir"
