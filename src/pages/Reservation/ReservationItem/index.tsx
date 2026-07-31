@@ -56,10 +56,12 @@ function OptionIcons({
   isNeedsNetting,
   isEvent,
   isBarbecueIncluded,
+  muted = false,
 }: {
   isNeedsNetting: boolean;
   isEvent: boolean;
   isBarbecueIncluded: boolean;
+  muted?: boolean;
 }) {
   if (!isNeedsNetting && !isEvent && !isBarbecueIncluded) {
     return null;
@@ -67,7 +69,9 @@ function OptionIcons({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5"
+      className={`flex flex-wrap items-center gap-1.5 ${
+        muted ? "opacity-45" : ""
+      }`}
       aria-label="Opções da reserva"
     >
       {isNeedsNetting && (
@@ -117,12 +121,12 @@ function ReservationItem({
   const isInactive = status === ReservationStatusEnum.INACTIVE;
   const isPastAvailable = isAvailable && isPastDate;
 
-  // Passados (disponível, reservado, fixo…): cinza legível, sem opacity no item.
+  // Passados: ícone/barra/detalhes mais escuros para não competir com o dia atual.
   const { label, barClass, iconWrapClass, Icon, markerIconClass } = isPastDate
     ? {
         label: isPastAvailable ? "Encerrado" : statusMeta.label,
-        barClass: "bg-text-light/35",
-        iconWrapClass: "bg-text-light/10 text-text-light/55",
+        barClass: "bg-text-light/18",
+        iconWrapClass: "bg-text-light/6 text-text-light/35",
         Icon: statusMeta.Icon,
         markerIconClass: statusMeta.markerIconClass,
       }
@@ -168,12 +172,18 @@ function ReservationItem({
             <span
               className={`min-w-0 flex-1 truncate tabular-nums ${
                 isPastDate
-                  ? "text-sm font-medium text-text-light/85"
+                  ? "text-sm font-medium text-text-light/70"
                   : "text-base font-semibold text-text-light"
               }`}
             >
               {time}
-              <span className="font-medium text-text-light/70">
+              <span
+                className={
+                  isPastDate
+                    ? "font-medium text-text-light/45"
+                    : "font-medium text-text-light/70"
+                }
+              >
                 {" "}
                 — {court}
               </span>
@@ -182,7 +192,7 @@ function ReservationItem({
             <span
               className={`max-w-[42%] shrink-0 truncate text-right ${
                 isPastDate
-                  ? "text-sm font-medium text-text-light/80"
+                  ? "text-sm font-medium text-text-light/55"
                   : isAvailable
                     ? "text-base font-semibold text-accent-green"
                     : "text-base font-semibold text-text-light"
@@ -195,7 +205,7 @@ function ReservationItem({
               <MdChevronRight
                 size={20}
                 className={`shrink-0 ${
-                  isPastDate ? "text-text-light/55" : "text-text-light/40"
+                  isPastDate ? "text-text-light/30" : "text-text-light/40"
                 }`}
                 aria-hidden
               />
@@ -207,6 +217,7 @@ function ReservationItem({
               isNeedsNetting={isNeedsNetting}
               isEvent={isEvent}
               isBarbecueIncluded={isBarbecueIncluded}
+              muted={isPastDate}
             />
           )}
         </div>
@@ -215,7 +226,7 @@ function ReservationItem({
   );
 
   return (
-    <li className={isPastDate ? "opacity-80" : undefined}>
+    <li>
       {isPastAvailable ? (
         <div className={cardClassName} aria-label={ariaLabel}>
           {cardBody}
