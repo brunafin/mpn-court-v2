@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
-import { MdClose, MdOutlineInfo, MdOutlinePhotoCamera } from "react-icons/md";
+import {
+  MdClose,
+  MdContentCopy,
+  MdOpenInNew,
+  MdOutlineInfo,
+  MdOutlineLink,
+  MdOutlinePhotoCamera,
+} from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import {
   deleteCompanyPhoto,
@@ -22,6 +29,21 @@ import {
 import { PageEyebrow } from "../../components/PageTitle";
 import { formatPhoneMask } from "../../utils/formatPhone";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import {
+  IMAGE_UPLOAD_MAX_BYTES,
+  imageUploadHint,
+  imageUploadTooLargeMessage,
+} from "../../utils/imageUpload";
+import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
+import { buttonClassName } from "../../components/Button";
+
+function arenaPublicUrl(info: IInfo | null): string | null {
+  if (!info) return null;
+  if (info.slug) {
+    return `${MPN_PUBLIC_SITE_URL}/encontre-onde-jogar/${info.slug}`;
+  }
+  return info.link || null;
+}
 
 function RealInfo() {
   const navigate = useNavigate();
@@ -39,6 +61,7 @@ function RealInfo() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [removingPhotoId, setRemovingPhotoId] = useState<number | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -115,9 +138,9 @@ function RealInfo() {
       });
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
       notifyError({
-        message: "A imagem deve ter no máximo 2 MB.",
+        message: imageUploadTooLargeMessage(),
         type: "error",
       });
       return;
@@ -163,9 +186,9 @@ function RealInfo() {
       });
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
       notifyError({
-        message: "A imagem deve ter no máximo 2 MB.",
+        message: imageUploadTooLargeMessage(),
         type: "error",
       });
       return;
@@ -216,6 +239,22 @@ function RealInfo() {
 
   const isInitialLoading = loading && !info;
   const logoUrl = info?.logoUrl || null;
+  const publicArenaUrl = arenaPublicUrl(info);
+  const arenaPublished = Boolean(info?.isActive);
+
+  const copyArenaLink = async () => {
+    if (!publicArenaUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicArenaUrl);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      notifyError({
+        message: "Não foi possível copiar. Selecione o link manualmente.",
+        type: "error",
+      });
+    }
+  };
 
   return (
     <AppLayout>
@@ -251,6 +290,78 @@ function RealInfo() {
                   <p className="mt-2 text-base text-text-light/70">
                     {formatPhoneMask(info.companyPhone)}
                   </p>
+                )}
+
+                {publicArenaUrl && (
+                  <div className="mt-5 rounded-xl bg-master/50 p-3.5 sm:p-4">
+                    <div className="flex items-start gap-2.5">
+                      <MdOutlineLink
+                        size={22}
+                        className="mt-0.5 shrink-0 text-accent-blue-soft"
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-text-light">
+                          Link da sua quadra
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-text-light/60">
+                          {arenaPublished
+                            ? "Compartilhe com clientes para verem horários e reservar."
+                            : "Ative pelo menos uma quadra no site para a página ficar pública."}
+                        </p>
+                        <a
+                          href={publicArenaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 block break-all text-sm font-medium text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                        >
+                          {publicArenaUrl}
+                        </a>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void copyArenaLink()}
+                            className={buttonClassName({
+                              variant: "secondary",
+                              size: "md",
+                              fullWidth: false,
+                              className: "inline-flex items-center gap-1.5 !min-h-11 px-3.5 text-sm",
+                            })}
+                          >
+                            <MdContentCopy size={18} aria-hidden />
+                            {linkCopied ? "Copiado!" : "Copiar link"}
+                          </button>
+                          <a
+                            href={publicArenaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={buttonClassName({
+                              variant: "ghost",
+                              size: "md",
+                              fullWidth: false,
+                              className: "inline-flex items-center gap-1.5 !min-h-11 px-3.5 text-sm",
+                            })}
+                          >
+                            <MdOpenInNew size={18} aria-hidden />
+                            Abrir
+                          </a>
+                          {!arenaPublished ? (
+                            <Link
+                              to="/quadras"
+                              className={buttonClassName({
+                                variant: "primary",
+                                size: "md",
+                                fullWidth: false,
+                                className: "inline-flex !min-h-11 px-3.5 text-sm",
+                              })}
+                            >
+                              Ativar no site
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 <input
@@ -293,7 +404,7 @@ function RealInfo() {
                     {!uploadingLogo && (
                       <>
                         <br />
-                        JPG, PNG ou WebP · até 2 MB
+                        {imageUploadHint()}
                       </>
                     )}
                   </span>
@@ -360,7 +471,7 @@ function RealInfo() {
                     ) : null}
                   </ul>
                   <p className="mt-2 text-xs text-text-light/45">
-                    JPG, PNG ou WebP · até 2 MB cada · {photos.length}/3
+                    {imageUploadHint()} cada · {photos.length}/3
                   </p>
                 </div>
               </div>

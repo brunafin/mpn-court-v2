@@ -21,8 +21,11 @@ import {
   onlyCepDigits,
 } from "../../../utils/formatCep";
 import { formatPhoneMask, onlyPhoneDigits } from "../../../utils/formatPhone";
-
-const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+import {
+  IMAGE_UPLOAD_MAX_BYTES,
+  imageUploadHint,
+  imageUploadTooLargeMessage,
+} from "../../../utils/imageUpload";
 
 function OnboardingArena() {
   const navigate = useNavigate();
@@ -113,8 +116,8 @@ function OnboardingArena() {
       setLogoError("Use uma imagem JPG, PNG ou WebP.");
       return;
     }
-    if (file.size > LOGO_MAX_BYTES) {
-      setLogoError("A imagem deve ter no máximo 2 MB.");
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+      setLogoError(imageUploadTooLargeMessage());
       return;
     }
 
@@ -411,7 +414,7 @@ function OnboardingArena() {
                   ? "Clique para alterar o logo"
                   : "Clique para enviar o logo"}
                 <br />
-                JPG, PNG ou WebP · até 2 MB
+                {imageUploadHint()}
               </span>
             </button>
             {logoPreview && (
