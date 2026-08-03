@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
-import { ReservationStatusEnum } from "../enum";
+import {
+  isBookedStatus,
+  normalizeReservationStatus,
+  ReservationStatusEnum,
+} from "../enum";
 import { MdChevronRight, MdOutlineCelebration, MdOutlineRestaurant } from "react-icons/md";
 import { IReservationItemProps } from "../interface";
 import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
@@ -116,10 +120,14 @@ function ReservationItem({
 }) {
   const isPastDate =
     new Date(`${date}T${time}`) < new Date(new Date().setSeconds(0, 0));
-  const statusMeta = getStatusMeta(status);
-  const isAvailable = status === ReservationStatusEnum.AVAILABLE;
-  const isInactive = status === ReservationStatusEnum.INACTIVE;
+  const normalizedStatus =
+    normalizeReservationStatus(status) ?? status;
+  const statusMeta = getStatusMeta(normalizedStatus);
+  const isAvailable = normalizedStatus === ReservationStatusEnum.AVAILABLE;
+  const isInactive = normalizedStatus === ReservationStatusEnum.INACTIVE;
   const isPastAvailable = isAvailable && isPastDate;
+  // Passado: só reserva/fixo abre (consulta). Livre encerrado não tem detalhe útil.
+  const canOpenDetails = !isPastDate || isBookedStatus(normalizedStatus);
 
   // Passados: ícone/barra/detalhes mais escuros para não competir com o dia atual.
   const { label, barClass, iconWrapClass, Icon, markerIconClass } = isPastDate
@@ -201,7 +209,7 @@ function ReservationItem({
               {rightLabel}
             </span>
 
-            {!isPastAvailable && (
+            {canOpenDetails && (
               <MdChevronRight
                 size={20}
                 className={`shrink-0 ${
@@ -227,11 +235,7 @@ function ReservationItem({
 
   return (
     <li>
-      {isPastAvailable ? (
-        <div className={cardClassName} aria-label={ariaLabel}>
-          {cardBody}
-        </div>
-      ) : (
+      {canOpenDetails ? (
         <Link
           to={`/reservas/${scheduleId}`}
           state={{
@@ -245,6 +249,10 @@ function ReservationItem({
         >
           {cardBody}
         </Link>
+      ) : (
+        <div className={cardClassName} aria-label={ariaLabel}>
+          {cardBody}
+        </div>
       )}
     </li>
   );

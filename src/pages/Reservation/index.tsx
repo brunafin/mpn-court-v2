@@ -308,17 +308,9 @@ function Reservation() {
   const showUnreadBadge = dayUnreadCount > 0;
   const hasActiveFilters = Boolean(statusSelected || customerQuery.trim());
   const dayTitle = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
-  const agendaScrollRef = useRef<HTMLDivElement>(null);
 
   const shiftDay = useCallback((deltaDays: -1 | 1) => {
     setDate((current) => startOfDay(addDays(current, deltaDays)));
-    // Mantém a faixa de dias no topo após trocar o dia.
-    window.requestAnimationFrame(() => {
-      const sticky = agendaScrollRef.current?.querySelector(
-        "[data-agenda-day-sticky]",
-      );
-      sticky?.scrollIntoView({ block: "start", behavior: "auto" });
-    });
   }, []);
 
   const daySwipe = useDaySwipe(shiftDay);
@@ -431,7 +423,6 @@ function Reservation() {
       ) : (
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master text-text-light">
         <div
-          ref={agendaScrollRef}
           className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
           {...daySwipe}
         >
