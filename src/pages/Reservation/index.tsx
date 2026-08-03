@@ -468,7 +468,7 @@ function Reservation() {
 
           <div
             data-agenda-day-sticky
-            className="sticky top-0 z-20 border-b border-text-light/8 bg-master-light px-3 pb-2.5 pt-1.5 lg:bg-master lg:px-8 lg:pb-3 lg:pt-2"
+            className="sticky top-0 z-10 border-b border-text-light/8 bg-master-light px-3 pb-2.5 pt-1.5 lg:bg-master lg:px-8 lg:pb-3 lg:pt-2"
           >
             <div className="mx-auto w-full lg:max-w-6xl">
               <div data-no-day-swipe>
