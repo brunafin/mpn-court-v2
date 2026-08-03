@@ -39,6 +39,8 @@ interface IInputProps {
   describedBy?: string;
   error?: string;
   maxLength?: number;
+  showCount?: boolean;
+  onBeforeInput?: (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
 function Input({
@@ -65,6 +67,8 @@ function Input({
   describedBy,
   error,
   maxLength,
+  showCount = false,
+  onBeforeInput,
 }: IInputProps) {
   const isDark = mode === "dark";
   const isPassword = type === "password";
@@ -75,9 +79,11 @@ function Input({
     /password|email|phone|telefone|cpf|senha|contato|^name$/i.test(name);
   const [showPassword, setShowPassword] = useState(false);
   const errorId = error ? `${name}-error` : undefined;
+  const countId = maxLength && showCount ? `${name}-count` : undefined;
   const describedByIds =
-    [describedBy, errorId].filter(Boolean).join(" ") || undefined;
+    [describedBy, errorId, countId].filter(Boolean).join(" ") || undefined;
   const inputType = isPassword && showPassword ? "text" : type;
+  const currentLength = value?.length ?? 0;
 
   const fieldClass = `w-full min-h-14 rounded-xl px-4 py-3.5 text-lg font-medium leading-7 tracking-normal
     focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
@@ -131,6 +137,7 @@ function Input({
           onKeyDown={onKeyDown}
           onKeyUp={onKeyUp}
           onKeyPress={onKeyPress}
+          onBeforeInput={onBeforeInput}
           onClick={onClick}
           required={required}
           readOnly={readOnly}
@@ -163,6 +170,16 @@ function Input({
           className="mt-1.5 text-base font-medium text-danger-400"
         >
           {error}
+        </p>
+      )}
+      {maxLength && showCount && (
+        <p
+          id={countId}
+          className={`mt-1.5 text-right text-sm font-medium ${
+            isDark ? "text-text-light/70" : "text-neutral-600"
+          }`}
+        >
+          {currentLength}/{maxLength}
         </p>
       )}
     </div>

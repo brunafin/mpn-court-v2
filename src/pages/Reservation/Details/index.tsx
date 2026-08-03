@@ -29,6 +29,7 @@ import {
 } from "../../../utils/formatPhone";
 import {
   PERSON_NAME_MAX_LENGTH,
+  personNameInsertHasDisallowedChars,
   sanitizePersonName,
   sanitizePersonNameInput,
 } from "../../../utils/sanitizePersonName";
@@ -756,6 +757,13 @@ function ReservationDetails() {
                       );
                       if (nameError) setNameError("");
                     }}
+                    onBeforeInput={(e) => {
+                      const native = e.nativeEvent as InputEvent;
+                      if (native.isComposing || native.data == null) return;
+                      if (personNameInsertHasDisallowedChars(native.data)) {
+                        e.preventDefault();
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -768,6 +776,7 @@ function ReservationDetails() {
                     autoCapitalize="words"
                     enterKeyHint="next"
                     maxLength={PERSON_NAME_MAX_LENGTH}
+                    showCount
                     error={nameError || undefined}
                   />
                   <Input
@@ -952,6 +961,13 @@ function ReservationDetails() {
                   sanitizePersonNameInput(e.target.value),
                 )
               }
+              onBeforeInput={(e) => {
+                const native = e.nativeEvent as InputEvent;
+                if (native.isComposing || native.data == null) return;
+                if (personNameInsertHasDisallowedChars(native.data)) {
+                  e.preventDefault();
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -964,6 +980,7 @@ function ReservationDetails() {
               autoCapitalize="words"
               enterKeyHint="next"
               maxLength={PERSON_NAME_MAX_LENGTH}
+              showCount
             />
             <Input
               name="contact-phone"
