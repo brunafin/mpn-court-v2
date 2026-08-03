@@ -44,10 +44,7 @@ function DateStrip({
   return (
     <div
       className="overflow-hidden rounded-2xl bg-master lg:rounded-none lg:bg-transparent"
-      onTouchStart={(event) => event.stopPropagation()}
-      onTouchMove={(event) => event.stopPropagation()}
-      onTouchEnd={(event) => event.stopPropagation()}
-      onTouchCancel={(event) => event.stopPropagation()}
+      data-no-day-swipe
     >
       <div className="flex gap-3 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-2.5 lg:px-0 lg:py-0">
         {days.map((day) => {

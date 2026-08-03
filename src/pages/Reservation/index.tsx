@@ -466,7 +466,7 @@ function Reservation() {
 
         <div
           ref={agendaScrollRef}
-          className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-y-contain"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
           {...daySwipe}
         >
           <div className="sticky top-0 z-20 border-b border-text-light/8 bg-master-light/95 px-3 pb-3 pt-1 backdrop-blur-sm lg:bg-master/95 lg:px-8 lg:pb-4 lg:pt-2">
