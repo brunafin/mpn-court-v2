@@ -72,7 +72,7 @@ function App() {
       className={
         authShell
           ? "flex min-h-dvh flex-col bg-master"
-          : "flex min-h-dvh flex-col bg-master lg:h-dvh lg:overflow-hidden"
+          : "flex h-dvh flex-col overflow-hidden bg-master"
       }
     >
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (

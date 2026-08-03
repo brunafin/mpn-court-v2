@@ -312,7 +312,13 @@ function Reservation() {
 
   const shiftDay = useCallback((deltaDays: -1 | 1) => {
     setDate((current) => startOfDay(addDays(current, deltaDays)));
-    agendaScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    // Mantém a faixa de dias no topo após trocar o dia.
+    window.requestAnimationFrame(() => {
+      const sticky = agendaScrollRef.current?.querySelector(
+        "[data-agenda-day-sticky]",
+      );
+      sticky?.scrollIntoView({ block: "start", behavior: "auto" });
+    });
   }, []);
 
   const daySwipe = useDaySwipe(shiftDay);
@@ -424,56 +430,61 @@ function Reservation() {
         </section>
       ) : (
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master text-text-light">
-        <div className="shrink-0 bg-master-light px-3 pb-2 pt-2 lg:bg-transparent lg:px-8 lg:pb-3 lg:pt-5">
-          <div className="mx-auto w-full lg:max-w-6xl">
-            <div className="flex items-center justify-between gap-2">
-              <CalendarButton selectedDate={date} setSelectedDate={setDate} />
-              <div className="flex shrink-0 items-center gap-1">
-                <Link
-                  to="/configuracoes-horarios"
-                  state={{ date }}
-                  aria-label="Detalhes do dia"
-                  className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-full lg:bg-master"
-                >
-                  <MdOutlineEventNote size={22} aria-hidden />
-                </Link>
-                <Link
-                  to="/notificacoes"
-                  state={{ date }}
-                  aria-label={
-                    showUnreadBadge
-                      ? `Lembretes do dia, ${dayUnreadCount} não lidos`
-                      : "Lembretes do dia"
-                  }
-                  className={`mpn-tap relative flex size-11 items-center justify-center rounded-xl text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-full lg:bg-master ${
-                    showUnreadBadge
-                      ? "ring-1 ring-inset ring-accent-blue/40"
-                      : ""
-                  }`}
-                >
-                  <MdOutlineNotifications size={22} aria-hidden />
-                  {showUnreadBadge && (
-                    <ReminderBadge
-                      count={dayUnreadCount}
-                      className="absolute -right-0.5 -top-0.5 min-h-5 min-w-5 px-1 text-[11px]"
-                    />
-                  )}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div
           ref={agendaScrollRef}
           className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
           {...daySwipe}
         >
-          <div className="sticky top-0 z-20 border-b border-text-light/8 bg-master-light/95 px-3 pb-3 pt-1 backdrop-blur-sm lg:bg-master/95 lg:px-8 lg:pb-4 lg:pt-2">
+          <div className="bg-master-light px-3 pb-3 pt-2 lg:bg-transparent lg:px-8 lg:pb-4 lg:pt-5">
             <div className="mx-auto w-full lg:max-w-6xl">
-              <DateStrip selectedDate={date} setSelectedDate={setDate} />
+              <div className="mb-2 flex items-center justify-between gap-2 lg:mb-4">
+                <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+                <div className="flex shrink-0 items-center gap-1">
+                  <Link
+                    to="/configuracoes-horarios"
+                    state={{ date }}
+                    aria-label="Detalhes do dia"
+                    className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-full lg:bg-master"
+                  >
+                    <MdOutlineEventNote size={22} aria-hidden />
+                  </Link>
+                  <Link
+                    to="/notificacoes"
+                    state={{ date }}
+                    aria-label={
+                      showUnreadBadge
+                        ? `Lembretes do dia, ${dayUnreadCount} não lidos`
+                        : "Lembretes do dia"
+                    }
+                    className={`mpn-tap relative flex size-11 items-center justify-center rounded-xl text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-full lg:bg-master ${
+                      showUnreadBadge
+                        ? "ring-1 ring-inset ring-accent-blue/40"
+                        : ""
+                    }`}
+                  >
+                    <MdOutlineNotifications size={22} aria-hidden />
+                    {showUnreadBadge && (
+                      <ReminderBadge
+                        count={dayUnreadCount}
+                        className="absolute -right-0.5 -top-0.5 min-h-5 min-w-5 px-1 text-[11px]"
+                      />
+                    )}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            data-agenda-day-sticky
+            className="sticky top-0 z-20 border-b border-text-light/8 bg-master-light px-3 pb-2.5 pt-1.5 lg:bg-master lg:px-8 lg:pb-3 lg:pt-2"
+          >
+            <div className="mx-auto w-full lg:max-w-6xl">
+              <div data-no-day-swipe>
+                <DateStrip selectedDate={date} setSelectedDate={setDate} />
+              </div>
               <p
-                className="mt-2 truncate text-sm font-semibold capitalize text-text-light/70 lg:mt-3 lg:text-base"
+                className="mt-2 truncate px-1 text-sm font-semibold capitalize text-text-light/70 lg:text-base"
                 aria-live="polite"
               >
                 {dayTitle}
@@ -483,13 +494,15 @@ function Reservation() {
 
           <div className="bg-master-light px-3 pb-4 pt-3 lg:bg-transparent lg:px-8 lg:pb-5 lg:pt-4">
             <div className="mx-auto w-full lg:max-w-6xl">
-              <LegendAndFilters
-                statusSelected={statusSelected}
-                setStatusSelected={setStatusSelected}
-                courtsNameList={courtsNameList}
-                courtSelected={courtSelected}
-                setCourtSelected={setCourtSelected}
-              />
+              <div data-no-day-swipe>
+                <LegendAndFilters
+                  statusSelected={statusSelected}
+                  setStatusSelected={setStatusSelected}
+                  courtsNameList={courtsNameList}
+                  courtSelected={courtSelected}
+                  setCourtSelected={setCourtSelected}
+                />
+              </div>
 
               <label className="mt-3 block">
                 <span className="sr-only">Buscar cliente no dia</span>

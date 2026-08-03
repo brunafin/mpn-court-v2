@@ -108,7 +108,7 @@ function LegendAndFilters({
     "flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:flex-wrap lg:overflow-visible";
 
   return (
-    <div className="flex flex-col gap-2.5" data-no-day-swipe>
+    <div className="flex flex-col gap-2.5">
       {hasCourts ? (
         <div
           role="group"
