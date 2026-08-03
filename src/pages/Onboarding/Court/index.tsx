@@ -22,6 +22,10 @@ import {
 } from "../../../onboarding/mockStore";
 import { getAccessToken } from "../../../utils/authCookie";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
+import {
+  capCourtPriceDigits,
+  MAX_COURT_PRICE_REAIS,
+} from "../../../utils/courtPrice";
 
 function scrollCourtPageToTop(pageEl: HTMLElement | null) {
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -144,7 +148,7 @@ function OnboardingCourt() {
   );
 
   const handleSlotPriceChange = (dayKey: WeekDayKey, hour: string, raw: string) => {
-    const digits = raw.replace(/\D/g, "");
+    const digits = capCourtPriceDigits(raw.replace(/\D/g, ""));
     const key = slotKey(dayKey, hour);
     setSlotPriceDigits((prev) => {
       const next = { ...prev };
@@ -165,6 +169,12 @@ function OnboardingCourt() {
 
     if (price <= 0) {
       setFormError("Informe o preço padrão da quadra.");
+      return;
+    }
+    if (price > MAX_COURT_PRICE_REAIS) {
+      setFormError(
+        `O valor máximo por horário é ${formatCurrencyBRL(MAX_COURT_PRICE_REAIS)}.`,
+      );
       return;
     }
 
@@ -188,6 +198,12 @@ function OnboardingCourt() {
           if (!(slotPrice > 0)) {
             setFormError(
               `Informe o preço de ${day.dayLabel} às ${hour}.`,
+            );
+            return;
+          }
+          if (slotPrice > MAX_COURT_PRICE_REAIS) {
+            setFormError(
+              `O valor máximo por horário é ${formatCurrencyBRL(MAX_COURT_PRICE_REAIS)}.`,
             );
             return;
           }
@@ -359,13 +375,16 @@ function OnboardingCourt() {
                   }
                   onChange={(e) => {
                     const digits = e.target.value.replace(/\D/g, "");
-                    setPriceDigits(digits === "" ? "" : digits);
+                    setPriceDigits(capCourtPriceDigits(digits));
                     if (formError) setFormError("");
                   }}
                   required
                   className="mt-1"
                   error={
-                    formError.includes("preço padrão") ? formError : undefined
+                    formError.includes("preço padrão") ||
+                    formError.includes("valor máximo")
+                      ? formError
+                      : undefined
                   }
                 />
 

@@ -12,6 +12,11 @@ import { invalidateSchedulesDayCache } from "../../../utils/schedulesDayCache";
 import {
   getAccessTokenPayload,
 } from "../../../utils/authCookie";
+import {
+  capCourtPriceDigits,
+  MAX_COURT_PRICE_REAIS,
+} from "../../../utils/courtPrice";
+import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 
 interface IAddCourtScheduleProps {
   show: boolean;
@@ -101,6 +106,13 @@ function AddCourtSchedule({
 
     if (missingCourt || missingHour || missingPrice) {
       setError("Preencha os campos obrigatórios.");
+      return;
+    }
+
+    if (price !== null && price > MAX_COURT_PRICE_REAIS) {
+      setError(
+        `O valor máximo por horário é ${formatCurrencyBRL(MAX_COURT_PRICE_REAIS)}.`,
+      );
       return;
     }
 
@@ -250,7 +262,8 @@ function AddCourtSchedule({
                 setPrice(null);
                 return;
               }
-              setPrice(Number(val) / 100);
+              const capped = capCourtPriceDigits(val);
+              setPrice(Number(capped) / 100);
               setError("");
             }}
           />

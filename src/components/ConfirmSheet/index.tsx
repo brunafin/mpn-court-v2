@@ -12,6 +12,8 @@ type ConfirmSheetProps = {
   cancelLabel?: string;
   tone?: ConfirmTone;
   loading?: boolean;
+  /** Só o botão de ação (ex.: erro que precisa ser lido). */
+  alertOnly?: boolean;
   onConfirm: () => void | Promise<void>;
   onClose: () => void;
 };
@@ -31,6 +33,7 @@ function ConfirmSheet({
   cancelLabel = "Cancelar",
   tone = "primary",
   loading = false,
+  alertOnly = false,
   onConfirm,
   onClose,
 }: ConfirmSheetProps) {
@@ -122,19 +125,21 @@ function ConfirmSheet({
         </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className={buttonClassName({
-              variant: "ghost",
-              size: "lg",
-              fullWidth: false,
-              className: "w-full bg-master sm:w-auto",
-            })}
-          >
-            {cancelLabel}
-          </button>
+          {!alertOnly && (
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className={buttonClassName({
+                variant: "ghost",
+                size: "lg",
+                fullWidth: false,
+                className: "w-full bg-master sm:w-auto",
+              })}
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             ref={confirmRef}
             type="button"

@@ -38,6 +38,7 @@ interface IInputProps {
     | "send";
   describedBy?: string;
   error?: string;
+  maxLength?: number;
 }
 
 function Input({
@@ -63,6 +64,7 @@ function Input({
   enterKeyHint,
   describedBy,
   error,
+  maxLength,
 }: IInputProps) {
   const isDark = mode === "dark";
   const isPassword = type === "password";
@@ -132,6 +134,7 @@ function Input({
           onClick={onClick}
           required={required}
           readOnly={readOnly}
+          maxLength={maxLength}
         />
         {isPassword && (
           <button

@@ -31,6 +31,7 @@ import {
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { isPaidEntitlement } from "../../utils/billingNav";
+import { formatCpfMask } from "../../utils/formatCpf";
 
 const WHATSAPP_CONTRACT =
   import.meta.env.VITE_WHATSAPP_CONTRACT_URL ||
@@ -310,7 +311,7 @@ function PlansPage() {
                     autoComplete="off"
                     placeholder="000.000.000-00"
                     value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
+                    onChange={(e) => setCpf(formatCpfMask(e.target.value))}
                     className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
                   />
                   <button

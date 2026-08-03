@@ -56,9 +56,25 @@ function handleSessionExpired() {
 
 type ApiErrorBody = {
   code?: string;
-  message?: string | { code?: string; message?: string };
+  message?: string | string[] | { code?: string; message?: string };
   error?: string;
 };
+
+function messageFromBody(
+  data: ApiErrorBody | undefined,
+): string | undefined {
+  if (!data) return undefined;
+  const raw = data.message;
+  if (typeof raw === 'string' && raw.trim()) return raw.trim();
+  if (Array.isArray(raw)) {
+    const joined = raw.filter((m) => typeof m === 'string' && m.trim()).join(' ');
+    return joined || undefined;
+  }
+  if (raw && typeof raw === 'object' && typeof raw.message === 'string') {
+    return raw.message.trim() || undefined;
+  }
+  return undefined;
+}
 
 function parseApiError(error: unknown): {
   status?: number;
@@ -71,20 +87,17 @@ function parseApiError(error: unknown): {
     ?.data;
 
   const nested =
-    data?.message && typeof data.message === 'object' ? data.message : null;
-  const code = data?.code || nested?.code;
-  const message =
-    typeof data?.message === 'string'
+    data?.message && typeof data.message === 'object' && !Array.isArray(data.message)
       ? data.message
-      : typeof nested?.message === 'string'
-        ? nested.message
-        : undefined;
+      : null;
+  const code = data?.code || nested?.code;
+  const message = messageFromBody(data);
 
   return { status, code, message };
 }
 
 /** Mensagens conhecidas da API são exibidas; demais 4xx/5xx ficam genéricas. */
-function userFacingErrorMessage(error: unknown): string {
+export function userFacingErrorMessage(error: unknown): string {
   const { status, code, message } = parseApiError(error);
 
   if (code === 'PRODUCT_INACTIVE' || code === 'ACCOUNT_READ_ONLY') {
@@ -99,14 +112,19 @@ function userFacingErrorMessage(error: unknown): string {
   if (status === 403) {
     return message || 'Você não tem permissão para esta ação.';
   }
-  if (status === 404) {
-    return 'Recurso não encontrado.';
+  if (status === 404 || status === 409) {
+    return message || (status === 409
+      ? 'Não foi possível concluir por conflito com outro registro.'
+      : 'Recurso não encontrado.');
   }
   if (status === 429) {
     return 'Muitas tentativas. Aguarde um momento e tente de novo.';
   }
   if (typeof status === 'number' && status >= 500) {
     return 'Serviço temporariamente indisponível. Tente novamente.';
+  }
+  if (message && typeof status === 'number' && status >= 400 && status < 500) {
+    return message;
   }
   return 'Não foi possível concluir a operação. Tente novamente.';
 }
@@ -121,6 +139,7 @@ api.interceptors.response.use(
     const isCpfRequired =
       data?.code === 'CPF_REQUIRED' ||
       (typeof data?.message === 'object' &&
+        !Array.isArray(data?.message) &&
         data?.message?.code === 'CPF_REQUIRED') ||
       (error?.response?.status === 422 && /CPF/i.test(messageText));
     const silent = Boolean(error?.config?.silentError);

@@ -62,9 +62,16 @@ interface ICreateReservation {
   sportId: number;
 }
 
-export const createReservation = async (data: ICreateReservation) => {
+export const createReservation = async (
+  data: ICreateReservation,
+  options?: { silentError?: boolean },
+) => {
   try {
-    const response = await api.post<IReservationDetailsItemProps>('/reservation', data);
+    const response = await api.post<IReservationDetailsItemProps>(
+      '/reservation',
+      data,
+      { silentError: options?.silentError },
+    );
     return response.data;
   } catch (error) {
     console.error('Erro ao reservar:', error);
@@ -104,18 +111,31 @@ export const updatePhoneContact = async (
   }
 }
 
-export const cancelReservation = async (publicId: string): Promise<void> => {
+export const cancelReservation = async (
+  publicId: string,
+  options?: { silentError?: boolean },
+): Promise<void> => {
   try {
-    await api.delete(`/reservation/${publicId}`);
+    await api.delete(`/reservation/${publicId}`, {
+      silentError: options?.silentError,
+    });
   } catch (error) {
     console.error('Erro ao cancelar reserva:', error);
     throw error;
   }
 }
 
-export const changeAvailability = async (courtScheduleId: string, available: boolean): Promise<void> => {
+export const changeAvailability = async (
+  courtScheduleId: string,
+  available: boolean,
+  options?: { silentError?: boolean },
+): Promise<void> => {
   try {
-    await api.patch(`court-schedules/${courtScheduleId}/availability`, { available })
+    await api.patch(
+      `court-schedules/${courtScheduleId}/availability`,
+      { available },
+      { silentError: options?.silentError },
+    );
   } catch (error) {
     console.error('Erro ao alterar a disponibilidade do horário:', error);
     throw error;
@@ -151,13 +171,25 @@ interface IFixOrUnfixSchedule {
   court_schedule_public_id: string;
 }
 
-export const fixSchedule = async (data: IFixOrUnfixSchedule): Promise<void> => {
-  await api.post('/court-schedules/fix', data, { timeout: 30000 });
+export const fixSchedule = async (
+  data: IFixOrUnfixSchedule,
+  options?: { silentError?: boolean },
+): Promise<void> => {
+  await api.post('/court-schedules/fix', data, {
+    timeout: 30000,
+    silentError: options?.silentError,
+  });
 };
 
-export const unfixSchedule = async (data: IFixOrUnfixSchedule): Promise<void> => {
+export const unfixSchedule = async (
+  data: IFixOrUnfixSchedule,
+  options?: { silentError?: boolean },
+): Promise<void> => {
   try {
-    await api.post('/court-schedules/unfix', data, { timeout: 30000 });
+    await api.post('/court-schedules/unfix', data, {
+      timeout: 30000,
+      silentError: options?.silentError,
+    });
   } catch (error) {
     console.error('Erro ao desfixar horário:', error);
     throw error;

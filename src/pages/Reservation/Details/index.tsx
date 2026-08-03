@@ -21,11 +21,17 @@ import {
   updateObservationByPublicId,
   updatePhoneContact,
 } from "../../../api/schedules";
+import { userFacingErrorMessage } from "../../../api/axios";
 import {
   formatPhoneMask,
   onlyPhoneDigits,
   PHONE_MASK_PLACEHOLDER,
 } from "../../../utils/formatPhone";
+import {
+  PERSON_NAME_MAX_LENGTH,
+  sanitizePersonName,
+  sanitizePersonNameInput,
+} from "../../../utils/sanitizePersonName";
 import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
 import { getAccessTokenPayload } from "../../../utils/authCookie";
 import { invalidateSchedulesDayCache } from "../../../utils/schedulesDayCache";
@@ -55,6 +61,11 @@ type ConfirmAction = {
   confirmLabel: string;
   tone: ConfirmTone;
   run: () => Promise<void>;
+};
+
+type ActionAlert = {
+  title: string;
+  description: string;
 };
 
 function ReservationDetails() {
@@ -90,6 +101,7 @@ function ReservationDetails() {
     null
   );
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [actionAlert, setActionAlert] = useState<ActionAlert | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savingObservation, setSavingObservation] = useState(false);
@@ -171,13 +183,15 @@ function ReservationDetails() {
       });
       return;
     }
-    if (!customerReservationName?.trim()) {
-      setNameError("Informe o nome do cliente");
+    const contactName = sanitizePersonName(customerReservationName ?? "");
+    if (!contactName) {
+      setNameError("Informe o nome do cliente (sem emojis)");
       window.requestAnimationFrame(() => {
         document.getElementById("name")?.focus();
       });
       return;
     }
+    setCustomerReservationName(contactName);
     setNameError("");
     if (!court?.scheduleId) {
       notifyError({
@@ -190,18 +204,21 @@ function ReservationDetails() {
 
     setIsSubmitting(true);
     try {
-      const response = await createReservation({
-        contactName: customerReservationName,
-        contactPhone:
-          customerReservationPhone && customerReservationPhone.trim().length > 0
-            ? customerReservationPhone
-            : "",
-        courtSchedulePublicId: court?.scheduleId,
-        observation,
-        isBarbecueIncluded,
-        isEvent,
-        sportId: sportSelected?.id || courtSports[0]?.id,
-      });
+      const response = await createReservation(
+        {
+          contactName,
+          contactPhone:
+            customerReservationPhone && customerReservationPhone.trim().length > 0
+              ? customerReservationPhone
+              : "",
+          courtSchedulePublicId: court?.scheduleId,
+          observation,
+          isBarbecueIncluded,
+          isEvent,
+          sportId: sportSelected?.id || courtSports[0]?.id,
+        },
+        { silentError: true },
+      );
       if (response) {
         invalidateAgendaCache();
         navigate("/reservas", {
@@ -210,9 +227,9 @@ function ReservationDetails() {
       }
     } catch (error) {
       console.error(error);
-      notifyError({
-        message: "Não foi possível reservar o horário. Tente novamente.",
-        type: "error",
+      setActionAlert({
+        title: "Não foi possível reservar",
+        description: userFacingErrorMessage(error),
       });
     } finally {
       setIsSubmitting(false);
@@ -220,14 +237,19 @@ function ReservationDetails() {
   };
 
   const handleUpdatePhoneContact = async () => {
-    const contactName =
-      customerReservationName?.trim() ||
-      court?.reservation?.contactName ||
-      "";
+    const contactName = sanitizePersonName(
+      customerReservationName ?? court?.reservation?.contactName ?? "",
+    );
     const contactPhone =
       customerReservationPhone || court?.reservation?.contactPhone || "";
 
     if (!contactName || !contactPhone || !court?.scheduleId || !id) {
+      if (!contactName) {
+        notifyError({
+          message: "Informe o nome do cliente (sem emojis)",
+          type: "error",
+        });
+      }
       return;
     }
     await withLoading(async () => {
@@ -354,9 +376,10 @@ function ReservationDetails() {
         confirmLabel: "Liberar fixo",
         tone: "success",
         run: async () => {
-          await unfixSchedule({
-            court_schedule_public_id: court?.scheduleId || "",
-          });
+          await unfixSchedule(
+            { court_schedule_public_id: court?.scheduleId || "" },
+            { silentError: true },
+          );
           goBackToList();
         },
       });
@@ -368,7 +391,9 @@ function ReservationDetails() {
         confirmLabel: "Ativar horário",
         tone: "success",
         run: async () => {
-          await changeAvailability(court?.scheduleId || "", true);
+          await changeAvailability(court?.scheduleId || "", true, {
+            silentError: true,
+          });
           goBackToList();
         },
       });
@@ -383,9 +408,10 @@ function ReservationDetails() {
         confirmLabel: "Fixar horário",
         tone: "neutral",
         run: async () => {
-          await fixSchedule({
-            court_schedule_public_id: court?.scheduleId || "",
-          });
+          await fixSchedule(
+            { court_schedule_public_id: court?.scheduleId || "" },
+            { silentError: true },
+          );
           goBackToList();
         },
       });
@@ -398,7 +424,9 @@ function ReservationDetails() {
         confirmLabel: "Inativar",
         tone: "danger",
         run: async () => {
-          await changeAvailability(court?.scheduleId || "", false);
+          await changeAvailability(court?.scheduleId || "", false, {
+            silentError: true,
+          });
           goBackToList();
         },
       });
@@ -413,7 +441,9 @@ function ReservationDetails() {
       confirmLabel: "Cancelar reserva",
       tone: "danger",
       run: async () => {
-        await cancelReservation(String(court?.reservation?.publicId));
+        await cancelReservation(String(court?.reservation?.publicId), {
+          silentError: true,
+        });
         goBackToList();
       },
     });
@@ -427,12 +457,11 @@ function ReservationDetails() {
         await confirmAction.run();
       });
       setConfirmAction(null);
-    } catch (error: any) {
-      notifyError({
-        message:
-          error?.response?.data?.message ||
-          "Não foi possível concluir a ação. Tente novamente.",
-        type: "error",
+    } catch (error: unknown) {
+      setConfirmAction(null);
+      setActionAlert({
+        title: "Não foi possível concluir",
+        description: userFacingErrorMessage(error),
       });
     } finally {
       setConfirmLoading(false);
@@ -599,7 +628,7 @@ function ReservationDetails() {
                       Observação
                     </p>
                     <p
-                      className={`mt-2 text-base leading-6 whitespace-pre-wrap ${
+                      className={`mt-2 break-words text-base leading-6 whitespace-pre-wrap [overflow-wrap:anywhere] ${
                         observation?.trim()
                           ? "text-text-light/85"
                           : "text-text-light/45"
@@ -722,7 +751,9 @@ function ReservationDetails() {
                     type="text"
                     value={customerReservationName ?? ""}
                     onChange={(e) => {
-                      setCustomerReservationName(e.target.value);
+                      setCustomerReservationName(
+                        sanitizePersonNameInput(e.target.value),
+                      );
                       if (nameError) setNameError("");
                     }}
                     onKeyDown={(e) => {
@@ -736,6 +767,7 @@ function ReservationDetails() {
                     autoComplete="name"
                     autoCapitalize="words"
                     enterKeyHint="next"
+                    maxLength={PERSON_NAME_MAX_LENGTH}
                     error={nameError || undefined}
                   />
                   <Input
@@ -915,7 +947,11 @@ function ReservationDetails() {
               value={
                 customerReservationName ?? court?.reservation?.contactName ?? ""
               }
-              onChange={(e) => setCustomerReservationName(e.target.value)}
+              onChange={(e) =>
+                setCustomerReservationName(
+                  sanitizePersonNameInput(e.target.value),
+                )
+              }
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -927,6 +963,7 @@ function ReservationDetails() {
               autoComplete="name"
               autoCapitalize="words"
               enterKeyHint="next"
+              maxLength={PERSON_NAME_MAX_LENGTH}
             />
             <Input
               name="contact-phone"
@@ -990,6 +1027,17 @@ function ReservationDetails() {
           if (!confirmLoading) setConfirmAction(null);
         }}
         onConfirm={handleConfirmAction}
+      />
+
+      <ConfirmSheet
+        isOpen={!!actionAlert}
+        title={actionAlert?.title || ""}
+        description={actionAlert?.description || ""}
+        confirmLabel="Entendi"
+        tone="danger"
+        alertOnly
+        onClose={() => setActionAlert(null)}
+        onConfirm={() => setActionAlert(null)}
       />
 
       <NewReminderModal

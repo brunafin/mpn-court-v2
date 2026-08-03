@@ -22,6 +22,7 @@ import {
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import { isPaidEntitlement } from "../../utils/billingNav";
+import { formatCpfMask } from "../../utils/formatCpf";
 
 function statusLabel(status: BillingPaymentItem["status"]): string {
   switch (status) {
@@ -261,7 +262,7 @@ function BillingPage() {
                   autoComplete="off"
                   placeholder="000.000.000-00"
                   value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
+                  onChange={(e) => setCpf(formatCpfMask(e.target.value))}
                   className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
                 />
                 <button
