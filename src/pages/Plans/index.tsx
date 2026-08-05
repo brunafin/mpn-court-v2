@@ -8,6 +8,7 @@ import {
 } from "react-icons/md";
 import AppLayout from "../../components/AppLayout";
 import { buttonClassName } from "../../components/Button";
+import ManualPixPay from "../../components/ManualPixPay";
 import { PageEyebrow } from "../../components/PageTitle";
 import {
   useCompanyBranding,
@@ -20,7 +21,7 @@ import {
   BillingSummary,
   getBillingPayment,
   getBillingSummary,
-  isCpfRequiredError,
+  getPayerDataNeeded,
   isPixUnavailableError,
   startBillingContract,
 } from "../../api/billing";
@@ -32,6 +33,7 @@ import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { isPaidEntitlement } from "../../utils/billingNav";
 import { formatCpfMask } from "../../utils/formatCpf";
+import { isManualPixConfigured } from "../../utils/manualPix";
 
 const WHATSAPP_CONTRACT =
   import.meta.env.VITE_WHATSAPP_CONTRACT_URL ||
@@ -61,13 +63,16 @@ function PlansPage() {
   const { notifyError } = useErrors();
   const { loading, withLoading } = useLoading();
   const caps = useCompanyCapabilities();
-  const { refreshCapabilities } = useCompanyBranding();
+  const { refreshCapabilities, companyName } = useCompanyBranding();
+  const manualPix = isManualPixConfigured();
   const [companyPublicId, setCompanyPublicId] = useState("");
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [pix, setPix] = useState<BillingPixPayload | null>(null);
   const [paying, setPaying] = useState(false);
   const [needCpf, setNeedCpf] = useState(false);
+  const [needEmail, setNeedEmail] = useState(false);
   const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -137,7 +142,9 @@ function PlansPage() {
     }
   }, [pix?.paid, caps.ready, caps.entitlement, navigate]);
 
-  const startContract = async (withCpf?: string) => {
+  const needPayerData = needEmail || needCpf;
+
+  const startContract = async (payer?: { cpf?: string; email?: string }) => {
     if (!companyPublicId) return;
     if (!summary?.pixEnabled) {
       openWhatsAppContract();
@@ -145,20 +152,20 @@ function PlansPage() {
     }
     setGenerating(true);
     try {
-      const payload = await startBillingContract(
-        companyPublicId,
-        withCpf ? { cpf: withCpf.replace(/\D/g, "") } : undefined,
-      );
+      const payload = await startBillingContract(companyPublicId, payer);
       setPix(payload);
       setPaying(true);
       setNeedCpf(false);
+      setNeedEmail(false);
     } catch (error) {
       if (isPixUnavailableError(error)) {
         openWhatsAppContract();
         return;
       }
-      if (isCpfRequiredError(error)) {
-        setNeedCpf(true);
+      const needed = getPayerDataNeeded(error);
+      if (needed) {
+        setNeedEmail(needed.email);
+        setNeedCpf(needed.cpf);
         setPaying(true);
         return;
       }
@@ -170,14 +177,22 @@ function PlansPage() {
     }
   };
 
-  const onSubmitCpf = async (event: FormEvent) => {
+  const onSubmitPayerData = async (event: FormEvent) => {
     event.preventDefault();
     const digits = cpf.replace(/\D/g, "");
-    if (digits.length !== 11) {
+    const trimmedEmail = email.trim();
+    if (needEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      notifyError({ message: "Informe um e-mail válido." });
+      return;
+    }
+    if (needCpf && digits.length !== 11) {
       notifyError({ message: "Informe um CPF válido com 11 dígitos." });
       return;
     }
-    await startContract(digits);
+    await startContract({
+      ...(needEmail || trimmedEmail ? { email: trimmedEmail } : {}),
+      ...(needCpf || digits.length === 11 ? { cpf: digits } : {}),
+    });
   };
 
   const copyPix = async () => {
@@ -193,6 +208,13 @@ function PlansPage() {
     }
   };
 
+  const resetPayUi = () => {
+    setPaying(false);
+    setPix(null);
+    setNeedCpf(false);
+    setNeedEmail(false);
+  };
+
   const expired = caps.entitlement === "none";
   const fee = summary?.monthlyFee ?? null;
   const trialEndsLabel = summary?.trialEndsAt
@@ -206,6 +228,15 @@ function PlansPage() {
     : trialEndsLabel
       ? `Aproveite o teste grátis até ${trialEndsLabel} e, quando quiser, contrate o plano mensal para manter a operação da arena no ritmo.`
       : "Aproveite o teste grátis e, quando quiser, contrate o plano mensal para manter a operação da arena no ritmo.";
+
+  const payerHint = [
+    "Para o PIX automático (Mercado Pago), falta:",
+    needEmail && needCpf
+      ? "e-mail e CPF."
+      : needEmail
+        ? "e-mail."
+        : "CPF.",
+  ].join(" ");
 
   return (
     <AppLayout>
@@ -268,52 +299,83 @@ function PlansPage() {
 
               {!paying ? (
                 <>
-                  <button
-                    type="button"
-                    disabled={generating}
-                    onClick={() => void startContract()}
-                    className={`${buttonClassName({
-                      variant: "primary",
-                      size: "lg",
-                    })} mt-6`}
-                  >
-                    {generating
-                      ? "Gerando PIX…"
-                      : summary?.pixEnabled
-                        ? "Gerar PIX"
-                        : "Contrate pelo WhatsApp"}
-                  </button>
-                  <p className="mt-3 text-center text-sm text-text-light/55">
-                    {summary?.pixEnabled
-                      ? "Pague com PIX e o acesso libera na hora."
-                      : "PIX indisponível no momento — falamos no WhatsApp."}
-                  </p>
                   {summary?.pixEnabled ? (
                     <button
                       type="button"
-                      onClick={openWhatsAppContract}
-                      className="mt-2 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                      disabled={generating}
+                      onClick={() => void startContract()}
+                      className={`${buttonClassName({
+                        variant: "primary",
+                        size: "lg",
+                      })} mt-6`}
                     >
-                      Prefere WhatsApp?
+                      {generating
+                        ? "Gerando PIX…"
+                        : "Gerar PIX"}
+                    </button>
+                  ) : null}
+                  <p className="mt-3 text-center text-sm text-text-light/55">
+                    {summary?.pixEnabled
+                      ? "Pague com PIX e o acesso libera na hora — ou use a chave abaixo e envie o comprovante."
+                      : manualPix
+                        ? "Copie a chave PIX e envie o comprovante no WhatsApp para liberarmos o acesso."
+                        : "PIX automático indisponível — falamos no WhatsApp."}
+                  </p>
+                  {manualPix ? (
+                    <ManualPixPay
+                      className={summary?.pixEnabled ? "mt-4" : "mt-6"}
+                      primary={!summary?.pixEnabled}
+                      amount={fee}
+                      companyName={companyName || null}
+                    />
+                  ) : null}
+                  {!summary?.pixEnabled && !manualPix ? (
+                    <button
+                      type="button"
+                      onClick={openWhatsAppContract}
+                      className={`${buttonClassName({
+                        variant: "primary",
+                        size: "lg",
+                      })} mt-6`}
+                    >
+                      Contrate pelo WhatsApp
+                    </button>
+                  ) : summary?.pixEnabled ? (
+                    <button
+                      type="button"
+                      onClick={openWhatsAppContract}
+                      className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                    >
+                      Prefere só WhatsApp?
                     </button>
                   ) : null}
                 </>
               ) : null}
 
-              {paying && needCpf ? (
-                <form onSubmit={onSubmitCpf} className="mt-6 space-y-3">
-                  <p className="text-sm text-text-light/70">
-                    Informe o CPF do responsável para gerar o PIX.
-                  </p>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    placeholder="000.000.000-00"
-                    value={cpf}
-                    onChange={(e) => setCpf(formatCpfMask(e.target.value))}
-                    className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
-                  />
+              {paying && needPayerData ? (
+                <form onSubmit={onSubmitPayerData} className="mt-6 space-y-3">
+                  <p className="text-sm text-text-light/70">{payerHint}</p>
+                  {needEmail ? (
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      placeholder="E-mail"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
+                    />
+                  ) : null}
+                  {needCpf ? (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="000.000.000-00"
+                      value={cpf}
+                      onChange={(e) => setCpf(formatCpfMask(e.target.value))}
+                      className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
+                    />
+                  ) : null}
                   <button
                     type="submit"
                     disabled={generating}
@@ -324,10 +386,17 @@ function PlansPage() {
                   >
                     Gerar PIX
                   </button>
+                  <button
+                    type="button"
+                    className="block text-sm font-semibold text-accent-blue-soft"
+                    onClick={resetPayUi}
+                  >
+                    Cancelar
+                  </button>
                 </form>
               ) : null}
 
-              {paying && pix && !needCpf ? (
+              {paying && pix && !needPayerData ? (
                 <div className="mt-6 space-y-4">
                   {pix.paid ? (
                     <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-sm font-semibold text-accent-green">
@@ -368,18 +437,22 @@ function PlansPage() {
                         </span>
                       </button>
                       <p className="text-center text-xs text-text-light/50">
-                        Após pagar, a confirmação aparece em alguns segundos.
+                        Após pagar, a confirmação aparece em
+                        alguns segundos.
                       </p>
+                      {manualPix ? (
+                        <ManualPixPay
+                          className="mt-2"
+                          amount={pix.value}
+                          companyName={companyName || null}
+                        />
+                      ) : null}
                     </>
                   )}
                   <button
                     type="button"
                     className="text-sm font-semibold text-accent-blue-soft"
-                    onClick={() => {
-                      setPaying(false);
-                      setPix(null);
-                      setNeedCpf(false);
-                    }}
+                    onClick={resetPayUi}
                   >
                     Fechar
                   </button>

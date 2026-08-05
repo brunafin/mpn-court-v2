@@ -136,12 +136,19 @@ api.interceptors.response.use(
     const messageText = message ?? '';
     const data = (error as { response?: { data?: ApiErrorBody } })?.response
       ?.data;
-    const isCpfRequired =
+    const isPayerDataRequired =
       data?.code === 'CPF_REQUIRED' ||
+      data?.code === 'EMAIL_REQUIRED' ||
+      data?.code === 'PAYER_DATA_REQUIRED' ||
       (typeof data?.message === 'object' &&
         !Array.isArray(data?.message) &&
-        data?.message?.code === 'CPF_REQUIRED') ||
-      (error?.response?.status === 422 && /CPF/i.test(messageText));
+        (data?.message?.code === 'CPF_REQUIRED' ||
+          data?.message?.code === 'EMAIL_REQUIRED' ||
+          data?.message?.code === 'PAYER_DATA_REQUIRED')) ||
+      (error?.response?.status === 422 && /CPF/i.test(messageText)) ||
+      (error?.response?.status === 422 &&
+        /e-?mail/i.test(messageText) &&
+        /PIX|gerar/i.test(messageText));
     const silent = Boolean(error?.config?.silentError);
 
     if (status === 401) {
@@ -161,7 +168,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (notifyError && !isCpfRequired && !silent) {
+    if (notifyError && !isPayerDataRequired && !silent) {
       notifyError({ message: userFacingErrorMessage(error), type: 'error' });
     }
     return Promise.reject(error);

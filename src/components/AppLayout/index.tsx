@@ -11,7 +11,6 @@ import { logoutAndRedirect } from "../../utils/authCookie";
 import Header from "../Header";
 import CompanyAvatar from "../CompanyAvatar";
 import {
-  CompanyBrandingProvider,
   useCompanyBranding,
   useCompanyCapabilities,
 } from "../../contexts/CompanyBrandingContext";
@@ -180,11 +179,7 @@ function AppLayoutShell({ children }: AppLayoutProps) {
 }
 
 function AppLayout({ children }: AppLayoutProps) {
-  return (
-    <CompanyBrandingProvider>
-      <AppLayoutShell>{children}</AppLayoutShell>
-    </CompanyBrandingProvider>
-  );
+  return <AppLayoutShell>{children}</AppLayoutShell>;
 }
 
 export default AppLayout;

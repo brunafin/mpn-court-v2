@@ -105,7 +105,8 @@ export function useCompanyBranding() {
       logoUrl: null,
       setLogoUrl: () => undefined,
       setCompanyName: () => undefined,
-      capabilities: defaultCapabilities,
+      /** Sem provider: null (não fingir trial/paid carregados). */
+      capabilities: null,
       refreshCapabilities: async () => undefined,
     };
   }
@@ -118,9 +119,9 @@ export type CompanyCapabilitiesState = CompanyCapabilities & {
 };
 
 export function useCompanyCapabilities(): CompanyCapabilitiesState {
-  const { capabilities } = useCompanyBranding();
-  if (!capabilities) {
+  const ctx = useContext(CompanyBrandingContext);
+  if (!ctx?.capabilities) {
     return { ...defaultCapabilities, ready: false };
   }
-  return { ...capabilities, ready: true };
+  return { ...ctx.capabilities, ready: true };
 }

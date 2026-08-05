@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { CompanyBrandingProvider } from "../../contexts/CompanyBrandingContext";
 import {
   getAccessToken,
   getAccessTokenPayload,
@@ -35,5 +36,9 @@ export default function ProtectedRoute() {
     return <Navigate to="/alterar-senha" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <CompanyBrandingProvider>
+      <Outlet />
+    </CompanyBrandingProvider>
+  );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MdContentCopy, MdOutlinePayments } from "react-icons/md";
 import AppLayout from "../../components/AppLayout";
 import { buttonClassName } from "../../components/Button";
+import ManualPixPay from "../../components/ManualPixPay";
 import { PageEyebrow, PageTitle } from "../../components/PageTitle";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useLoading } from "../../hooks/useLoading";
@@ -13,16 +14,20 @@ import {
   generateBillingPix,
   getBillingPayment,
   getBillingSummary,
-  isCpfRequiredError,
+  getPayerDataNeeded,
 } from "../../api/billing";
 import {
   getAccessToken,
   getAccessTokenPayload,
 } from "../../utils/authCookie";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
-import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import {
+  useCompanyBranding,
+  useCompanyCapabilities,
+} from "../../contexts/CompanyBrandingContext";
 import { isPaidEntitlement } from "../../utils/billingNav";
 import { formatCpfMask } from "../../utils/formatCpf";
+import { isManualPixConfigured } from "../../utils/manualPix";
 
 function statusLabel(status: BillingPaymentItem["status"]): string {
   switch (status) {
@@ -60,12 +65,16 @@ function BillingPage() {
   const { notifyError } = useErrors();
   const { loading, withLoading } = useLoading();
   const caps = useCompanyCapabilities();
+  const { companyName } = useCompanyBranding();
+  const manualPix = isManualPixConfigured();
   const [companyPublicId, setCompanyPublicId] = useState("");
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [paying, setPaying] = useState(false);
   const [pix, setPix] = useState<BillingPixPayload | null>(null);
   const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
   const [needCpf, setNeedCpf] = useState(false);
+  const [needEmail, setNeedEmail] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
 
@@ -133,7 +142,12 @@ function BillingPage() {
     return summary.history.filter((item) => item.paid || item.id !== openPayment?.id);
   }, [summary, openPayment?.id]);
 
-  const startPay = async (payment: BillingPaymentItem, withCpf?: string) => {
+  const needPayerData = needEmail || needCpf;
+
+  const startPay = async (
+    payment: BillingPaymentItem,
+    payer?: { cpf?: string; email?: string },
+  ) => {
     if (!companyPublicId) return;
     if (!summary?.pixEnabled) {
       notifyError({
@@ -147,14 +161,17 @@ function BillingPage() {
       const payload = await generateBillingPix(
         companyPublicId,
         payment.id,
-        withCpf ? { cpf: withCpf.replace(/\D/g, "") } : undefined,
+        payer,
       );
       setPix(payload);
       setPaying(true);
       setNeedCpf(false);
+      setNeedEmail(false);
     } catch (error) {
-      if (isCpfRequiredError(error)) {
-        setNeedCpf(true);
+      const needed = getPayerDataNeeded(error);
+      if (needed) {
+        setNeedEmail(needed.email);
+        setNeedCpf(needed.cpf);
         setPaying(true);
         return;
       }
@@ -166,15 +183,25 @@ function BillingPage() {
     }
   };
 
-  const onSubmitCpf = async (event: FormEvent) => {
+  const onSubmitPayerData = async (event: FormEvent) => {
     event.preventDefault();
     if (!openPayment) return;
     const digits = cpf.replace(/\D/g, "");
-    if (digits.length !== 11) {
+    const trimmedEmail = email.trim();
+    if (needEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      notifyError({ message: "Informe um e-mail válido." });
+      return;
+    }
+    if (needCpf && digits.length !== 11) {
       notifyError({ message: "Informe um CPF válido com 11 dígitos." });
       return;
     }
-    await startPay(openPayment, digits);
+    await startPay(openPayment, {
+      ...(needEmail || trimmedEmail
+        ? { email: trimmedEmail }
+        : {}),
+      ...(needCpf || digits.length === 11 ? { cpf: digits } : {}),
+    });
   };
 
   const copyPix = async () => {
@@ -190,9 +217,25 @@ function BillingPage() {
     }
   };
 
+  const resetPayUi = () => {
+    setPaying(false);
+    setPix(null);
+    setNeedCpf(false);
+    setNeedEmail(false);
+  };
+
+  const payerHint = [
+    "Para o PIX automático (Mercado Pago), falta:",
+    needEmail && needCpf
+      ? "e-mail e CPF."
+      : needEmail
+        ? "e-mail."
+        : "CPF.",
+  ].join(" ");
+
   return (
     <AppLayout>
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-6 lg:px-8">
+      <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 lg:px-8">
         <div>
           <PageEyebrow>Financeiro</PageEyebrow>
           <PageTitle>Mensalidades</PageTitle>
@@ -240,31 +283,60 @@ function BillingPage() {
             </div>
 
             {!paying ? (
-              <button
-                type="button"
-                disabled={generating || !summary?.pixEnabled}
-                className={`${buttonClassName({ variant: "primary", size: "md" })} mt-4 w-full`}
-                onClick={() => void startPay(openPayment)}
-              >
-                {summary?.pixEnabled ? "Pagar com PIX" : "PIX indisponível"}
-              </button>
+              <>
+                {summary?.pixEnabled ? (
+                  <button
+                    type="button"
+                    disabled={generating}
+                    className={`${buttonClassName({ variant: "primary", size: "md" })} mt-4 w-full`}
+                    onClick={() => void startPay(openPayment)}
+                  >
+                    {generating
+                      ? "Gerando PIX…"
+                      : "Gerar PIX"}
+                  </button>
+                ) : null}
+                {manualPix ? (
+                  <ManualPixPay
+                    className="mt-4"
+                    primary={!summary?.pixEnabled}
+                    amount={openPayment.value}
+                    companyName={companyName || null}
+                    dueLabel={formatMonthYear(openPayment.dueDate)}
+                  />
+                ) : null}
+                {!summary?.pixEnabled && !manualPix ? (
+                  <p className="mt-4 text-sm text-text-light/60">
+                    PIX automático indisponível no momento. Contate o suporte.
+                  </p>
+                ) : null}
+              </>
             ) : null}
 
-            {paying && needCpf ? (
-              <form onSubmit={onSubmitCpf} className="mt-4 space-y-3">
-                <p className="text-sm text-text-light/70">
-                  Informe o CPF do responsável para gerar o PIX (usado só no
-                  Mercado Pago).
-                </p>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={(e) => setCpf(formatCpfMask(e.target.value))}
-                  className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
-                />
+            {paying && needPayerData ? (
+              <form onSubmit={onSubmitPayerData} className="mt-4 space-y-3">
+                <p className="text-sm text-text-light/70">{payerHint}</p>
+                {needEmail ? (
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="E-mail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
+                  />
+                ) : null}
+                {needCpf ? (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="000.000.000-00"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCpfMask(e.target.value))}
+                    className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
+                  />
+                ) : null}
                 <button
                   type="submit"
                   disabled={generating}
@@ -272,10 +344,17 @@ function BillingPage() {
                 >
                   Gerar PIX
                 </button>
+                <button
+                  type="button"
+                  className="block text-sm font-semibold text-accent-blue-soft"
+                  onClick={resetPayUi}
+                >
+                  Cancelar
+                </button>
               </form>
             ) : null}
 
-            {paying && pix && !needCpf ? (
+            {paying && pix && !needPayerData ? (
               <div className="mt-4 space-y-4">
                 {pix.paid ? (
                   <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-sm font-semibold text-accent-green">
@@ -310,19 +389,23 @@ function BillingPage() {
                       </span>
                     </button>
                     <p className="text-center text-xs text-text-light/50">
-                      Após pagar, a confirmação aparece automaticamente em
-                      alguns segundos.
+                      Após pagar, a confirmação aparece
+                      automaticamente em alguns segundos.
                     </p>
+                    {manualPix ? (
+                      <ManualPixPay
+                        className="mt-2"
+                        amount={pix.value}
+                        companyName={companyName || null}
+                        dueLabel={formatMonthYear(openPayment.dueDate)}
+                      />
+                    ) : null}
                   </>
                 )}
                 <button
                   type="button"
                   className="text-sm font-semibold text-accent-blue-soft"
-                  onClick={() => {
-                    setPaying(false);
-                    setPix(null);
-                    setNeedCpf(false);
-                  }}
+                  onClick={resetPayUi}
                 >
                   Fechar
                 </button>
