@@ -54,7 +54,7 @@ export const getScheduleById = async (id: string) => {
 
 interface ICreateReservation {
   contactName: string;
-  contactPhone: string;
+  contactPhone?: string | null;
   courtSchedulePublicId: string;
   observation?: string;
   isBarbecueIncluded?: boolean;
@@ -97,12 +97,16 @@ export const updateObservationByPublicId = async (
 }
 
 export const updatePhoneContact = async (
-  data: { contactName: string; contactPhone: string, courtSchedulePublicId: string }
+  data: {
+    contactName: string;
+    contactPhone?: string | null;
+    courtSchedulePublicId: string;
+  }
 ) => {
   try {
     const response = await api.patch<IReservationDetailsItemProps>(`/reservation/${data.courtSchedulePublicId}/contact`, {
       contactName: data.contactName,
-      contactPhone: data.contactPhone
+      contactPhone: data.contactPhone ?? null
     });
     return response.data;
   } catch (error) {

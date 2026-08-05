@@ -211,8 +211,7 @@ function ReservationDetails() {
           contactPhone:
             customerReservationPhone && customerReservationPhone.trim().length > 0
               ? customerReservationPhone
-              : "",
-          courtSchedulePublicId: court?.scheduleId,
+              : null,          courtSchedulePublicId: court?.scheduleId,
           observation,
           isBarbecueIncluded,
           isEvent,
@@ -242,9 +241,9 @@ function ReservationDetails() {
       customerReservationName ?? court?.reservation?.contactName ?? "",
     );
     const contactPhone =
-      customerReservationPhone || court?.reservation?.contactPhone || "";
+      customerReservationPhone ?? court?.reservation?.contactPhone ?? null;
 
-    if (!contactName || !contactPhone || !court?.scheduleId || !id) {
+    if (!contactName || !court?.scheduleId || !id) {
       if (!contactName) {
         notifyError({
           message: "Informe o nome do cliente (sem emojis)",
@@ -781,7 +780,7 @@ function ReservationDetails() {
                   />
                   <Input
                     name="phone"
-                    title="Telefone com DDD"
+                    title="Telefone com DDD (opcional)"
                     placeholder={PHONE_MASK_PLACEHOLDER}
                     type="tel"
                     inputMode="tel"
@@ -984,7 +983,7 @@ function ReservationDetails() {
             />
             <Input
               name="contact-phone"
-              title="Telefone com DDD"
+              title="Telefone com DDD (opcional)"
               placeholder={PHONE_MASK_PLACEHOLDER}
               type="tel"
               inputMode="tel"
@@ -1006,7 +1005,6 @@ function ReservationDetails() {
                 }
               }}
               mode="dark"
-              required
               enterKeyHint="done"
               autoComplete="tel"
             />
@@ -1021,9 +1019,6 @@ function ReservationDetails() {
                 !(
                   customerReservationName?.trim() ||
                   court?.reservation?.contactName
-                ) ||
-                !(
-                  customerReservationPhone || court?.reservation?.contactPhone
                 )
               }
             >

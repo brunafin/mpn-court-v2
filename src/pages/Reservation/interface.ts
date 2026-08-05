@@ -20,10 +20,9 @@ export interface IReservationDetailsItemProps {
   reservation: {
     publicId: string;
     createdAt: string;
-    isPrepaid: boolean;
     customerId?: number;
     contactName: string;
-    contactPhone: string;
+    contactPhone: string | null;
     observation: string;
     isBarbecueIncluded: boolean;
     isEvent: boolean;
