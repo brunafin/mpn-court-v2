@@ -541,7 +541,7 @@ function ReservationDetails() {
               {
                 sportName: court?.reservation?.sportName,
                 contactName: court?.reservation?.contactName,
-                contactPhone: court?.reservation?.contactPhone,
+                contactPhone: court?.reservation?.contactPhone ?? undefined,
                 courtName: court?.court,
                 price: court?.price,
               }
