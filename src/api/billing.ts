@@ -182,3 +182,20 @@ export function isPixUnavailableError(error: unknown): boolean {
   const code = readErrorCode(data);
   return code === "PIX_UNAVAILABLE";
 }
+
+/** Cliente já pago sem parcela em aberto (ou deve ir a Mensalidades). */
+export function isNoOpenPaymentError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const data = readBillingError(error);
+  const code = readErrorCode(data);
+  if (code === "NO_OPEN_PAYMENT") return true;
+  const msg =
+    typeof data?.message === "string"
+      ? data.message
+      : String(
+          typeof data?.message === "object"
+            ? (data.message?.message ?? "")
+            : "",
+        );
+  return /mensalidade em aberto/i.test(msg);
+}

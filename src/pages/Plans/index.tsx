@@ -22,6 +22,7 @@ import {
   getBillingPayment,
   getBillingSummary,
   getPayerDataNeeded,
+  isNoOpenPaymentError,
   isPixUnavailableError,
   startBillingContract,
 } from "../../api/billing";
@@ -160,6 +161,11 @@ function PlansPage() {
     } catch (error) {
       if (isPixUnavailableError(error)) {
         openWhatsAppContract();
+        return;
+      }
+      if (isNoOpenPaymentError(error)) {
+        await refreshCapabilities();
+        navigate("/mensalidades", { replace: true });
         return;
       }
       const needed = getPayerDataNeeded(error);
