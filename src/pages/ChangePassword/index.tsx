@@ -131,6 +131,7 @@ export default function ChangePassword() {
             type="password"
             required
             mode="dark"
+            disabled={loading}
             value={newPassword}
             onChange={(e) => {
               setNewPassword(e.target.value);
@@ -148,6 +149,7 @@ export default function ChangePassword() {
             type="password"
             required
             mode="dark"
+            disabled={loading}
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);

@@ -262,6 +262,7 @@ function Login() {
                 placeholder="Sua senha"
                 type="password"
                 mode="dark"
+                disabled={googleLoading}
                 value={linkPassword}
                 onChange={(e) => {
                   setLinkPassword(e.target.value);
@@ -283,7 +284,8 @@ function Login() {
               </button>
               <button
                 type="button"
-                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                disabled={googleLoading}
+                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
                 onClick={() => {
                   setLinkGoogleToken(null);
                   setLinkPassword('');
@@ -294,13 +296,14 @@ function Login() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSubmit} noValidate aria-busy={loading || undefined}>
               <Input
                 name="username"
                 title="E-mail ou usuário"
                 placeholder="seu@email.com"
                 type="text"
                 mode="dark"
+                disabled={loading || googleLoading}
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -317,6 +320,7 @@ function Login() {
                 placeholder="Sua senha"
                 type="password"
                 mode="dark"
+                disabled={loading || googleLoading}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);

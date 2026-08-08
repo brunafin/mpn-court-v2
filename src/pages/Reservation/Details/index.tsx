@@ -33,6 +33,13 @@ import {
   sanitizePersonName,
   sanitizePersonNameInput,
 } from "../../../utils/sanitizePersonName";
+import {
+  OBSERVATION_MAX_LENGTH,
+  REMINDER_MESSAGE_MAX_LENGTH,
+  noteTextInsertHasDisallowedChars,
+  sanitizeNoteText,
+  sanitizeNoteTextInput,
+} from "../../../utils/sanitizeNoteText";
 import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
 import { getAccessTokenPayload } from "../../../utils/authCookie";
 import { invalidateSchedulesDayCache } from "../../../utils/schedulesDayCache";
@@ -203,6 +210,12 @@ function ReservationDetails() {
     }
     if (isSubmitting) return;
 
+    const safeObservation = sanitizeNoteText(
+      observation,
+      OBSERVATION_MAX_LENGTH,
+    );
+    setObservation(safeObservation);
+
     setIsSubmitting(true);
     try {
       const response = await createReservation(
@@ -212,7 +225,7 @@ function ReservationDetails() {
             customerReservationPhone && customerReservationPhone.trim().length > 0
               ? customerReservationPhone
               : null,          courtSchedulePublicId: court?.scheduleId,
-          observation,
+          observation: safeObservation || undefined,
           isBarbecueIncluded,
           isEvent,
           sportId: sportSelected?.id || courtSports[0]?.id,
@@ -299,8 +312,15 @@ function ReservationDetails() {
       });
       return;
     }
+    const safeObservation =
+      observation !== undefined
+        ? sanitizeNoteText(observation, OBSERVATION_MAX_LENGTH)
+        : undefined;
+    if (safeObservation !== undefined) {
+      setObservation(safeObservation);
+    }
     await updateObservationByPublicId(court.reservation.publicId, {
-      ...(observation !== undefined && { observation }),
+      ...(safeObservation !== undefined && { observation: safeObservation }),
       ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
       ...(isEvent !== undefined && { isEvent }),
     });
@@ -325,20 +345,32 @@ function ReservationDetails() {
       formattedDate = format(new Date(), "yyyy-MM-dd");
     }
 
+    const fallbackMessage = [
+      court?.date && `Reserva para o dia ${court.date}`,
+      court?.time,
+      court?.reservation?.contactName,
+    ]
+      .filter(Boolean)
+      .join(" - ");
+    const safeMessage = sanitizeNoteText(
+      message || fallbackMessage,
+      REMINDER_MESSAGE_MAX_LENGTH,
+    );
+    if (!safeMessage) {
+      notifyError({
+        message: "Uma mensagem é necessária para criar um lembrete.",
+        type: "error",
+      });
+      return;
+    }
+    setMessage(safeMessage);
+
     setCreatingNote(true);
     try {
       await createNote({
         companyPublicId: court?.companyPublicId || "",
         date: formattedDate,
-        message:
-          message ||
-          [
-            court?.date && `Reserva para o dia ${court.date}`,
-            court?.time,
-            court?.reservation?.contactName,
-          ]
-            .filter(Boolean)
-            .join(" - "),
+        message: safeMessage,
       });
       setShowNewReminderModal(false);
       setMessage("");
@@ -642,7 +674,10 @@ function ReservationDetails() {
                 </div>
               ) : (
                 <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
-                  <fieldset className="mb-4 space-y-2">
+                  <fieldset
+                    className="mb-4 space-y-2"
+                    disabled={savingObservation}
+                  >
                     <legend className="mb-1 text-base font-semibold text-text-light">
                       Opções da reserva
                     </legend>
@@ -658,12 +693,14 @@ function ReservationDetails() {
                       label="Com churrasqueira"
                       checked={isBarbecueIncluded}
                       onChange={setIsBarbecueIncluded}
+                      disabled={savingObservation}
                       icon={<MdOutlineRestaurant size={20} />}
                     />
                     <OptionToggle
                       label="É um evento"
                       checked={isEvent}
                       onChange={setIsEvent}
+                      disabled={savingObservation}
                       icon={<MdOutlineCelebration size={20} />}
                     />
                   </fieldset>
@@ -673,12 +710,24 @@ function ReservationDetails() {
                     placeholder="Jogo contra, 10 pessoas, churrasqueira por 2h"
                     name="observation-edit"
                     value={observation}
-                    onChange={async (e) => {
-                      const newObservation = e.target.value;
-                      setObservation(newObservation);
+                    onChange={(e) => {
+                      setObservation(
+                        sanitizeNoteTextInput(
+                          e.target.value,
+                          OBSERVATION_MAX_LENGTH,
+                        ),
+                      );
                     }}
+                    onBeforeInput={(e) => {
+                      const native = e.nativeEvent as InputEvent;
+                      if (native.isComposing || native.data == null) return;
+                      if (noteTextInsertHasDisallowedChars(native.data)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    disabled={savingObservation}
                     mode="dark"
-                    maxLength={150}
+                    maxLength={OBSERVATION_MAX_LENGTH}
                     rows={3}
                   />
                   <button
@@ -742,6 +791,7 @@ function ReservationDetails() {
                 }}
                 noValidate
                 aria-label="Formulário de nova reserva"
+                aria-busy={isSubmitting || undefined}
               >
                 <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
                   <Input
@@ -770,6 +820,7 @@ function ReservationDetails() {
                       }
                     }}
                     required
+                    disabled={isSubmitting}
                     mode="dark"
                     autoComplete="name"
                     autoCapitalize="words"
@@ -803,6 +854,7 @@ function ReservationDetails() {
                       }
                       (e.target as HTMLInputElement).blur();
                     }}
+                    disabled={isSubmitting}
                     mode="dark"
                     autoComplete="tel"
                     enterKeyHint={courtSports.length > 1 ? "next" : "done"}
@@ -815,6 +867,7 @@ function ReservationDetails() {
                       value={sportSelected?.id}
                       options={courtSports}
                       mode="dark"
+                      disabled={isSubmitting}
                       onChange={(e) => {
                         const selectedId = Number(e.target.value);
                         const selectedSport = courtSports.find(
@@ -825,7 +878,10 @@ function ReservationDetails() {
                     />
                   )}
 
-                  <fieldset className="mt-3 border-t border-text-light/10 pt-5">
+                  <fieldset
+                    className="mt-3 border-t border-text-light/10 pt-5"
+                    disabled={isSubmitting}
+                  >
                     <legend className="mb-3 text-base font-semibold text-text-light">
                       Opções da reserva
                     </legend>
@@ -844,6 +900,7 @@ function ReservationDetails() {
                         label="Com churrasqueira"
                         checked={isBarbecueIncluded}
                         onChange={setIsBarbecueIncluded}
+                        disabled={isSubmitting}
                         icon={<MdOutlineRestaurant size={20} />}
                       />
                       <OptionToggle
@@ -852,6 +909,7 @@ function ReservationDetails() {
                         label="É um evento"
                         checked={isEvent}
                         onChange={setIsEvent}
+                        disabled={isSubmitting}
                         icon={<MdOutlineCelebration size={20} />}
                       />
                     </div>
@@ -861,9 +919,24 @@ function ReservationDetails() {
                     title="Observação"
                     placeholder="Jogo contra, 10 pessoas, churrasqueira por 2h"
                     value={observation}
-                    onChange={(e) => setObservation(e.target.value)}
+                    onChange={(e) =>
+                      setObservation(
+                        sanitizeNoteTextInput(
+                          e.target.value,
+                          OBSERVATION_MAX_LENGTH,
+                        ),
+                      )
+                    }
+                    onBeforeInput={(e) => {
+                      const native = e.nativeEvent as InputEvent;
+                      if (native.isComposing || native.data == null) return;
+                      if (noteTextInsertHasDisallowedChars(native.data)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    disabled={isSubmitting}
                     mode="dark"
-                    maxLength={150}
+                    maxLength={OBSERVATION_MAX_LENGTH}
                     rows={3}
                     className="mb-0"
                   />
@@ -920,12 +993,16 @@ function ReservationDetails() {
             type="button"
             aria-label="Fechar"
             className="absolute inset-0 bg-black/75"
-            onClick={() => setShowInfoCustomer(false)}
+            disabled={loading}
+            onClick={() => {
+              if (!loading) setShowInfoCustomer(false);
+            }}
           />
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={contactTitleId}
+            aria-busy={loading || undefined}
             className="relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 shadow-2xl sm:rounded-3xl sm:p-6"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
@@ -942,7 +1019,8 @@ function ReservationDetails() {
                 type="button"
                 onClick={() => setShowInfoCustomer(false)}
                 aria-label="Fechar"
-                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                disabled={loading}
+                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
               >
                 <BsX size={24} aria-hidden />
               </button>
@@ -974,6 +1052,7 @@ function ReservationDetails() {
                 }
               }}
               required
+              disabled={loading}
               mode="dark"
               autoComplete="name"
               autoCapitalize="words"
@@ -1004,6 +1083,7 @@ function ReservationDetails() {
                   void handleUpdatePhoneContact();
                 }
               }}
+              disabled={loading}
               mode="dark"
               enterKeyHint="done"
               autoComplete="tel"

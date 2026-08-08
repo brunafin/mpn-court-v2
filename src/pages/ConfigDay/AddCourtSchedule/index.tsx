@@ -247,7 +247,7 @@ function AddCourtSchedule({
             inputMode="numeric"
             required
             mode="dark"
-            readOnly={loading}
+            disabled={loading}
             value={
               price !== null
                 ? price.toLocaleString("pt-BR", {

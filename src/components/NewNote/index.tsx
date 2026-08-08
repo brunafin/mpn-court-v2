@@ -3,6 +3,11 @@ import Textarea from "../Textarea";
 import { BsX } from "react-icons/bs";
 import { MdOutlinePostAdd } from "react-icons/md";
 import { buttonClassName } from "../Button";
+import {
+  REMINDER_MESSAGE_MAX_LENGTH,
+  noteTextInsertHasDisallowedChars,
+  sanitizeNoteTextInput,
+} from "../../utils/sanitizeNoteText";
 
 interface NewReminderModalProps {
   isOpen: boolean;
@@ -17,12 +22,15 @@ interface NewReminderModalProps {
 
 function sanitizeDefaultMessage(value?: string) {
   if (!value) return "";
-  return value
-    .replace(/\bundefined\b/gi, "")
-    .replace(/\s+-\s+-/g, " -")
-    .replace(/\s+-\s*$/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return sanitizeNoteTextInput(
+    value
+      .replace(/\bundefined\b/gi, "")
+      .replace(/\s+-\s+-/g, " -")
+      .replace(/\s+-\s*$/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim(),
+    REMINDER_MESSAGE_MAX_LENGTH,
+  );
 }
 
 const NewReminderModal: React.FC<NewReminderModalProps> = ({
@@ -144,9 +152,24 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
             placeholder="Digite o que precisa lembrar"
             name="reminder-message"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            disabled={isSubmitting}
+            onChange={(e) =>
+              setMessage(
+                sanitizeNoteTextInput(
+                  e.target.value,
+                  REMINDER_MESSAGE_MAX_LENGTH,
+                ),
+              )
+            }
+            onBeforeInput={(e) => {
+              const native = e.nativeEvent as InputEvent;
+              if (native.isComposing || native.data == null) return;
+              if (noteTextInsertHasDisallowedChars(native.data)) {
+                e.preventDefault();
+              }
+            }}
             mode="dark"
-            maxLength={100}
+            maxLength={REMINDER_MESSAGE_MAX_LENGTH}
             rows={4}
             required
           />

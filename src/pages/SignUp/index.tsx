@@ -298,6 +298,7 @@ function SignUp() {
                 placeholder="Sua senha"
                 type="password"
                 mode="dark"
+                disabled={googleLoading}
                 value={linkPassword}
                 onChange={(e) => {
                   setLinkPassword(e.target.value);
@@ -319,7 +320,8 @@ function SignUp() {
               </button>
               <button
                 type="button"
-                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                disabled={googleLoading}
+                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
                 onClick={() => {
                   setLinkGoogleToken(null);
                   setLinkPassword("");
@@ -330,7 +332,11 @@ function SignUp() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} noValidate>
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              aria-busy={loading || undefined}
+            >
               <div className="sm:grid sm:grid-cols-2 sm:gap-x-3">
                 <Input
                   name="ownerName"
@@ -338,6 +344,7 @@ function SignUp() {
                   placeholder="João Silva"
                   type="text"
                   mode="dark"
+                  disabled={loading || googleLoading}
                   value={ownerName}
                   onChange={(e) => {
                     setOwnerName(e.target.value);
@@ -354,6 +361,7 @@ function SignUp() {
                   placeholder="seu@email.com"
                   type="email"
                   mode="dark"
+                  disabled={loading || googleLoading}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -371,6 +379,7 @@ function SignUp() {
                   placeholder="(00) 90000-0000"
                   type="tel"
                   mode="dark"
+                  disabled={loading || googleLoading}
                   value={ownerPhone}
                   onChange={(e) => {
                     setOwnerPhone(formatPhoneMask(e.target.value));
@@ -388,6 +397,7 @@ function SignUp() {
                   placeholder="000.000.000-00"
                   type="text"
                   mode="dark"
+                  disabled={loading || googleLoading}
                   value={ownerCpf}
                   onChange={(e) => {
                     setOwnerCpf(formatCpfMask(e.target.value));
@@ -406,6 +416,7 @@ function SignUp() {
                     placeholder="Senha segura"
                     type="password"
                     mode="dark"
+                    disabled={loading || googleLoading}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
@@ -425,16 +436,23 @@ function SignUp() {
                 </div>
               </div>
 
-              <label className="mt-4 flex cursor-pointer items-start gap-3 text-base leading-6 text-text-light/80">
+              <label
+                className={`mt-4 flex items-start gap-3 text-base leading-6 text-text-light/80 ${
+                  loading || googleLoading
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer"
+                }`}
+              >
                 <input
                   type="checkbox"
                   name="acceptedTerms"
                   checked={acceptedTerms}
+                  disabled={loading || googleLoading}
                   onChange={(e) => {
                     setAcceptedTerms(e.target.checked);
                     clearErrors();
                   }}
-                  className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue"
+                  className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue disabled:cursor-not-allowed"
                 />
                 <span>
                   Li e aceito os{" "}

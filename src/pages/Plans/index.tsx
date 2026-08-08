@@ -359,7 +359,11 @@ function PlansPage() {
               ) : null}
 
               {paying && needPayerData ? (
-                <form onSubmit={onSubmitPayerData} className="mt-6 space-y-3">
+                <form
+                  onSubmit={onSubmitPayerData}
+                  className="mt-6 space-y-3"
+                  aria-busy={generating || undefined}
+                >
                   <p className="text-sm text-text-light/70">{payerHint}</p>
                   {needEmail ? (
                     <input
@@ -367,8 +371,9 @@ function PlansPage() {
                       autoComplete="email"
                       placeholder="E-mail"
                       value={email}
+                      disabled={generating}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
+                      className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   ) : null}
                   {needCpf ? (
@@ -378,8 +383,9 @@ function PlansPage() {
                       autoComplete="off"
                       placeholder="000.000.000-00"
                       value={cpf}
+                      disabled={generating}
                       onChange={(e) => setCpf(formatCpfMask(e.target.value))}
-                      className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light"
+                      className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   ) : null}
                   <button
@@ -390,11 +396,12 @@ function PlansPage() {
                       size: "md",
                     })}
                   >
-                    Gerar PIX
+                    {generating ? "Gerando…" : "Gerar PIX"}
                   </button>
                   <button
                     type="button"
-                    className="block text-sm font-semibold text-accent-blue-soft"
+                    disabled={generating}
+                    className="block text-sm font-semibold text-accent-blue-soft disabled:opacity-50"
                     onClick={resetPayUi}
                   >
                     Cancelar

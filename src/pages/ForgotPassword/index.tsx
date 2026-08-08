@@ -78,6 +78,7 @@ function ForgotPassword() {
           onSubmit={handleSubmit}
           className="rounded-2xl bg-master-light p-4 sm:p-6"
           noValidate
+          aria-busy={loading || undefined}
         >
           <Input
             name="email"
@@ -85,6 +86,7 @@ function ForgotPassword() {
             placeholder="seu@email.com"
             type="email"
             mode="dark"
+            disabled={loading}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);

@@ -118,6 +118,7 @@ function CompleteProfile() {
           onSubmit={handleSubmit}
           className="rounded-2xl bg-master-light p-4 sm:p-6"
           noValidate
+          aria-busy={loading || undefined}
         >
           <Input
             name="ownerPhone"
@@ -125,6 +126,7 @@ function CompleteProfile() {
             placeholder="(00) 90000-0000"
             type="tel"
             mode="dark"
+            disabled={loading}
             value={ownerPhone}
             onChange={(e) => {
               setOwnerPhone(formatPhoneMask(e.target.value));
@@ -140,16 +142,21 @@ function CompleteProfile() {
             }
           />
 
-          <label className="mt-4 flex cursor-pointer items-start gap-3 text-base leading-6 text-text-light/80">
+          <label
+            className={`mt-4 flex items-start gap-3 text-base leading-6 text-text-light/80 ${
+              loading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+            }`}
+          >
             <input
               type="checkbox"
               name="acceptedTerms"
               checked={acceptedTerms}
+              disabled={loading}
               onChange={(e) => {
                 setAcceptedTerms(e.target.checked);
                 if (formError) setFormError('');
               }}
-              className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue"
+              className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue disabled:cursor-not-allowed"
             />
             <span>
               Li e aceito os{' '}

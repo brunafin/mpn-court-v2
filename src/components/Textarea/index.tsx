@@ -12,7 +12,9 @@ interface ITextareaProps {
   onKeyUp?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onKeyPress?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onClick?: (e: React.MouseEvent<HTMLTextAreaElement>) => void;
+  onBeforeInput?: (e: React.FormEvent<HTMLTextAreaElement>) => void;
   required?: boolean;
+  disabled?: boolean;
   mode: "light" | "dark";
   className?: string;
   rows?: number;
@@ -30,7 +32,9 @@ function Textarea({
   onBlur,
   onChange,
   onClick,
+  onBeforeInput,
   required,
+  disabled = false,
   mode = "light",
   className,
   rows = 3,
@@ -74,8 +78,10 @@ function Textarea({
         placeholder={placeholder}
         aria-required={required || undefined}
         aria-describedby={describedByIds}
+        disabled={disabled}
         className={`w-full min-h-[6rem] resize-none rounded-xl px-4 py-3 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out clarity-mask
           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+          disabled:cursor-not-allowed disabled:opacity-60
           ${
             isDark
               ? "mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/40 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light"
@@ -86,6 +92,7 @@ function Textarea({
         onChange={onChange}
         onBlur={onBlur}
         onClick={onClick}
+        onBeforeInput={onBeforeInput}
         onFocus={onFocus}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}

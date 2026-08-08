@@ -17,6 +17,10 @@ import { useErrors } from "../../contexts/ErrorsContext";
 import EmptyState from "../../components/EmptyState";
 import { PageTitle } from "../../components/PageTitle";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import {
+  REMINDER_MESSAGE_MAX_LENGTH,
+  sanitizeNoteText,
+} from "../../utils/sanitizeNoteText";
 
 function parseIncomingDate(value: unknown): Date {
   if (value instanceof Date && isValid(value)) {
@@ -102,7 +106,8 @@ function DayReminders() {
     event?: React.FormEvent
   ): Promise<void> => {
     event?.preventDefault?.();
-    if (!message.trim()) {
+    const safeMessage = sanitizeNoteText(message, REMINDER_MESSAGE_MAX_LENGTH);
+    if (!safeMessage) {
       notifyError({
         message: "Uma mensagem é necessária para criar um lembrete.",
         type: "error",
@@ -110,12 +115,13 @@ function DayReminders() {
       return;
     }
     if (creatingNote) return;
+    setMessage(safeMessage);
     setCreatingNote(true);
     try {
       await createNote({
         companyPublicId,
         date: format(date, "yyyy-MM-dd"),
-        message,
+        message: safeMessage,
       });
       setShowNewReminderModal(false);
       setMessage("");

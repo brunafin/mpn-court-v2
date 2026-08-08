@@ -183,6 +183,7 @@ function SignUpVerifyCode() {
             onSubmit={handleRequestCode}
             className="rounded-2xl bg-master-light p-4 sm:p-6"
             noValidate
+            aria-busy={requestingCode || undefined}
           >
             <Input
               name="email"
@@ -190,6 +191,7 @@ function SignUpVerifyCode() {
               placeholder="seu@email.com"
               type="email"
               mode="dark"
+              disabled={requestingCode}
               value={emailInput}
               onChange={(e) => {
                 setEmailInput(e.target.value);
@@ -252,8 +254,9 @@ function SignUpVerifyCode() {
           onSubmit={handleVerify}
           className="rounded-2xl bg-master-light p-4 sm:p-6"
           noValidate
+          aria-busy={loading || undefined}
         >
-          <fieldset>
+          <fieldset disabled={loading}>
             <legend className="sr-only">Digite o código de 6 dígitos</legend>
             <div className="flex justify-between gap-2 sm:gap-3">
               {digits.map((digit, index) => (
@@ -267,11 +270,12 @@ function SignUpVerifyCode() {
                   autoComplete={index === 0 ? "one-time-code" : "off"}
                   maxLength={CODE_LENGTH}
                   value={digit}
+                  disabled={loading}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
                   aria-label={`Dígito ${index + 1}`}
-                  className="size-12 rounded-xl border-0 bg-master text-center text-2xl font-semibold text-text-light outline-none ring-1 ring-inset ring-text-light/15 focus:ring-2 focus:ring-accent-blue sm:size-14 clarity-mask"
+                  className="size-12 rounded-xl border-0 bg-master text-center text-2xl font-semibold text-text-light outline-none ring-1 ring-inset ring-text-light/15 focus:ring-2 focus:ring-accent-blue disabled:cursor-not-allowed disabled:opacity-60 sm:size-14 clarity-mask"
                   data-clarity-mask="true"
                 />
               ))}
@@ -298,7 +302,7 @@ function SignUpVerifyCode() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={resendCooldown > 0}
+            disabled={loading || resendCooldown > 0}
             className="mt-4 w-full text-center text-base font-semibold text-accent-blue-soft disabled:text-text-light/40"
           >
             {resendCooldown > 0

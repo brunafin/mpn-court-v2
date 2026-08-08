@@ -483,7 +483,12 @@ function RealInfo() {
               </p>
               <label
                 htmlFor="is-hidden-inactive-hours"
-                className={`flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
+                aria-disabled={loading || undefined}
+                className={`flex min-h-16 items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
+                  loading
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer"
+                } ${
                   isHiddenInactiveHours
                     ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
                     : "bg-master"
@@ -496,12 +501,13 @@ function RealInfo() {
                   type="checkbox"
                   id="is-hidden-inactive-hours"
                   checked={isHiddenInactiveHours}
+                  disabled={loading}
                   onChange={async (e) => {
                     const next = e.target.checked;
                     setIsHiddenInactiveHours(next);
                     await updatePreferences(next);
                   }}
-                  className="size-7 shrink-0 rounded accent-accent-blue"
+                  className="size-7 shrink-0 rounded accent-accent-blue disabled:cursor-not-allowed"
                 />
               </label>
               <div className="mt-3 flex items-start gap-2 px-1">

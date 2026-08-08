@@ -16,6 +16,7 @@ interface IInputProps {
   onClick?: (e: React.MouseEvent<HTMLInputElement>) => void;
   required?: boolean;
   readOnly?: boolean;
+  disabled?: boolean;
   mode: "light" | "dark";
   className?: string;
   inputMode?:
@@ -58,6 +59,7 @@ function Input({
   onKeyPress,
   required,
   readOnly = false,
+  disabled = false,
   mode = "light",
   inputMode,
   className,
@@ -141,6 +143,7 @@ function Input({
           onClick={onClick}
           required={required}
           readOnly={readOnly}
+          disabled={disabled}
           maxLength={maxLength}
         />
         {isPassword && (
@@ -149,7 +152,8 @@ function Input({
             onClick={() => setShowPassword((open) => !open)}
             aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             aria-pressed={showPassword}
-            className={`absolute right-1.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            disabled={disabled}
+            className={`absolute right-1.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
               isDark
                 ? "text-text-light/80 hover:bg-master-light focus-visible:outline-accent-blue"
                 : "text-neutral-600 hover:bg-neutral-200 focus-visible:outline-neutral-500"
