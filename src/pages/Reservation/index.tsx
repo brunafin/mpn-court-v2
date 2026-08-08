@@ -229,6 +229,38 @@ function Reservation() {
     [companyPublicId, navigate, withLoading, applyDayData],
   );
 
+  const prefetchAdjacentDays = useCallback(
+    (centerDate: Date) => {
+      if (!companyPublicId) return;
+      for (const offset of [-1, 1] as const) {
+        const dateInput = toDateKey(addDays(centerDate, offset));
+        if (isSchedulesDayCacheFresh(companyPublicId, dateInput)) continue;
+        void (async () => {
+          try {
+            const response = await getSchedulesByCompanyPublicIdAndDate({
+              companyPublicId,
+              date: dateInput,
+            });
+            const uniqueCourts = [
+              ...new Set(response.map((item) => item.court)),
+            ].sort((a, b) =>
+              a.localeCompare(b, "pt-BR", { sensitivity: "base" }),
+            );
+            setSchedulesDayCache(
+              companyPublicId,
+              dateInput,
+              response,
+              uniqueCourts,
+            );
+          } catch {
+            // prefetch best-effort — falha não afeta a agenda atual
+          }
+        })();
+      }
+    },
+    [companyPublicId],
+  );
+
   useEffect(() => {
     if (!companyPublicId || !date) return;
     const dateInput = toDateKey(date);
@@ -248,6 +280,15 @@ function Reservation() {
     void fetchData(dateInput);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
   }, [companyPublicId, date]);
+
+  useEffect(() => {
+    if (!companyPublicId || !date) return;
+    if (loadedDateKey !== toDateKey(date)) return;
+    const timer = window.setTimeout(() => {
+      prefetchAdjacentDays(date);
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [companyPublicId, date, loadedDateKey, prefetchAdjacentDays]);
 
   useEffect(() => {
     refreshUnreadCount();

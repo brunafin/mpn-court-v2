@@ -42,7 +42,11 @@ import {
 } from "../../../utils/sanitizeNoteText";
 import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
 import { getAccessTokenPayload } from "../../../utils/authCookie";
-import { invalidateSchedulesDayCache } from "../../../utils/schedulesDayCache";
+import {
+  invalidateSchedulesDayCache,
+  patchSchedulesDayCacheSlot,
+} from "../../../utils/schedulesDayCache";
+import type { IReservationItemProps } from "../interface";
 import Textarea from "../../../components/Textarea";
 import Select from "../../../components/Select";
 import { useLoading } from "../../../hooks/useLoading";
@@ -233,9 +237,13 @@ function ReservationDetails() {
         { silentError: true },
       );
       if (response) {
-        invalidateAgendaCache();
-        navigate("/reservas", {
-          state: buildListReturnState(),
+        returnToListAfterMutation({
+          patch: {
+            status: ReservationStatusEnum.RESERVED,
+            customerName: contactName,
+            isBarbecueIncluded,
+            isEvent,
+          },
         });
       }
     } catch (error) {
@@ -286,7 +294,16 @@ function ReservationDetails() {
       setCustomerReservationName(contactName);
       setCustomerReservationPhone(contactPhone);
       setShowInfoCustomer(false);
-      invalidateAgendaCache();
+      const companyPublicId =
+        getAccessTokenPayload<{ companyPublicId?: string }>()?.companyPublicId;
+      if (companyPublicId && dateFrom && court?.scheduleId) {
+        patchSchedulesDayCacheSlot(
+          companyPublicId,
+          String(dateFrom),
+          court.scheduleId,
+          { customerName: contactName },
+        );
+      }
     });
   };
 
@@ -390,6 +407,33 @@ function ReservationDetails() {
     }
   };
 
+  /** Volta à lista sem skeleton: patch local do slot (+ limpa outros dias se fix/unfix). */
+  const returnToListAfterMutation = (opts: {
+    patch: Partial<IReservationItemProps>;
+    clearOtherDays?: boolean;
+  }) => {
+    const companyPublicId =
+      getAccessTokenPayload<{ companyPublicId?: string }>()?.companyPublicId;
+    const scheduleId = court?.scheduleId;
+    if (companyPublicId && dateFrom && scheduleId) {
+      const patched = patchSchedulesDayCacheSlot(
+        companyPublicId,
+        String(dateFrom),
+        scheduleId,
+        opts.patch,
+        { clearOtherDays: opts.clearOtherDays },
+      );
+      if (!patched && !opts.clearOtherDays) {
+        invalidateAgendaCache();
+      }
+    } else {
+      invalidateAgendaCache();
+    }
+    navigate("/reservas", {
+      state: buildListReturnState(),
+    });
+  };
+
   const goBackToList = (opts?: { stale?: boolean }) => {
     if (opts?.stale !== false) {
       invalidateAgendaCache();
@@ -412,7 +456,15 @@ function ReservationDetails() {
             { court_schedule_public_id: court?.scheduleId || "" },
             { silentError: true },
           );
-          goBackToList();
+          returnToListAfterMutation({
+            patch: {
+              status: ReservationStatusEnum.AVAILABLE,
+              customerName: null,
+              isBarbecueIncluded: false,
+              isEvent: false,
+            },
+            clearOtherDays: true,
+          });
         },
       });
     },
@@ -426,7 +478,9 @@ function ReservationDetails() {
           await changeAvailability(court?.scheduleId || "", true, {
             silentError: true,
           });
-          goBackToList();
+          returnToListAfterMutation({
+            patch: { status: ReservationStatusEnum.AVAILABLE },
+          });
         },
       });
     },
@@ -444,7 +498,18 @@ function ReservationDetails() {
             { court_schedule_public_id: court?.scheduleId || "" },
             { silentError: true },
           );
-          goBackToList();
+          returnToListAfterMutation({
+            patch: {
+              status: ReservationStatusEnum.FIXED,
+              customerName:
+                sanitizePersonName(
+                  customerReservationName ??
+                    court?.reservation?.contactName ??
+                    "",
+                ) || court?.reservation?.contactName || null,
+            },
+            clearOtherDays: true,
+          });
         },
       });
     },
@@ -459,24 +524,37 @@ function ReservationDetails() {
           await changeAvailability(court?.scheduleId || "", false, {
             silentError: true,
           });
-          goBackToList();
+          returnToListAfterMutation({
+            patch: { status: ReservationStatusEnum.INACTIVE },
+          });
         },
       });
     },
   };
 
   const askCancelReservation = () => {
+    const dayLabel = court?.date?.trim();
+    const isFixed = court?.status === ReservationStatusEnum.FIXED;
+
     setConfirmAction({
-      title: "Cancelar reserva?",
-      description:
-        "A reserva deste horário será cancelada. Essa ação não pode ser desfeita.",
+      title: isFixed ? "Cancelar reserva deste dia?" : "Cancelar reserva?",
+      description: isFixed
+        ? `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica disponível só nesse dia. O fixo continua nas outras semanas.`
+        : "A reserva deste horário será cancelada. Essa ação não pode ser desfeita.",
       confirmLabel: "Cancelar reserva",
       tone: "danger",
       run: async () => {
         await cancelReservation(String(court?.reservation?.publicId), {
           silentError: true,
         });
-        goBackToList();
+        returnToListAfterMutation({
+          patch: {
+            status: ReservationStatusEnum.AVAILABLE,
+            customerName: null,
+            isBarbecueIncluded: false,
+            isEvent: false,
+          },
+        });
       },
     });
   };

@@ -86,3 +86,35 @@ export function invalidateSchedulesDayCache(
   }
   store.clear();
 }
+
+/**
+ * Atualiza um slot no cache do dia (evita skeleton após mutação).
+ * Com `clearOtherDays`, limpa outros dias da empresa (fix/unfix afetam futuros)
+ * e regrava o dia atual patchado.
+ */
+export function patchSchedulesDayCacheSlot(
+  companyPublicId: string,
+  date: string,
+  scheduleId: string,
+  patch: Partial<IReservationItemProps>,
+  opts?: { clearOtherDays?: boolean },
+): boolean {
+  const cached = getSchedulesDayCache(companyPublicId, date);
+  if (!cached) {
+    if (opts?.clearOtherDays) {
+      invalidateSchedulesDayCache(companyPublicId);
+    }
+    return false;
+  }
+
+  const list = cached.list.map((item) =>
+    item.scheduleId === scheduleId ? { ...item, ...patch } : item,
+  );
+
+  if (opts?.clearOtherDays) {
+    invalidateSchedulesDayCache(companyPublicId);
+  }
+
+  setSchedulesDayCache(companyPublicId, date, list, cached.courtsNameList);
+  return true;
+}
