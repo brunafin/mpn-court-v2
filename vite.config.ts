@@ -34,7 +34,16 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       includeAssets: ['logo-mpn.png', 'robots.txt', 'apple-touch-icon.png'],
+      workbox: {
+        // SPA online: `serve -s` já devolve index.html.
+        // NavigationRoute + precache vazio/desatualizado = ERR_FAILED no refresh (Chrome Android).
+        navigateFallback: undefined,
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       manifest: {
         name: 'Marca Pra Nós',
         short_name: 'MPN',

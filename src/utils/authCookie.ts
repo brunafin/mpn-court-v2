@@ -44,18 +44,27 @@ export function clearAccessToken() {
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict`;
 }
 
+/** Remove SW + Cache Storage sem deixar worker órfão (causa ERR_FAILED no refresh). */
+async function clearServiceWorkerAndCaches() {
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+}
+
 export async function logoutAndRedirect() {
   clearAccessToken();
   clearMockOnboarding();
   invalidateSchedulesDayCache();
 
   try {
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => caches.delete(key)));
-    }
+    await clearServiceWorkerAndCaches();
   } catch {
-    // ignore — logout não deve travar por falha de cache
+    // ignore — logout não deve travar por falha de cache/SW
   }
 
   window.location.replace("/");
