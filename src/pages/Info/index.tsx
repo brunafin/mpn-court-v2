@@ -187,14 +187,17 @@ function RealInfo() {
 
     if (selected.length > photoSlotsLeft) {
       notifyError({
-        message: `Só restam ${photoSlotsLeft} vaga${photoSlotsLeft === 1 ? "" : "s"}. Enviando ${photoSlotsLeft === 1 ? "a primeira foto" : `as ${photoSlotsLeft} primeiras`}.`,
+        message:
+          photoSlotsLeft === 1
+            ? "Só resta 1 vaga. Selecione apenas 1 foto."
+            : `Selecione no máximo ${photoSlotsLeft} fotos (limite de ${COMPANY_PHOTO_MAX_COUNT}).`,
         type: "error",
       });
+      return;
     }
 
-    const candidates = selected.slice(0, photoSlotsLeft);
     const validFiles: File[] = [];
-    for (const file of candidates) {
+    for (const file of selected) {
       if (!isAllowedImageFile(file)) {
         notifyError({
           message: `"${file.name}" não é JPG, PNG ou WebP.`,
@@ -416,6 +419,7 @@ function RealInfo() {
                 >
                   {logoUrl ? (
                     <img
+                      key={logoUrl}
                       src={logoUrl}
                       alt={`Logo de ${companyName || info?.companyName || "estabelecimento"}`}
                       className="max-h-28 max-w-[min(100%,12rem)] object-contain"
@@ -447,16 +451,21 @@ function RealInfo() {
                     Fotos do espaço
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-text-light/60">
-                    Até {COMPANY_PHOTO_MAX_COUNT} fotos do espaço — você pode
-                    selecionar várias de uma vez. Aparecem na página da sua
-                    arena no site.
+                    Até {COMPANY_PHOTO_MAX_COUNT} fotos do espaço
+                    {canAddPhoto
+                      ? photoSlotsLeft > 1
+                        ? ` — selecione até ${photoSlotsLeft} de uma vez`
+                        : " — selecione 1 foto"
+                      : ""}
+                    . Aparecem na página da sua arena no site.
                   </p>
 
                   <input
+                    key={`photo-input-${photoSlotsLeft}`}
                     ref={photoInputRef}
                     type="file"
                     accept={IMAGE_UPLOAD_ACCEPT}
-                    multiple
+                    multiple={photoSlotsLeft > 1}
                     className="sr-only"
                     onChange={handlePhotoChange}
                   />

@@ -29,6 +29,7 @@ function CompanyAvatar({
         className={`flex shrink-0 items-center justify-center overflow-hidden bg-neutral-100 ${sizeClass} ${roundedClass} ${className}`}
       >
         <img
+          key={logoUrl}
           src={logoUrl}
           alt={alt}
           aria-hidden={decorative || undefined}
