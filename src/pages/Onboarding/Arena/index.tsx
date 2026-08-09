@@ -22,9 +22,11 @@ import {
 } from "../../../utils/formatCep";
 import { formatPhoneMask, onlyPhoneDigits } from "../../../utils/formatPhone";
 import {
+  IMAGE_UPLOAD_ACCEPT,
   IMAGE_UPLOAD_MAX_BYTES,
   imageUploadHint,
   imageUploadTooLargeMessage,
+  isAllowedImageFile,
 } from "../../../utils/imageUpload";
 
 function OnboardingArena() {
@@ -107,12 +109,13 @@ function OnboardingArena() {
   };
 
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Logo: sempre 1 arquivo (input sem `multiple`).
     const file = event.target.files?.[0];
     event.target.value = "";
     setLogoError("");
     if (!file) return;
 
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+    if (!isAllowedImageFile(file)) {
       setLogoError("Use uma imagem JPG, PNG ou WebP.");
       return;
     }
@@ -382,7 +385,7 @@ function OnboardingArena() {
             <input
               ref={logoInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept={IMAGE_UPLOAD_ACCEPT}
               className="sr-only"
               onChange={handleLogoChange}
             />
@@ -414,7 +417,7 @@ function OnboardingArena() {
                   ? "Clique para alterar o logo"
                   : "Clique para enviar o logo"}
                 <br />
-                {imageUploadHint()}
+                {imageUploadHint()} · 1 foto
               </span>
             </button>
             {logoPreview && (

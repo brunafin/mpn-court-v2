@@ -30,9 +30,12 @@ import { PageEyebrow } from "../../components/PageTitle";
 import { formatPhoneMask } from "../../utils/formatPhone";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
 import {
+  COMPANY_PHOTO_MAX_COUNT,
+  IMAGE_UPLOAD_ACCEPT,
   IMAGE_UPLOAD_MAX_BYTES,
   imageUploadHint,
   imageUploadTooLargeMessage,
+  isAllowedImageFile,
 } from "../../utils/imageUpload";
 import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
 import { buttonClassName } from "../../components/Button";
@@ -127,11 +130,12 @@ function RealInfo() {
   const handleLogoChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    // Logo: sempre 1 arquivo (input sem `multiple`).
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || !publicId) return;
 
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+    if (!isAllowedImageFile(file)) {
       notifyError({
         message: "Use uma imagem JPG, PNG ou WebP.",
         type: "error",
@@ -163,49 +167,77 @@ function RealInfo() {
   };
 
   const photos: IInfoPhoto[] = info?.photos ?? [];
-  const canAddPhoto = photos.length < 3;
+  const photoSlotsLeft = COMPANY_PHOTO_MAX_COUNT - photos.length;
+  const canAddPhoto = photoSlotsLeft > 0;
 
   const handlePhotoChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    const selected = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!file || !publicId) return;
+    if (!selected.length || !publicId) return;
 
-    if (!canAddPhoto) {
+    if (photoSlotsLeft <= 0) {
       notifyError({
-        message: "Você já enviou 3 fotos. Remova uma para enviar outra.",
+        message: `Você já enviou ${COMPANY_PHOTO_MAX_COUNT} fotos. Remova uma para enviar outra.`,
         type: "error",
       });
       return;
     }
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+
+    if (selected.length > photoSlotsLeft) {
       notifyError({
-        message: "Use uma imagem JPG, PNG ou WebP.",
+        message: `Só restam ${photoSlotsLeft} vaga${photoSlotsLeft === 1 ? "" : "s"}. Enviando ${photoSlotsLeft === 1 ? "a primeira foto" : `as ${photoSlotsLeft} primeiras`}.`,
         type: "error",
       });
-      return;
     }
-    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
-      notifyError({
-        message: imageUploadTooLargeMessage(),
-        type: "error",
-      });
-      return;
+
+    const candidates = selected.slice(0, photoSlotsLeft);
+    const validFiles: File[] = [];
+    for (const file of candidates) {
+      if (!isAllowedImageFile(file)) {
+        notifyError({
+          message: `"${file.name}" não é JPG, PNG ou WebP.`,
+          type: "error",
+        });
+        continue;
+      }
+      if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+        notifyError({
+          message: `${file.name}: ${imageUploadTooLargeMessage()}`,
+          type: "error",
+        });
+        continue;
+      }
+      validFiles.push(file);
     }
+    if (!validFiles.length) return;
 
     setUploadingPhoto(true);
+    const uploaded: IInfoPhoto[] = [];
     try {
-      const photo = await uploadCompanyPhoto(publicId, file);
-      setInfo((prev) =>
-        prev
-          ? { ...prev, photos: [...(prev.photos ?? []), photo].slice(0, 3) }
-          : prev
-      );
+      for (const file of validFiles) {
+        const photo = await uploadCompanyPhoto(publicId, file);
+        uploaded.push(photo);
+        setInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                photos: [...(prev.photos ?? []), photo].slice(
+                  0,
+                  COMPANY_PHOTO_MAX_COUNT
+                ),
+              }
+            : prev
+        );
+      }
     } catch (error) {
       console.error(error);
       notifyError({
-        message: "Não foi possível enviar a foto. Tente novamente.",
+        message:
+          uploaded.length > 0
+            ? `Enviamos ${uploaded.length} foto${uploaded.length === 1 ? "" : "s"}, mas as demais falharam. Tente de novo.`
+            : "Não foi possível enviar as fotos. Tente novamente.",
         type: "error",
       });
     } finally {
@@ -367,7 +399,7 @@ function RealInfo() {
                 <input
                   ref={logoInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={IMAGE_UPLOAD_ACCEPT}
                   className="sr-only"
                   onChange={handleLogoChange}
                 />
@@ -404,7 +436,7 @@ function RealInfo() {
                     {!uploadingLogo && (
                       <>
                         <br />
-                        {imageUploadHint()}
+                        {imageUploadHint()} · 1 foto
                       </>
                     )}
                   </span>
@@ -415,14 +447,16 @@ function RealInfo() {
                     Fotos do espaço
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-text-light/60">
-                    Até 3 fotos do espaço — aparecem na página da sua arena no
-                    site.
+                    Até {COMPANY_PHOTO_MAX_COUNT} fotos do espaço — você pode
+                    selecionar várias de uma vez. Aparecem na página da sua
+                    arena no site.
                   </p>
 
                   <input
                     ref={photoInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept={IMAGE_UPLOAD_ACCEPT}
+                    multiple
                     className="sr-only"
                     onChange={handlePhotoChange}
                   />
@@ -455,7 +489,7 @@ function RealInfo() {
                           type="button"
                           disabled={uploadingPhoto || !publicId}
                           onClick={() => photoInputRef.current?.click()}
-                          aria-label="Adicionar foto do espaço"
+                          aria-label={`Adicionar fotos do espaço (até ${photoSlotsLeft})`}
                           className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-text-light/20 bg-master/40 px-2 text-center transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
                         >
                           <MdOutlinePhotoCamera
@@ -464,14 +498,19 @@ function RealInfo() {
                             aria-hidden
                           />
                           <span className="text-xs leading-4 text-text-light/55">
-                            {uploadingPhoto ? "Enviando…" : "Adicionar"}
+                            {uploadingPhoto
+                              ? "Enviando…"
+                              : photoSlotsLeft === 1
+                                ? "Adicionar"
+                                : `Até ${photoSlotsLeft}`}
                           </span>
                         </button>
                       </li>
                     ) : null}
                   </ul>
                   <p className="mt-2 text-xs text-text-light/45">
-                    {imageUploadHint()} cada · {photos.length}/3
+                    {imageUploadHint()} cada · {photos.length}/
+                    {COMPANY_PHOTO_MAX_COUNT}
                   </p>
                 </div>
               </div>

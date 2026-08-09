@@ -149,7 +149,12 @@ export const getCourtsByCompanyPublicId = async (publicId: string): Promise<{ id
   }
 }
 
-export const createNewCourtSchedule = async (data: { start_hour: string, date: string, court_id: number }): Promise<any> => {
+export const createNewCourtSchedule = async (data: {
+  start_hour: string;
+  date: string;
+  court_id: number;
+  price?: number;
+}): Promise<any> => {
   try {
     const response = await api.post('/court-schedules/quick-create', data)
     return response;
