@@ -2,11 +2,13 @@ import Input from "../../components/Input";
 import { useEffect, useMemo, useState } from "react";
 import { changePassword } from "../../api/auth";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import { useLoading } from "../../hooks/useLoading";
 import { MdOutlineInfo } from "react-icons/md";
 import { useErrors } from "../../contexts/ErrorsContext";
 import {
   getAccessToken,
+  setAccessToken,
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
 import { MPN_LOGO_URL } from "../../constants/brand";
@@ -15,6 +17,19 @@ import {
   PASSWORD_HINT,
   PASSWORD_REGEX,
 } from "../../utils/passwordPolicy";
+
+type TokenPayload = {
+  updatedPassword?: boolean;
+  companyPublicId?: string | null;
+  termsAccepted?: boolean;
+};
+
+function routeAfterPasswordChange(token: string): string {
+  const payload = jwtDecode<TokenPayload>(token);
+  if (payload.termsAccepted === false) return "/cadastro/completar";
+  if (payload.updatedPassword === false) return "/alterar-senha";
+  return payload.companyPublicId ? "/reservas" : "/comecar";
+}
 
 export default function ChangePassword() {
   const { loading, withLoading } = useLoading();
@@ -66,12 +81,18 @@ export default function ChangePassword() {
     try {
       await withLoading(async () => {
         // Conta com senha padrão: API não exige currentPassword.
-        await changePassword(newPassword);
+        const result = await changePassword(newPassword);
+        if (!result?.access_token) {
+          throw new Error("Resposta sem access_token");
+        }
+        setAccessToken(result.access_token);
         notifyError({
           message: "Senha alterada com sucesso!",
           type: "success",
         });
-        navigate("/reservas");
+        navigate(routeAfterPasswordChange(result.access_token), {
+          replace: true,
+        });
       });
     } catch (error) {
       console.error("Erro ao alterar a senha:", error);

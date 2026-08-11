@@ -71,7 +71,10 @@ function AccessBanners() {
   const location = useLocation();
 
   if (caps.accessMode === "read_only") {
-    const onBilling = location.pathname.startsWith("/mensalidades");
+    const billingPath = billingNavPath(caps.entitlement);
+    const onBilling =
+      location.pathname.startsWith("/mensalidades") ||
+      location.pathname.startsWith("/planos");
     return (
       <div
         role="status"
@@ -87,7 +90,7 @@ function AccessBanners() {
         </p>
         {!onBilling ? (
           <Link
-            to="/mensalidades"
+            to={billingPath}
             className={buttonClassName({
               variant: "secondary",
               size: "md",
@@ -95,7 +98,7 @@ function AccessBanners() {
               fullWidth: false,
             })}
           >
-            Ir para mensalidades
+            Ir para {billingNavLabel(caps.entitlement).toLowerCase()}
           </Link>
         ) : null}
       </div>

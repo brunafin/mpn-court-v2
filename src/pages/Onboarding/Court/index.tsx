@@ -62,6 +62,8 @@ function OnboardingCourt() {
   );
   const [sports, setSports] = useState<CourtSport[]>([]);
   const [floor, setFloor] = useState<CourtFloor | "">("");
+  const [isCovered, setIsCovered] = useState(true);
+  const [isCanHaveNet, setIsCanHaveNet] = useState(false);
   const [formError, setFormError] = useState("");
 
   const price = useMemo(() => reaisFromDigits(priceDigits), [priceDigits]);
@@ -95,6 +97,8 @@ function OnboardingCourt() {
     setSlotPriceDigits(digits);
     setSports(court?.sports ?? []);
     setFloor(court?.floor ?? "");
+    setIsCovered(court?.isCovered ?? true);
+    setIsCanHaveNet(court?.isCanHaveNet ?? false);
     setFormError("");
   }, []);
 
@@ -229,6 +233,8 @@ function OnboardingCourt() {
         priceOverrides,
         sports,
         floor,
+        isCovered,
+        isCanHaveNet,
       },
       existing ? editingIndex : undefined,
     );
@@ -511,6 +517,27 @@ function OnboardingCourt() {
                     if (formError) setFormError("");
                   }}
                 />
+
+                <div className="mt-4 space-y-3 rounded-xl bg-master px-3 py-3">
+                  <label className="flex cursor-pointer items-center gap-3 text-sm text-text-light">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={isCovered}
+                      onChange={(e) => setIsCovered(e.target.checked)}
+                    />
+                    Quadra coberta
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3 text-sm text-text-light">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={isCanHaveNet}
+                      onChange={(e) => setIsCanHaveNet(e.target.checked)}
+                    />
+                    Pode ter rede
+                  </label>
+                </div>
 
                 {formError &&
                   !/preço padrão|esporte/.test(formError) && (

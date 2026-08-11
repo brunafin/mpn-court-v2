@@ -75,6 +75,10 @@ export type MockCourt = {
   sports: CourtSport[];
   /** Tipo de piso da quadra (obrigatório). */
   floor?: CourtFloor;
+  /** Quadra coberta (default true na API se omitido). */
+  isCovered?: boolean;
+  /** Pode ter rede. */
+  isCanHaveNet?: boolean;
 };
 
 /** Segunda … Domingo */
@@ -296,6 +300,8 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
     priceOverrides,
     sports,
     floor,
+    isCovered: court.isCovered ?? true,
+    isCanHaveNet: Boolean(court.isCanHaveNet),
   };
 }
 

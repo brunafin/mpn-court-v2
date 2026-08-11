@@ -29,6 +29,7 @@ import {
 import { PageEyebrow } from "../../components/PageTitle";
 import { formatPhoneMask } from "../../utils/formatPhone";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import {
   COMPANY_PHOTO_MAX_COUNT,
   IMAGE_UPLOAD_ACCEPT,
@@ -39,6 +40,10 @@ import {
 } from "../../utils/imageUpload";
 import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
 import { buttonClassName } from "../../components/Button";
+import EditCompanySection from "./EditCompanySection";
+import PortalStatusBanner from "../../components/PortalStatusBanner";
+import { resolveCompanyPortalStatus } from "../../utils/portalVisibility";
+import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
 
 function arenaPublicUrl(info: IInfo | null): string | null {
   if (!info) return null;
@@ -55,6 +60,7 @@ function RealInfo() {
   const { notifyError } = useErrors();
   const { setLogoUrl, setCompanyName: setBrandingCompanyName } =
     useCompanyBranding();
+  const caps = useCompanyCapabilities();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [publicId, setPublicId] = useState("");
@@ -275,7 +281,18 @@ function RealInfo() {
   const isInitialLoading = loading && !info;
   const logoUrl = info?.logoUrl || null;
   const publicArenaUrl = arenaPublicUrl(info);
-  const arenaPublished = Boolean(info?.isActive);
+  const portalStatus = resolveCompanyPortalStatus({
+    isActive: info?.isActive,
+    capabilities: caps.ready ? caps : info?.capabilities,
+    courts: info?.courts,
+  });
+  const arenaPublished = portalStatus.onSite;
+  const offSiteNeedsCourts =
+    !portalStatus.onSite &&
+    (caps.portalEligible ?? true) &&
+    !(info?.courts ?? []).some((c) => c.show);
+  const offSiteNeedsPlan =
+    !portalStatus.onSite && caps.ready && !caps.portalEligible;
 
   const copyArenaLink = async () => {
     if (!publicArenaUrl) return;
@@ -327,6 +344,16 @@ function RealInfo() {
                   </p>
                 )}
 
+                {caps.ready || info ? (
+                  <PortalStatusBanner
+                    className="mt-4"
+                    status={portalStatus}
+                    showActivateCourtsCta={offSiteNeedsCourts}
+                    showBillingCta={offSiteNeedsPlan}
+                    entitlement={caps.ready ? caps.entitlement : info?.capabilities?.entitlement}
+                  />
+                ) : null}
+
                 {publicArenaUrl && (
                   <div className="mt-5 rounded-xl bg-master/50 p-3.5 sm:p-4">
                     <div className="flex items-start gap-2.5">
@@ -342,7 +369,7 @@ function RealInfo() {
                         <p className="mt-1 text-sm leading-relaxed text-text-light/60">
                           {arenaPublished
                             ? "Compartilhe com clientes para verem horários e reservar."
-                            : "Ative pelo menos uma quadra no site para a página ficar pública."}
+                            : portalStatus.reason}
                         </p>
                         <a
                           href={publicArenaUrl}
@@ -380,7 +407,7 @@ function RealInfo() {
                             <MdOpenInNew size={18} aria-hidden />
                             Abrir
                           </a>
-                          {!arenaPublished ? (
+                          {offSiteNeedsCourts ? (
                             <Link
                               to="/quadras"
                               className={buttonClassName({
@@ -391,6 +418,28 @@ function RealInfo() {
                               })}
                             >
                               Ativar no site
+                            </Link>
+                          ) : null}
+                          {offSiteNeedsPlan ? (
+                            <Link
+                              to={billingNavPath(
+                                caps.ready
+                                  ? caps.entitlement
+                                  : info?.capabilities?.entitlement,
+                              )}
+                              className={buttonClassName({
+                                variant: "primary",
+                                size: "md",
+                                fullWidth: false,
+                                className: "inline-flex !min-h-11 px-3.5 text-sm",
+                              })}
+                            >
+                              Ver{" "}
+                              {billingNavLabel(
+                                caps.ready
+                                  ? caps.entitlement
+                                  : info?.capabilities?.entitlement,
+                              ).toLowerCase()}
                             </Link>
                           ) : null}
                         </div>
@@ -524,6 +573,20 @@ function RealInfo() {
                 </div>
               </div>
             </div>
+
+            {info ? (
+              <EditCompanySection
+                publicId={publicId}
+                info={info}
+                canMutate={caps.canMutate}
+                onSaved={(partial) => {
+                  setInfo((prev) => (prev ? { ...prev, ...partial } : prev));
+                  if (partial.companyName) {
+                    setCompanyName(partial.companyName);
+                  }
+                }}
+              />
+            ) : null}
 
             <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
               <p className="mb-3 text-lg font-semibold text-text-light">

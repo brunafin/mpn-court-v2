@@ -90,6 +90,8 @@ function BillingPage() {
     }
   }, [caps.ready, caps.entitlement, navigate]);
 
+  const canGeneratePix = caps.ready && caps.canPayBilling;
+
   useEffect(() => {
     const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
     setCompanyPublicId(payload?.companyPublicId || "");
@@ -284,7 +286,7 @@ function BillingPage() {
 
             {!paying ? (
               <>
-                {summary?.pixEnabled ? (
+                {summary?.pixEnabled && canGeneratePix ? (
                   <button
                     type="button"
                     disabled={generating}
@@ -296,7 +298,7 @@ function BillingPage() {
                       : "Gerar PIX"}
                   </button>
                 ) : null}
-                {manualPix ? (
+                {manualPix && canGeneratePix ? (
                   <ManualPixPay
                     className="mt-4"
                     primary={!summary?.pixEnabled}
@@ -305,9 +307,14 @@ function BillingPage() {
                     dueLabel={formatMonthYear(openPayment.dueDate)}
                   />
                 ) : null}
-                {!summary?.pixEnabled && !manualPix ? (
+                {canGeneratePix && !summary?.pixEnabled && !manualPix ? (
                   <p className="mt-4 text-sm text-text-light/60">
                     PIX automático indisponível no momento. Contate o suporte.
+                  </p>
+                ) : null}
+                {caps.ready && !canGeneratePix ? (
+                  <p className="mt-4 text-sm text-text-light/60">
+                    Pagamento disponível apenas para planos ativos.
                   </p>
                 ) : null}
               </>

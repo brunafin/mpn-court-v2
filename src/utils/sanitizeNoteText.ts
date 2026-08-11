@@ -1,8 +1,8 @@
 /** Limite alinhado ao campo observação da reserva. */
 export const OBSERVATION_MAX_LENGTH = 150;
 
-/** Limite alinhado ao textarea de lembrete no Manager. */
-export const REMINDER_MESSAGE_MAX_LENGTH = 100;
+/** Limite alinhado à API (`NOTE_MESSAGE_MAX_LENGTH`). */
+export const REMINDER_MESSAGE_MAX_LENGTH = 255;
 
 /**
  * Caracteres permitidos em observação/lembrete: letras (com acento),

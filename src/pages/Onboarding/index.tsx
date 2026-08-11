@@ -82,6 +82,8 @@ function OnboardingChecklist() {
           name: court.name,
           sports: court.sports.map((key) => courtSportLabel(key)),
           floor: court.floor as string,
+          is_covered: court.isCovered ?? true,
+          is_can_have_net: court.isCanHaveNet ?? false,
           price: court.defaultPrice,
           priceSlots: state.scheduleTemplate
             ? buildCourtPriceSlotsPayload(court, state.scheduleTemplate)

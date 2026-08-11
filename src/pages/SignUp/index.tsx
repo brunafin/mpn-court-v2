@@ -57,8 +57,9 @@ function SignUp() {
   const googleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim());
 
   useEffect(() => {
-    if (getAccessToken()) {
-      navigate("/reservas");
+    const token = getAccessToken();
+    if (token) {
+      navigate(routeAfterLogin(token), { replace: true });
     }
   }, [navigate]);
 

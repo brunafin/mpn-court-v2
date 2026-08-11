@@ -5,6 +5,8 @@ export interface IInfoCourt {
   name: string;
   floor: string | null;
   show: boolean;
+  isCovered?: boolean;
+  isCanHaveNet?: boolean;
   sports: string[];
   price: number | null;
 }
@@ -20,6 +22,15 @@ export interface IInfoPhoto {
   url: string;
 }
 
+export interface IInfoAddress {
+  cep: string | null;
+  street: string | null;
+  number: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  uf: string | null;
+}
+
 export interface IInfo {
   link: string;
   slug?: string;
@@ -27,6 +38,9 @@ export interface IInfo {
   isActive?: boolean;
   companyName: string;
   companyPhone?: string | null;
+  instagramUrl?: string | null;
+  characteristics?: string[];
+  address?: IInfoAddress | null;
   logoUrl?: string | null;
   photos?: IInfoPhoto[];
   owner?: IInfoOwner | null;
@@ -122,6 +136,41 @@ export const updateCourtVisibility = async (
     companyActive: boolean;
   }>(`/courts/${courtPublicId}/visibility`, { show });
   return response.data;
+};
+
+export type PatchCompanyInput = {
+  name?: string;
+  phone?: string;
+  instagram_url?: string | null;
+  cep?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  uf?: string;
+  characteristics?: string[];
+};
+
+export const patchCompany = async (
+  publicId: string,
+  data: PatchCompanyInput,
+): Promise<void> => {
+  await api.patch(`/companies/${publicId}`, data);
+};
+
+export type PatchCourtInput = {
+  name?: string;
+  floor?: string | null;
+  is_covered?: boolean;
+  is_can_have_net?: boolean;
+  sports?: string[];
+};
+
+export const patchCourt = async (
+  courtPublicId: string,
+  data: PatchCourtInput,
+): Promise<void> => {
+  await api.patch(`/courts/${courtPublicId}`, data);
 };
 
 export const updatePreferencesByCompanyPublicId = async (

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineArrowBackIos, MdOutlineEventBusy } from "react-icons/md";
 import { BsPlus } from "react-icons/bs";
 import { useLoading } from "../../hooks/useLoading";
@@ -24,6 +23,9 @@ import { PageTitle } from "../../components/PageTitle";
 import ConfirmSheet, { ConfirmTone } from "../../components/ConfirmSheet";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { invalidateSchedulesDayCache } from "../../utils/schedulesDayCache";
+import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import { billingNavPath } from "../../utils/billingNav";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 function parseIncomingDate(value: unknown): Date {
   if (value instanceof Date && isValid(value)) {
@@ -44,6 +46,8 @@ function ConfigDay() {
   const { notifyError } = useErrors();
   const location = useLocation();
   const navigate = useNavigate();
+  const caps = useCompanyCapabilities();
+  const canMutate = caps.canMutate;
   const [showAddCourtSchedule, setShowAddCourtSchedule] = useState(false);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [list, setList] = useState<IReservationItemProps[]>([]);
@@ -199,7 +203,7 @@ function ConfigDay() {
   };
 
   const handleConfirmCloseDay = async () => {
-    if (!companyPublicId || dayActionLoading) return;
+    if (!canMutate || !companyPublicId || dayActionLoading) return;
     setDayActionLoading(true);
     try {
       const result = await setDayAvailability(
@@ -229,7 +233,12 @@ function ConfigDay() {
   };
 
   const handleActivateSelected = async () => {
-    if (!companyPublicId || selectedInactiveIds.size === 0 || batchActivateLoading)
+    if (
+      !canMutate ||
+      !companyPublicId ||
+      selectedInactiveIds.size === 0 ||
+      batchActivateLoading
+    )
       return;
     setBatchActivateLoading(true);
     try {
@@ -285,6 +294,18 @@ function ConfigDay() {
       </header>
 
       <section className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-8 pt-4 lg:max-w-5xl lg:px-6">
+        {!canMutate && caps.ready ? (
+          <p className="mb-4 rounded-xl bg-master-light px-4 py-3 text-base text-text-light/70">
+            Conta em somente leitura — não é possível alterar horários.{" "}
+            <Link
+              to={billingNavPath(caps.entitlement)}
+              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+            >
+              Regularizar
+            </Link>
+          </p>
+        ) : null}
+
         <div
           className={`mb-4 rounded-2xl bg-master-light px-4 py-2 transition-opacity lg:px-5 lg:py-4 ${
             loading && list.length > 0 ? "opacity-70" : ""
@@ -365,20 +386,22 @@ function ConfigDay() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAddCourtSchedule(true)}
-          disabled={loading && courts.length === 0}
-          className={buttonClassName({
-            variant: "primary",
-            className: "mb-4 lg:w-auto lg:min-w-[16rem]",
-          })}
-        >
-          <BsPlus size={26} aria-hidden />
-          Adicionar horário
-        </button>
+        {canMutate ? (
+          <button
+            type="button"
+            onClick={() => setShowAddCourtSchedule(true)}
+            disabled={loading && courts.length === 0}
+            className={buttonClassName({
+              variant: "primary",
+              className: "mb-4 lg:w-auto lg:min-w-[16rem]",
+            })}
+          >
+            <BsPlus size={26} aria-hidden />
+            Adicionar horário
+          </button>
+        ) : null}
 
-        {counts.available > 0 && (
+        {canMutate && counts.available > 0 && (
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
@@ -408,12 +431,13 @@ function ConfigDay() {
                 </span>
               </div>
               <p className="text-base leading-6 text-text-light/65">
-                Selecione e reative em lote — sem diferença entre inativação
-                avulsa ou do dia.
+                {canMutate
+                  ? "Selecione e reative em lote — sem diferença entre inativação avulsa ou do dia."
+                  : "Somente leitura — reativação indisponível."}
               </p>
             </div>
 
-            {selectableInactiveHours.length > 0 && (
+            {canMutate && selectableInactiveHours.length > 0 && (
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -478,7 +502,9 @@ function ConfigDay() {
                       type="checkbox"
                       className="size-5 shrink-0 rounded border-text-light/30 accent-accent-green disabled:opacity-40"
                       checked={checked}
-                      disabled={loading || batchActivateLoading || isPast}
+                      disabled={
+                        !canMutate || loading || batchActivateLoading || isPast
+                      }
                       onChange={() =>
                         toggleInactiveSelection(inactiveHour.scheduleId)
                       }

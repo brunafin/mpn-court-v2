@@ -38,7 +38,10 @@ export async function changePassword(
     newPassword,
     ...(currentPassword ? { currentPassword } : {}),
   });
-  return response.data;
+  return response.data as {
+    access_token: string;
+    needsProfileCompletion?: boolean;
+  };
 }
 
 export async function signup(input: {
