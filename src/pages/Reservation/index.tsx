@@ -392,6 +392,7 @@ function Reservation() {
           isBarbecueIncluded={item.isBarbecueIncluded}
           isEvent={item.isEvent}
           isNeedsNetting={item.isNeedsNetting}
+          isPublic={item.isPublic}
           listFilters={{
             status: statusSelected,
             court: courtSelected,

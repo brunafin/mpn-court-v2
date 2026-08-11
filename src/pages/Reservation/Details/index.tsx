@@ -15,6 +15,7 @@ import {
   cancelReservation,
   changeAvailability,
   createReservation,
+  deleteSchedule,
   fixSchedule,
   getScheduleById,
   unfixSchedule,
@@ -41,10 +42,15 @@ import {
   sanitizeNoteTextInput,
 } from "../../../utils/sanitizeNoteText";
 import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
+import {
+  isInternalSchedule,
+  willFixAsInternal,
+} from "../scheduleVisibility";
 import { getAccessTokenPayload } from "../../../utils/authCookie";
 import {
   invalidateSchedulesDayCache,
   patchSchedulesDayCacheSlot,
+  removeSchedulesDayCacheSlot,
 } from "../../../utils/schedulesDayCache";
 import type { IReservationItemProps } from "../interface";
 import Textarea from "../../../components/Textarea";
@@ -445,23 +451,48 @@ function ReservationDetails() {
 
   const statusActionHandlers = {
     onLiberarFixo: () => {
+      const internal = isInternalSchedule(court?.isPublic);
       setConfirmAction({
-        title: "Liberar horário fixo?",
-        description:
-          "Isso cancela todas as reservas futuras deste horário e cliente.",
+        title: internal
+          ? "Liberar horário fixo interno?"
+          : "Liberar horário fixo?",
+        description: internal
+          ? "Remove a série interna da agenda (todos os dias deste horário). Não volta a nascer e não aparece no site."
+          : "Isso cancela todas as reservas futuras deste horário e cliente.",
         confirmLabel: "Liberar fixo",
         tone: "success",
         run: async () => {
-          await unfixSchedule(
+          const result = await unfixSchedule(
             { court_schedule_public_id: court?.scheduleId || "" },
             { silentError: true },
           );
+          if (internal || result?.removed) {
+            const companyPublicId =
+              getAccessTokenPayload<{ companyPublicId?: string }>()
+                ?.companyPublicId;
+            const scheduleId = court?.scheduleId;
+            if (companyPublicId && dateFrom && scheduleId) {
+              removeSchedulesDayCacheSlot(
+                companyPublicId,
+                String(dateFrom),
+                scheduleId,
+                { clearOtherDays: true },
+              );
+            } else {
+              invalidateAgendaCache();
+            }
+            navigate("/reservas", {
+              state: buildListReturnState(),
+            });
+            return;
+          }
           returnToListAfterMutation({
             patch: {
               status: ReservationStatusEnum.AVAILABLE,
               customerName: null,
               isBarbecueIncluded: false,
               isEvent: false,
+              isPublic: court?.isPublic,
             },
             clearOtherDays: true,
           });
@@ -469,9 +500,12 @@ function ReservationDetails() {
       });
     },
     onAtivar: () => {
+      const internal = isInternalSchedule(court?.isPublic);
       setConfirmAction({
         title: "Ativar horário?",
-        description: "O horário volta a aparecer como disponível para reserva.",
+        description: internal
+          ? "Volta a aparecer na agenda do manager. Continua fora do site."
+          : "O horário volta a aparecer como disponível para reserva.",
         confirmLabel: "Ativar horário",
         tone: "success",
         run: async () => {
@@ -488,9 +522,12 @@ function ReservationDetails() {
       const barbecueNote = isBarbecueIncluded
         ? " A churrasqueira não será agendada nas reservas futuras."
         : "";
+      const asInternal = willFixAsInternal(court?.isPublic);
       setConfirmAction({
-        title: "Fixar horário?",
-        description: `O cliente fica com este horário de forma recorrente.${barbecueNote}`,
+        title: asInternal ? "Fixar horário interno?" : "Fixar horário?",
+        description: asInternal
+          ? `O cliente fica com este horário de forma recorrente na agenda. Horário interno — não aparece no site.${barbecueNote}`
+          : `O cliente fica com este horário de forma recorrente.${barbecueNote}`,
         confirmLabel: "Fixar horário",
         tone: "neutral",
         run: async () => {
@@ -507,6 +544,7 @@ function ReservationDetails() {
                     court?.reservation?.contactName ??
                     "",
                 ) || court?.reservation?.contactName || null,
+              isPublic: asInternal ? false : court?.isPublic ?? true,
             },
             clearOtherDays: true,
           });
@@ -530,16 +568,52 @@ function ReservationDetails() {
         },
       });
     },
+    onExcluir: () => {
+      const orphan = court?.isPublic == null;
+      setConfirmAction({
+        title: orphan ? "Excluir horário?" : "Excluir horário interno?",
+        description: orphan
+          ? "Remove este horário pontual da agenda. Não faz parte da grade semanal."
+          : "Remove este horário da agenda. Se for série interna, também some das próximas semanas (só se estiverem livres). Funciona com horário disponível ou inativo.",
+        confirmLabel: "Excluir horário",
+        tone: "danger",
+        run: async () => {
+          await deleteSchedule(court?.scheduleId || "", {
+            silentError: true,
+          });
+          const companyPublicId =
+            getAccessTokenPayload<{ companyPublicId?: string }>()
+              ?.companyPublicId;
+          const scheduleId = court?.scheduleId;
+          if (companyPublicId && dateFrom && scheduleId) {
+            removeSchedulesDayCacheSlot(
+              companyPublicId,
+              String(dateFrom),
+              scheduleId,
+              { clearOtherDays: true },
+            );
+          } else {
+            invalidateAgendaCache();
+          }
+          navigate("/reservas", {
+            state: buildListReturnState(),
+          });
+        },
+      });
+    },
   };
 
   const askCancelReservation = () => {
     const dayLabel = court?.date?.trim();
     const isFixed = court?.status === ReservationStatusEnum.FIXED;
+    const internal = isInternalSchedule(court?.isPublic);
 
     setConfirmAction({
       title: isFixed ? "Cancelar reserva deste dia?" : "Cancelar reserva?",
       description: isFixed
-        ? `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica disponível só nesse dia. O fixo continua nas outras semanas.`
+        ? internal
+          ? `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica inativo só nesse dia (não aparece no site). O fixo interno continua nas outras semanas.`
+          : `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica disponível só nesse dia. O fixo continua nas outras semanas.`
         : "A reserva deste horário será cancelada. Essa ação não pode ser desfeita.",
       confirmLabel: "Cancelar reserva",
       tone: "danger",
@@ -549,7 +623,9 @@ function ReservationDetails() {
         });
         returnToListAfterMutation({
           patch: {
-            status: ReservationStatusEnum.AVAILABLE,
+            status: internal
+              ? ReservationStatusEnum.INACTIVE
+              : ReservationStatusEnum.AVAILABLE,
             customerName: null,
             isBarbecueIncluded: false,
             isEvent: false,
@@ -654,17 +730,23 @@ function ReservationDetails() {
                 contactPhone: court?.reservation?.contactPhone ?? undefined,
                 courtName: court?.court,
                 price: court?.price,
+                isPublic: court?.isPublic,
               }
             )}
 
             {canMutate &&
               !isPastSchedule &&
               court.status === ReservationStatusEnum.AVAILABLE &&
-              renderButtonByStatus(court.status, statusActionHandlers)}
+              renderButtonByStatus(court.status, statusActionHandlers, {
+                isPublic: court.isPublic,
+              })}
 
             {canMutate &&
               court.status === ReservationStatusEnum.INACTIVE &&
-              renderButtonByStatus(court?.status, statusActionHandlers)}
+              renderButtonByStatus(court?.status, statusActionHandlers, {
+                isPublic: court.isPublic,
+                canActivate: !isPastSchedule,
+              })}
 
             {canMutate &&
               !consultationOnly &&
@@ -674,6 +756,7 @@ function ReservationDetails() {
                   {renderButtonByStatus(
                     court.status,
                     statusActionHandlers,
+                    { isPublic: court.isPublic },
                   )}
                   <button
                     type="button"

@@ -10,12 +10,15 @@ import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 import { getStatusIcon } from "../statusIcons";
 import OptionChip from "../../../components/OptionChip";
 
-function getStatusMeta(status: ReservationStatusEnum) {
+function getStatusMeta(
+  status: ReservationStatusEnum,
+  isPublic?: boolean | null,
+) {
   const Icon = getStatusIcon(status);
   switch (status) {
     case ReservationStatusEnum.FIXED:
       return {
-        label: "Fixo",
+        label: isPublic === false ? "Fixo interno" : "Fixo",
         barClass: "bg-accent-purple",
         iconWrapClass: "bg-accent-purple/15 text-accent-purple-soft",
         Icon,
@@ -31,7 +34,7 @@ function getStatusMeta(status: ReservationStatusEnum) {
       };
     case ReservationStatusEnum.AVAILABLE:
       return {
-        label: "Disponível",
+        label: isPublic === false ? "Disponível (interno)" : "Disponível",
         barClass: "bg-accent-green-bar",
         iconWrapClass: "bg-accent-green/15 text-accent-green",
         Icon,
@@ -110,6 +113,7 @@ function ReservationItem({
   isBarbecueIncluded = false,
   isEvent = false,
   isNeedsNetting = false,
+  isPublic = null,
   listFilters,
 }: IReservationItemProps & {
   listFilters?: {
@@ -122,7 +126,7 @@ function ReservationItem({
     new Date(`${date}T${time}`) < new Date(new Date().setSeconds(0, 0));
   const normalizedStatus =
     normalizeReservationStatus(status) ?? status;
-  const statusMeta = getStatusMeta(normalizedStatus);
+  const statusMeta = getStatusMeta(normalizedStatus, isPublic);
   const isAvailable = normalizedStatus === ReservationStatusEnum.AVAILABLE;
   const isInactive = normalizedStatus === ReservationStatusEnum.INACTIVE;
   const isPastAvailable = isAvailable && isPastDate;

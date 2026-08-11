@@ -99,31 +99,45 @@ const statusCardMetaClass =
 const statusCardDescriptionClass =
   "mt-1.5 text-base leading-6 text-text-light";
 
-export function getStatusLabel(status?: ReservationStatusEnum | null) {
+export function getStatusLabel(
+  status?: ReservationStatusEnum | null,
+  isPublic?: boolean | null,
+) {
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "Fixo";
+      return isPublic === false ? "Fixo interno" : "Fixo";
     case ReservationStatusEnum.INACTIVE:
       return "Inativo";
     case ReservationStatusEnum.RESERVED:
       return "Reservado";
     case ReservationStatusEnum.AVAILABLE:
-      return "Horário disponível";
+      return isPublic === false
+        ? "Disponível (interno)"
+        : "Horário disponível";
     default:
       return "Status";
   }
 }
 
-export function getStatusDescription(status?: ReservationStatusEnum | null) {
+export function getStatusDescription(
+  status?: ReservationStatusEnum | null,
+  isPublic?: boolean | null,
+) {
   switch (status) {
     case ReservationStatusEnum.FIXED:
-      return "Reservado de forma recorrente para este cliente.";
+      return isPublic === false
+        ? "Recorrente na agenda — não aparece no site."
+        : "Reservado de forma recorrente para este cliente.";
     case ReservationStatusEnum.INACTIVE:
-      return "Não aparece como disponível para reserva.";
+      return isPublic === false
+        ? "Inativo na agenda do manager. Horários internos não entram no site."
+        : "Não aparece como disponível para reserva.";
     case ReservationStatusEnum.RESERVED:
       return "Já possui cliente neste horário.";
     case ReservationStatusEnum.AVAILABLE:
-      return "Pronto para nova reserva.";
+      return isPublic === false
+        ? "Disponível na agenda do manager — não listado no site."
+        : "Pronto para nova reserva.";
     default:
       return "";
   }
@@ -200,6 +214,7 @@ export function getMeanByStatus(
     contactPhone?: string;
     courtName?: string;
     price?: string;
+    isPublic?: boolean | null;
   }
 ) {
   if (!status) return null;
@@ -210,6 +225,7 @@ export function getMeanByStatus(
     contactPhone,
     courtName,
     price,
+    isPublic,
   } = details || {};
 
   const accent = getStatusAccent(status);
@@ -232,7 +248,7 @@ export function getMeanByStatus(
     status === ReservationStatusEnum.FIXED;
 
   if (isCompactStatus) {
-    const statusLabel = getStatusLabel(status);
+    const statusLabel = getStatusLabel(status, isPublic);
     const ariaSummary = [
       statusLabel,
       metaLine,
@@ -266,6 +282,11 @@ export function getMeanByStatus(
                 <span className="line-clamp-2 break-words">{metaLine}</span>
               </p>
             )}
+            {isPublic === false && (
+              <p className={statusCardDescriptionClass}>
+                {getStatusDescription(status, isPublic)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -281,7 +302,7 @@ export function getMeanByStatus(
     );
   }
 
-  const statusLabel = getStatusLabel(status);
+  const statusLabel = getStatusLabel(status, isPublic);
   const ariaSummary = metaLine ? `${statusLabel}. ${metaLine}` : statusLabel;
 
   return (
@@ -310,7 +331,7 @@ export function getMeanByStatus(
               </p>
             )}
             <p className={statusCardDescriptionClass}>
-              {getStatusDescription(status)}
+              {getStatusDescription(status, isPublic)}
             </p>
           </div>
         </div>
@@ -324,14 +345,17 @@ type StatusActionHandlers = {
   onAtivar: () => void;
   onFixar: () => void;
   onInativar: () => void;
+  onExcluir?: () => void;
 };
 
 export function renderButtonByStatus(
   status: ReservationStatusEnum | null,
-  handlers: StatusActionHandlers
+  handlers: StatusActionHandlers,
+  opts?: { isPublic?: boolean | null; canActivate?: boolean },
 ) {
   if (!status) return null;
 
+  const canActivate = opts?.canActivate !== false;
   const wrap = (button: ReactNode) => (
     <div className="mb-5 flex justify-end">{button}</div>
   );
@@ -353,7 +377,43 @@ export function renderButtonByStatus(
           Liberar fixo
         </button>
       );
-    case ReservationStatusEnum.INACTIVE:
+    case ReservationStatusEnum.INACTIVE: {
+      const canDeleteInternal =
+        opts?.isPublic !== true && typeof handlers.onExcluir === "function";
+      if (canDeleteInternal) {
+        return (
+          <div className="mb-5 flex flex-wrap justify-end gap-2">
+            {canActivate && (
+              <button
+                type="button"
+                onClick={handlers.onAtivar}
+                className={buttonClassName({
+                  variant: "success",
+                  fullWidth: false,
+                })}
+              >
+                <StatusIcons.available size={20} className="shrink-0" aria-hidden />
+                Ativar horário
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handlers.onExcluir}
+              className={buttonClassName({
+                variant: "secondary",
+                size: "md",
+                fullWidth: false,
+                className:
+                  "border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
+              })}
+            >
+              <MdNotInterested size={18} className="shrink-0" aria-hidden />
+              Excluir horário
+            </button>
+          </div>
+        );
+      }
+      if (!canActivate) return null;
       return wrap(
         <button
           type="button"
@@ -367,6 +427,7 @@ export function renderButtonByStatus(
           Ativar horário
         </button>
       );
+    }
     case ReservationStatusEnum.RESERVED:
       return (
         <button
@@ -383,7 +444,27 @@ export function renderButtonByStatus(
           Fixar horário
         </button>
       );
-    case ReservationStatusEnum.AVAILABLE:
+    case ReservationStatusEnum.AVAILABLE: {
+      const canDeleteInternal =
+        opts?.isPublic !== true && typeof handlers.onExcluir === "function";
+      if (canDeleteInternal) {
+        return wrap(
+          <button
+            type="button"
+            onClick={handlers.onExcluir}
+            className={buttonClassName({
+              variant: "secondary",
+              size: "md",
+              fullWidth: false,
+              className:
+                "border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
+            })}
+          >
+            <MdNotInterested size={18} className="shrink-0" aria-hidden />
+            Excluir horário
+          </button>
+        );
+      }
       return wrap(
         <button
           type="button"
@@ -400,6 +481,7 @@ export function renderButtonByStatus(
           Inativar horário
         </button>
       );
+    }
     default:
       return null;
   }

@@ -11,6 +11,8 @@ export interface IReservationItemProps {
   isEvent?: boolean;
   isNeedsNetting?: boolean;
   isHiddenInactiveHours?: boolean;
+  /** true = público; false = interno; null = sem OS (órfão). */
+  isPublic?: boolean | null;
 }
 
 export interface IReservationDetailsItemProps {
@@ -38,4 +40,6 @@ export interface IReservationDetailsItemProps {
   price: string;
   weekday: string;
   companyPublicId: string;
+  /** true = público; false = interno; null = sem OS (órfão). */
+  isPublic?: boolean | null;
 }

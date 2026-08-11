@@ -153,7 +153,7 @@ export type DayAvailabilityResult = {
   isDayClosed: boolean;
 };
 
-/** Fecha (available=false) ou reabre (available=true) horários livres do dia. */
+/** Fecha (available=false) todos os livres do dia — atalho sem seleção. */
 export const setDayAvailability = async (
   companyPublicId: string,
   date: string,
@@ -165,6 +165,32 @@ export const setDayAvailability = async (
       company_public_id: companyPublicId,
       date,
       available,
+    },
+  );
+  return response.data;
+};
+
+export type AvailabilityBatchResult = {
+  updated: number;
+  skipped: number;
+  date: string | null;
+  available: boolean;
+};
+
+/** Inativa/ativa horários por seleção (public_ids). */
+export const setAvailabilityBatch = async (
+  companyPublicId: string,
+  publicIds: string[],
+  available: boolean,
+  date?: string,
+): Promise<AvailabilityBatchResult> => {
+  const response = await api.patch<AvailabilityBatchResult>(
+    '/court-schedules/availability-batch',
+    {
+      company_public_id: companyPublicId,
+      public_ids: publicIds,
+      available,
+      ...(date ? { date } : {}),
     },
   );
   return response.data;
@@ -188,14 +214,24 @@ export const fixSchedule = async (
 export const unfixSchedule = async (
   data: IFixOrUnfixSchedule,
   options?: { silentError?: boolean },
-): Promise<void> => {
-  try {
-    await api.post('/court-schedules/unfix', data, {
+): Promise<{ message: string; removed?: boolean }> => {
+  const response = await api.post<{ message: string; removed?: boolean }>(
+    '/court-schedules/unfix',
+    data,
+    {
       timeout: 30000,
       silentError: options?.silentError,
-    });
-  } catch (error) {
-    console.error('Erro ao desfixar horário:', error);
-    throw error;
-  }
+    },
+  );
+  return response.data;
+};
+
+/** Exclui horário interno/órfão disponível (não vale para grade comercial). */
+export const deleteSchedule = async (
+  courtSchedulePublicId: string,
+  options?: { silentError?: boolean },
+): Promise<void> => {
+  await api.delete(`/court-schedules/${courtSchedulePublicId}`, {
+    silentError: options?.silentError,
+  });
 };

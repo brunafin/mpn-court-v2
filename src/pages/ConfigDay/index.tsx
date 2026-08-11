@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  MdOutlineArrowBackIos,
-  MdOutlineEventBusy,
-  MdOutlineEventAvailable,
-} from "react-icons/md";
+import { MdOutlineArrowBackIos, MdOutlineEventBusy } from "react-icons/md";
 import { BsPlus } from "react-icons/bs";
 import { useLoading } from "../../hooks/useLoading";
 import { IReservationItemProps } from "../Reservation/interface";
 import {
-  changeAvailability,
   getAllSchedulesByCompanyPublicIdAndDate,
+  setAvailabilityBatch,
   setDayAvailability,
 } from "../../api/schedules";
 import { ReservationStatusEnum } from "../Reservation/enum";
@@ -28,8 +24,6 @@ import { PageTitle } from "../../components/PageTitle";
 import ConfirmSheet, { ConfirmTone } from "../../components/ConfirmSheet";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { invalidateSchedulesDayCache } from "../../utils/schedulesDayCache";
-
-type DayAction = "close" | "reopen";
 
 function parseIncomingDate(value: unknown): Date {
   if (value instanceof Date && isValid(value)) {
@@ -54,10 +48,13 @@ function ConfigDay() {
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courts, setCourts] = useState<{ id: number; name: string }[]>([]);
-  const [isDayClosed, setIsDayClosed] = useState(false);
   const [date] = useState<Date>(() => parseIncomingDate(location.state?.date));
-  const [dayAction, setDayAction] = useState<DayAction | null>(null);
+  const [confirmCloseDay, setConfirmCloseDay] = useState(false);
   const [dayActionLoading, setDayActionLoading] = useState(false);
+  const [selectedInactiveIds, setSelectedInactiveIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [batchActivateLoading, setBatchActivateLoading] = useState(false);
 
   const dateKey = format(date, "yyyy-MM-dd");
   const dateLabel = format(date, "dd/MM/yyyy", { locale: ptBR });
@@ -88,7 +85,7 @@ function ConfigDay() {
             getCourtsByCompanyPublicId(companyPublicId),
           ]);
           setList(dayData.schedules);
-          setIsDayClosed(dayData.isDayClosed);
+          setSelectedInactiveIds(new Set());
           setCourts(courtsResponse);
         });
       } catch (error: any) {
@@ -97,7 +94,7 @@ function ConfigDay() {
         }
       }
     },
-    [companyPublicId, dateKey]
+    [companyPublicId, dateKey],
   );
 
   useEffect(() => {
@@ -108,26 +105,40 @@ function ConfigDay() {
 
   const counts = useMemo(() => {
     const available = list.filter(
-      (item) => item.status === ReservationStatusEnum.AVAILABLE
+      (item) => item.status === ReservationStatusEnum.AVAILABLE,
     ).length;
     const reserved = list.filter(
-      (item) => item.status === ReservationStatusEnum.RESERVED
+      (item) => item.status === ReservationStatusEnum.RESERVED,
     ).length;
     const fixed = list.filter(
-      (item) => item.status === ReservationStatusEnum.FIXED
+      (item) => item.status === ReservationStatusEnum.FIXED,
     ).length;
     const inactive = list.filter(
-      (item) => item.status === ReservationStatusEnum.INACTIVE
+      (item) => item.status === ReservationStatusEnum.INACTIVE,
     ).length;
     return { available, reserved, fixed, inactive };
   }, [list]);
 
-  const hiddenInactiveHours = useMemo(() => {
-    if (!list.length || !list[0]?.isHiddenInactiveHours) return [];
+  const inactiveHours = useMemo(() => {
     return list.filter(
-      (item) => item.status === ReservationStatusEnum.INACTIVE
+      (item) => item.status === ReservationStatusEnum.INACTIVE,
     );
   }, [list]);
+
+  const selectableInactiveHours = useMemo(() => {
+    return inactiveHours.filter((item) => {
+      const isPast =
+        new Date(`${dateKey}T${item.time}`) <
+        new Date(new Date().setSeconds(0, 0));
+      return !isPast;
+    });
+  }, [inactiveHours, dateKey]);
+
+  const allSelectableSelected =
+    selectableInactiveHours.length > 0 &&
+    selectableInactiveHours.every((item) =>
+      selectedInactiveIds.has(item.scheduleId),
+    );
 
   const summaryRows = [
     {
@@ -168,57 +179,83 @@ function ConfigDay() {
     counts.available + counts.reserved + counts.fixed + counts.inactive;
   const showSummaryLoading = loading && list.length === 0;
 
-  const dayConfirm =
-    dayAction === "close"
-      ? {
-          title: "Inativar o dia inteiro?",
-          description:
-            counts.reserved + counts.fixed > 0
-              ? `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}. ${counts.reserved} reserva${counts.reserved === 1 ? "" : "s"} e ${counts.fixed} fixo${counts.fixed === 1 ? "" : "s"} não serão alterados.`
-              : `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}.`,
-          confirmLabel: "Inativar o dia inteiro",
-          tone: "danger" as ConfirmTone,
-        }
-      : dayAction === "reopen"
-        ? {
-            title: "Reativar horários do dia?",
-            description: `Isso reativa os horários inativados em lote em ${dateLabel}. Inativações manuais de horários isolados não são alteradas.`,
-            confirmLabel: "Reativar horários do dia",
-            tone: "primary" as ConfirmTone,
-          }
-        : null;
+  const toggleInactiveSelection = (scheduleId: string) => {
+    setSelectedInactiveIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(scheduleId)) next.delete(scheduleId);
+      else next.add(scheduleId);
+      return next;
+    });
+  };
 
-  const handleConfirmDayAction = async () => {
-    if (!dayAction || !companyPublicId || dayActionLoading) return;
-    const action = dayAction;
+  const toggleSelectAllInactive = () => {
+    if (allSelectableSelected) {
+      setSelectedInactiveIds(new Set());
+      return;
+    }
+    setSelectedInactiveIds(
+      new Set(selectableInactiveHours.map((item) => item.scheduleId)),
+    );
+  };
+
+  const handleConfirmCloseDay = async () => {
+    if (!companyPublicId || dayActionLoading) return;
     setDayActionLoading(true);
     try {
       const result = await setDayAvailability(
         companyPublicId,
         dateKey,
-        action === "reopen",
+        false,
       );
       invalidateSchedulesDayCache(companyPublicId, dateKey);
-      setDayAction(null);
-      setIsDayClosed(result.isDayClosed);
+      setConfirmCloseDay(false);
       await fetchData(dateKey);
       notifyError({
         type: "success",
         message:
-          action === "close"
-            ? result.updated === 0
-              ? "Nenhum horário livre para inativar."
-              : `Dia inativado: ${result.updated} horário${result.updated === 1 ? "" : "s"} inativado${result.updated === 1 ? "" : "s"}.`
-            : result.updated === 0
-              ? "Nenhum horário inativo do lote para reativar."
-              : `Horários reativados: ${result.updated} horário${result.updated === 1 ? "" : "s"} reativado${result.updated === 1 ? "" : "s"}.`,
+          result.updated === 0
+            ? "Nenhum horário livre para inativar."
+            : `Dia inativado: ${result.updated} horário${result.updated === 1 ? "" : "s"} inativado${result.updated === 1 ? "" : "s"}.`,
       });
     } catch (error) {
-      if ((error as { response?: { status?: number } })?.response?.status !== 401) {
+      if (
+        (error as { response?: { status?: number } })?.response?.status !== 401
+      ) {
         console.error(error);
       }
     } finally {
       setDayActionLoading(false);
+    }
+  };
+
+  const handleActivateSelected = async () => {
+    if (!companyPublicId || selectedInactiveIds.size === 0 || batchActivateLoading)
+      return;
+    setBatchActivateLoading(true);
+    try {
+      const result = await setAvailabilityBatch(
+        companyPublicId,
+        [...selectedInactiveIds],
+        true,
+        dateKey,
+      );
+      invalidateSchedulesDayCache(companyPublicId, dateKey);
+      await fetchData(dateKey);
+      notifyError({
+        type: "success",
+        message:
+          result.updated === 0
+            ? "Nenhum horário selecionado pôde ser reativado."
+            : `${result.updated} horário${result.updated === 1 ? "" : "s"} reativado${result.updated === 1 ? "" : "s"}.`,
+      });
+    } catch (error) {
+      if (
+        (error as { response?: { status?: number } })?.response?.status !== 401
+      ) {
+        console.error(error);
+      }
+    } finally {
+      setBatchActivateLoading(false);
     }
   };
 
@@ -254,211 +291,227 @@ function ConfigDay() {
           }`}
           aria-busy={loading}
         >
-            <div className="flex items-center justify-between gap-3 px-1 pb-2 pt-3 lg:pb-3">
-              <p className="text-sm font-semibold uppercase tracking-wide text-text-light/60">
-                Resumo
+          <div className="flex items-center justify-between gap-3 px-1 pb-2 pt-3 lg:pb-3">
+            <p className="text-sm font-semibold uppercase tracking-wide text-text-light/60">
+              Resumo
+            </p>
+            {!showSummaryLoading && (
+              <p className="hidden text-base font-semibold text-text-light/70 lg:block">
+                Total do dia:{" "}
+                <span className="tabular-nums text-text-light">
+                  {totalHours}
+                </span>
               </p>
-              {!showSummaryLoading && (
-                <p className="hidden text-base font-semibold text-text-light/70 lg:block">
-                  Total do dia:{" "}
-                  <span className="tabular-nums text-text-light">
-                    {totalHours}
-                  </span>
-                </p>
-              )}
-            </div>
-            {showSummaryLoading ? (
-              <ul className="animate-pulse lg:grid lg:grid-cols-4 lg:gap-3" aria-label="Carregando resumo">
-                {summaryRows.map((row) => (
-                  <li
-                    key={row.key}
-                    className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0 lg:min-h-24 lg:flex-col lg:items-start lg:justify-center lg:rounded-xl lg:border-b-0 lg:bg-master lg:px-4 lg:py-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="size-10 shrink-0 rounded-full bg-text-light/10" />
-                      <span className="h-5 w-24 rounded bg-text-light/10" />
-                    </div>
-                    <span className="h-7 w-8 rounded bg-text-light/10" />
-                  </li>
-                ))}
-                <li className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1 lg:hidden">
-                  <span className="h-5 w-28 rounded bg-text-light/10" />
-                  <span className="h-7 w-8 rounded bg-text-light/10" />
-                </li>
-              </ul>
-            ) : (
-              <>
-                <ul className="lg:grid lg:grid-cols-4 lg:gap-3">
-                  {summaryRows.map((row) => {
-                    const Icon = row.Icon;
-                    return (
-                      <li
-                        key={row.key}
-                        className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0 lg:min-h-24 lg:flex-col lg:items-start lg:justify-center lg:gap-2 lg:rounded-xl lg:border-b-0 lg:bg-master lg:px-4 lg:py-3"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`flex size-10 shrink-0 items-center justify-center rounded-full ${row.iconBgClass} ${row.iconClass}`}
-                          >
-                            <Icon size={20} aria-hidden />
-                          </span>
-                          <span className="text-lg font-medium text-text-light">
-                            {row.label}
-                          </span>
-                        </div>
-                        <span className="text-2xl font-bold tabular-nums text-text-light lg:pl-0.5">
-                          {row.count}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1 lg:hidden">
-                  <span className="text-lg font-semibold text-text-light">
-                    Total do dia
-                  </span>
-                  <span className="text-2xl font-bold tabular-nums text-text-light">
-                    {totalHours}
-                  </span>
-                </div>
-              </>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setShowAddCourtSchedule(true)}
-            disabled={loading && courts.length === 0}
-            className={buttonClassName({
-              variant: "primary",
-              className: "mb-4 lg:w-auto lg:min-w-[16rem]",
-            })}
-          >
-            <BsPlus size={26} aria-hidden />
-            Adicionar horário
-          </button>
-
-          {(counts.available > 0 || isDayClosed) && (
-            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              {counts.available > 0 && (
-                <button
-                  type="button"
-                  disabled={showSummaryLoading || dayActionLoading}
-                  onClick={() => setDayAction("close")}
-                  className={buttonClassName({
-                    variant: "secondary",
-                    className:
-                      "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
-                  })}
+          {showSummaryLoading ? (
+            <ul
+              className="animate-pulse lg:grid lg:grid-cols-4 lg:gap-3"
+              aria-label="Carregando resumo"
+            >
+              {summaryRows.map((row) => (
+                <li
+                  key={row.key}
+                  className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0 lg:min-h-24 lg:flex-col lg:items-start lg:justify-center lg:rounded-xl lg:border-b-0 lg:bg-master lg:px-4 lg:py-3"
                 >
-                  <MdOutlineEventBusy size={22} className="shrink-0" aria-hidden />
-                  Inativar o dia inteiro
-                </button>
-              )}
-              {isDayClosed && (
-                <button
-                  type="button"
-                  disabled={showSummaryLoading || dayActionLoading}
-                  onClick={() => setDayAction("reopen")}
-                  className={buttonClassName({
-                    variant: "secondary",
-                    className:
-                      "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
-                  })}
-                >
-                  <MdOutlineEventAvailable
-                    size={22}
-                    className="shrink-0"
-                    aria-hidden
-                  />
-                  Reativar horários do dia
-                </button>
-              )}
-            </div>
-          )}
-
-          {hiddenInactiveHours.length > 0 && (
-            <section>
-              <div className="mb-2">
-                <div className="mb-1 flex items-end justify-between gap-3">
-                  <h3 className="text-lg font-semibold text-text-light">
-                    Horários inativos ocultos
-                  </h3>
-                  <span className="text-base font-medium tabular-nums text-text-light/60">
-                    {hiddenInactiveHours.length}
-                  </span>
-                </div>
-                <p className="text-base leading-6 text-text-light/65">
-                  Não aparecem na lista de reservas. Ao ativar, voltam como
-                  disponíveis.
-                </p>
-              </div>
-              <ul className="flex flex-col gap-2 lg:grid lg:grid-cols-2">
-                {hiddenInactiveHours.map((inactiveHour) => {
-                  const isPast =
-                    new Date(`${dateKey}T${inactiveHour.time}`) <
-                    new Date(new Date().setSeconds(0, 0));
-
+                  <div className="flex items-center gap-3">
+                    <span className="size-10 shrink-0 rounded-full bg-text-light/10" />
+                    <span className="h-5 w-24 rounded bg-text-light/10" />
+                  </div>
+                  <span className="h-7 w-8 rounded bg-text-light/10" />
+                </li>
+              ))}
+              <li className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1 lg:hidden">
+                <span className="h-5 w-28 rounded bg-text-light/10" />
+                <span className="h-7 w-8 rounded bg-text-light/10" />
+              </li>
+            </ul>
+          ) : (
+            <>
+              <ul className="lg:grid lg:grid-cols-4 lg:gap-3">
+                {summaryRows.map((row) => {
+                  const Icon = row.Icon;
                   return (
                     <li
-                      key={inactiveHour.scheduleId}
-                      className={`flex min-h-16 items-center justify-between gap-3 rounded-xl bg-master-light px-4 py-3 ${
-                        isPast ? "pointer-events-none opacity-50" : ""
-                      }`}
+                      key={row.key}
+                      className="flex min-h-14 items-center justify-between gap-3 border-b border-text-light/10 last:border-b-0 lg:min-h-24 lg:flex-col lg:items-start lg:justify-center lg:gap-2 lg:rounded-xl lg:border-b-0 lg:bg-master lg:px-4 lg:py-3"
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-danger-400/15 text-danger-400">
-                          <StatusIcons.inactive size={20} aria-hidden />
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`flex size-10 shrink-0 items-center justify-center rounded-full ${row.iconBgClass} ${row.iconClass}`}
+                        >
+                          <Icon size={20} aria-hidden />
                         </span>
-                        <div className="flex min-w-0 items-baseline gap-1.5">
-                          <p className="min-w-0 truncate text-lg font-semibold text-text-light">
-                            {inactiveHour.court}
-                          </p>
-                          <span
-                            className="shrink-0 text-lg font-medium tabular-nums text-text-light/70"
-                            aria-hidden
-                          >
-                            —
-                          </span>
-                          <p className="shrink-0 text-lg font-semibold tabular-nums text-text-light">
-                            {inactiveHour.time}
-                          </p>
-                        </div>
+                        <span className="text-lg font-medium text-text-light">
+                          {row.label}
+                        </span>
                       </div>
-                      <button
-                        type="button"
-                        disabled={loading || isPast}
-                        aria-label={`Ativar horário ${inactiveHour.time} da quadra ${inactiveHour.court}`}
-                        className={buttonClassName({
-                          variant: "secondary",
-                          size: "md",
-                          fullWidth: false,
-                          className:
-                            "min-h-11 shrink-0 justify-center border-accent-green px-3 text-accent-green hover:bg-accent-green/10 focus-visible:outline-accent-green",
-                        })}
-                        onClick={async () => {
-                          await withLoading(async () => {
-                            await changeAvailability(
-                              inactiveHour.scheduleId,
-                              true
-                            );
-                            await fetchData(dateKey);
-                          });
-                        }}
-                      >
-                        <StatusIcons.available
-                          size={20}
-                          className="shrink-0"
-                          aria-hidden
-                        />
-                        Ativar
-                      </button>
+                      <span className="text-2xl font-bold tabular-nums text-text-light lg:pl-0.5">
+                        {row.count}
+                      </span>
                     </li>
                   );
                 })}
               </ul>
-            </section>
+              <div className="mt-1 flex min-h-14 items-center justify-between gap-3 border-t border-text-light/15 px-1 lg:hidden">
+                <span className="text-lg font-semibold text-text-light">
+                  Total do dia
+                </span>
+                <span className="text-2xl font-bold tabular-nums text-text-light">
+                  {totalHours}
+                </span>
+              </div>
+            </>
           )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowAddCourtSchedule(true)}
+          disabled={loading && courts.length === 0}
+          className={buttonClassName({
+            variant: "primary",
+            className: "mb-4 lg:w-auto lg:min-w-[16rem]",
+          })}
+        >
+          <BsPlus size={26} aria-hidden />
+          Adicionar horário
+        </button>
+
+        {counts.available > 0 && (
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              disabled={showSummaryLoading || dayActionLoading}
+              onClick={() => setConfirmCloseDay(true)}
+              className={buttonClassName({
+                variant: "secondary",
+                className:
+                  "justify-center sm:flex-1 lg:min-w-[14rem] lg:flex-none",
+              })}
+            >
+              <MdOutlineEventBusy size={22} className="shrink-0" aria-hidden />
+              Inativar o dia inteiro
+            </button>
+          </div>
+        )}
+
+        {inactiveHours.length > 0 && (
+          <section>
+            <div className="mb-2">
+              <div className="mb-1 flex flex-wrap items-end justify-between gap-3">
+                <h3 className="text-lg font-semibold text-text-light">
+                  Horários inativos
+                </h3>
+                <span className="text-base font-medium tabular-nums text-text-light/60">
+                  {inactiveHours.length}
+                </span>
+              </div>
+              <p className="text-base leading-6 text-text-light/65">
+                Selecione e reative em lote — sem diferença entre inativação
+                avulsa ou do dia.
+              </p>
+            </div>
+
+            {selectableInactiveHours.length > 0 && (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={loading || batchActivateLoading}
+                  onClick={toggleSelectAllInactive}
+                  className={buttonClassName({
+                    variant: "ghost",
+                    size: "md",
+                    fullWidth: false,
+                    className:
+                      "border border-text-light/15 text-text-light/80 hover:bg-text-light/8",
+                  })}
+                >
+                  {allSelectableSelected
+                    ? "Limpar seleção"
+                    : "Selecionar todos"}
+                </button>
+                {selectedInactiveIds.size > 0 && (
+                  <button
+                    type="button"
+                    disabled={loading || batchActivateLoading}
+                    onClick={handleActivateSelected}
+                    aria-busy={batchActivateLoading}
+                    className={buttonClassName({
+                      variant: "secondary",
+                      size: "md",
+                      fullWidth: false,
+                      className:
+                        "border-accent-green text-accent-green hover:bg-accent-green/10 focus-visible:outline-accent-green disabled:opacity-60",
+                    })}
+                  >
+                    <StatusIcons.available
+                      size={20}
+                      className="shrink-0"
+                      aria-hidden
+                    />
+                    Ativar selecionados ({selectedInactiveIds.size})
+                  </button>
+                )}
+              </div>
+            )}
+
+            <ul className="flex flex-col gap-2 lg:grid lg:grid-cols-2">
+              {inactiveHours.map((inactiveHour) => {
+                const isPast =
+                  new Date(`${dateKey}T${inactiveHour.time}`) <
+                  new Date(new Date().setSeconds(0, 0));
+                const checked = selectedInactiveIds.has(
+                  inactiveHour.scheduleId,
+                );
+                const checkboxId = `inactive-${inactiveHour.scheduleId}`;
+
+                return (
+                  <li
+                    key={inactiveHour.scheduleId}
+                    className={`flex min-h-16 items-center gap-3 rounded-xl bg-master-light px-4 py-3 ${
+                      isPast ? "opacity-50" : ""
+                    }`}
+                  >
+                    <input
+                      id={checkboxId}
+                      type="checkbox"
+                      className="size-5 shrink-0 rounded border-text-light/30 accent-accent-green disabled:opacity-40"
+                      checked={checked}
+                      disabled={loading || batchActivateLoading || isPast}
+                      onChange={() =>
+                        toggleInactiveSelection(inactiveHour.scheduleId)
+                      }
+                      aria-label={`Selecionar ${inactiveHour.time} da quadra ${inactiveHour.court}`}
+                    />
+                    <label
+                      htmlFor={checkboxId}
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
+                    >
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-danger-400/15 text-danger-400">
+                        <StatusIcons.inactive size={20} aria-hidden />
+                      </span>
+                      <div className="flex min-w-0 items-baseline gap-1.5">
+                        <p className="min-w-0 truncate text-lg font-semibold text-text-light">
+                          {inactiveHour.court}
+                        </p>
+                        <span
+                          className="shrink-0 text-lg font-medium tabular-nums text-text-light/70"
+                          aria-hidden
+                        >
+                          —
+                        </span>
+                        <p className="shrink-0 text-lg font-semibold tabular-nums text-text-light">
+                          {inactiveHour.time}
+                        </p>
+                      </div>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
       </section>
 
       <AddCourtSchedule
@@ -469,20 +522,22 @@ function ConfigDay() {
         onSuccess={() => fetchData(dateKey)}
       />
 
-      {dayConfirm && (
-        <ConfirmSheet
-          isOpen={Boolean(dayAction)}
-          title={dayConfirm.title}
-          description={dayConfirm.description}
-          confirmLabel={dayConfirm.confirmLabel}
-          tone={dayConfirm.tone}
-          loading={dayActionLoading}
-          onConfirm={handleConfirmDayAction}
-          onClose={() => {
-            if (!dayActionLoading) setDayAction(null);
-          }}
-        />
-      )}
+      <ConfirmSheet
+        isOpen={confirmCloseDay}
+        title="Inativar o dia inteiro?"
+        description={
+          counts.reserved + counts.fixed > 0
+            ? `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}. ${counts.reserved} reserva${counts.reserved === 1 ? "" : "s"} e ${counts.fixed} fixo${counts.fixed === 1 ? "" : "s"} não serão alterados.`
+            : `Isso inativa ${counts.available} horário${counts.available === 1 ? "" : "s"} livre${counts.available === 1 ? "" : "s"} em ${dateLabel}.`
+        }
+        confirmLabel="Inativar o dia inteiro"
+        tone={"danger" as ConfirmTone}
+        loading={dayActionLoading}
+        onConfirm={handleConfirmCloseDay}
+        onClose={() => {
+          if (!dayActionLoading) setConfirmCloseDay(false);
+        }}
+      />
     </div>
   );
 }

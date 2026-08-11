@@ -118,3 +118,28 @@ export function patchSchedulesDayCacheSlot(
   setSchedulesDayCache(companyPublicId, date, list, cached.courtsNameList);
   return true;
 }
+
+/** Remove um slot do cache do dia (após exclusão). */
+export function removeSchedulesDayCacheSlot(
+  companyPublicId: string,
+  date: string,
+  scheduleId: string,
+  opts?: { clearOtherDays?: boolean },
+): boolean {
+  const cached = getSchedulesDayCache(companyPublicId, date);
+  if (!cached) {
+    if (opts?.clearOtherDays) {
+      invalidateSchedulesDayCache(companyPublicId);
+    }
+    return false;
+  }
+
+  const list = cached.list.filter((item) => item.scheduleId !== scheduleId);
+
+  if (opts?.clearOtherDays) {
+    invalidateSchedulesDayCache(companyPublicId);
+  }
+
+  setSchedulesDayCache(companyPublicId, date, list, cached.courtsNameList);
+  return true;
+}
