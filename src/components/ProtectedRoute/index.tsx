@@ -1,8 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { CompanyBrandingProvider } from "../../contexts/CompanyBrandingContext";
 import {
+  clearAccessToken,
   getAccessToken,
   getAccessTokenPayload,
+  isAccessTokenExpired,
 } from "../../utils/authCookie";
 
 type TokenClaims = {
@@ -18,7 +20,8 @@ export default function ProtectedRoute() {
   const location = useLocation();
   const token = getAccessToken();
 
-  if (!token) {
+  if (!token || isAccessTokenExpired()) {
+    if (token) clearAccessToken();
     return <Navigate to="/" replace />;
   }
 

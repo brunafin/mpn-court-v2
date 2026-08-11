@@ -32,7 +32,7 @@ const defaultCapabilities: CompanyCapabilities = {
   accessMode: "full",
   accessReason: null,
   canViewAgenda: true,
-  canMutate: true,
+  canMutate: false,
   canPayBilling: false,
   portalEligible: true,
 };

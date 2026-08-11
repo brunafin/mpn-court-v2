@@ -5,7 +5,12 @@ import { jwtDecode } from 'jwt-decode';
 import Input from '../../components/Input';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
 import { login, googleAuth } from '../../api/auth';
-import { getAccessToken, setAccessToken } from '../../utils/authCookie';
+import {
+  clearAccessToken,
+  getAccessToken,
+  isAccessTokenExpired,
+  setAccessToken,
+} from '../../utils/authCookie';
 import { useErrors } from '../../contexts/ErrorsContext';
 import { buttonClassName } from '../../components/Button';
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from '../../constants/legal';
@@ -62,12 +67,15 @@ function Login() {
 
   useEffect(() => {
     const token = getAccessToken();
-    if (token) {
-      try {
-        navigate(routeAfterLogin(token));
-      } catch {
-        // token inválido no cookie — permanece no login
-      }
+    if (!token) return;
+    if (isAccessTokenExpired()) {
+      clearAccessToken();
+      return;
+    }
+    try {
+      navigate(routeAfterLogin(token));
+    } catch {
+      // token inválido no cookie — permanece no login
     }
   }, [navigate]);
 

@@ -4,20 +4,39 @@ import { clearMockOnboarding } from "../onboarding/mockStore";
 import { invalidateSchedulesDayCache } from "./schedulesDayCache";
 
 const COOKIE_NAME = "access_token";
+/** Fallback se o JWT não tiver `exp` — alinhado ao TTL 1h da API. */
+const ACCESS_TOKEN_FALLBACK_DAYS = 1 / 24;
 
 /** Em http://localhost o flag Secure impede o cookie de gravar — login “200” e UI de senha inválida. */
-function cookieOptions() {
+function cookieOptions(expires?: Date | number) {
   const secure =
     typeof window !== "undefined" && window.location.protocol === "https:";
   return {
     path: "/",
     secure,
     sameSite: "strict" as const,
+    ...(expires ? { expires } : {}),
   };
 }
 
+function tokenExpiryDate(token: string): Date | undefined {
+  try {
+    const { exp } = jwtDecode<{ exp?: number }>(token);
+    if (typeof exp === "number") {
+      return new Date(exp * 1000);
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
+
 export function setAccessToken(token: string) {
-  Cookies.set(COOKIE_NAME, token, cookieOptions());
+  Cookies.set(
+    COOKIE_NAME,
+    token,
+    cookieOptions(tokenExpiryDate(token) ?? ACCESS_TOKEN_FALLBACK_DAYS),
+  );
 }
 
 export function getAccessToken(): string | undefined {
@@ -32,6 +51,15 @@ export function getAccessTokenPayload<T = Record<string, unknown>>(): T | null {
   } catch {
     return null;
   }
+}
+
+export function isAccessTokenExpired(): boolean {
+  const token = getAccessToken();
+  if (!token) return true;
+  const payload = getAccessTokenPayload<{ exp?: number }>();
+  if (!payload) return true;
+  if (typeof payload.exp !== "number") return false;
+  return payload.exp * 1000 <= Date.now();
 }
 
 /** Remove o cookie com os mesmos atributos usados no set (Secure/SameSite). */
