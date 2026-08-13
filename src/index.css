@@ -61,20 +61,49 @@
   --breakpoint-xs: 300px;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
 :root {
   font-family: Lato, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: var(--color-neutral-100);
-
-  @media (min-width: 1024px) {
-    overflow: hidden;
-  }
 }
 
 body {
   background-color: var(--color-master);
   color-scheme: dark;
+  overscroll-behavior: none;
+}
+
+/* Página de app: preenche o viewport e só o miolo rola */
+.mpn-page {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mpn-page-scroll {
+  min-height: 0;
+  flex: 1 1 0%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* PWA / iOS standalone: notch e home indicator */
@@ -87,11 +116,12 @@ body {
 }
 
 .mpn-action-bar {
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(0.75rem + max(1.25rem, env(safe-area-inset-bottom, 0px)));
 }
 
+/* Lista sem rodapé de ação: folga para a barra do sistema no celular */
 .mpn-scroll-end {
-  padding-bottom: max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Evita fundo claro do autofill do navegador nos campos escuros */

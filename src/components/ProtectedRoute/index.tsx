@@ -41,7 +41,9 @@ export default function ProtectedRoute() {
 
   return (
     <CompanyBrandingProvider>
-      <Outlet />
+      <div className="mpn-page">
+        <Outlet />
+      </div>
     </CompanyBrandingProvider>
   );
 }

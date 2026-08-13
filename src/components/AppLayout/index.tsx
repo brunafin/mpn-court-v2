@@ -114,7 +114,7 @@ function AppLayoutShell({ children }: AppLayoutProps) {
   const caps = useCompanyCapabilities();
   const navItems = buildNavItems(caps.entitlement, caps.ready);
   return (
-    <div className="flex h-full min-h-0 flex-1">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-text-light/10 bg-master-light lg:flex">
         <div className="flex items-center gap-3 px-4 py-5">
           <Link
@@ -171,7 +171,7 @@ function AppLayoutShell({ children }: AppLayoutProps) {
         </div>
       </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="mpn-page min-w-0">
         <Header />
         <AccessBanners />
         {children}

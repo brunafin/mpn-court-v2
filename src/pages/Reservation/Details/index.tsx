@@ -693,7 +693,7 @@ function ReservationDetails() {
   );
 
   return (
-    <div className="flex h-full min-h-0 max-h-dvh flex-1 flex-col bg-master text-text-light">
+    <div className="mpn-page bg-master text-text-light">
       <header className="mpn-chrome-top z-20 shrink-0 bg-master px-4 pb-3 lg:px-6">
         <div className="relative mx-auto flex w-full max-w-lg items-center justify-center lg:max-w-3xl">
           <button
@@ -711,7 +711,7 @@ function ReservationDetails() {
       </header>
 
       <section
-        className={`mpn-scroll-end mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto px-4 pt-5 transition-opacity lg:max-w-3xl lg:px-6 ${
+        className={`mpn-page-scroll mx-auto w-full max-w-lg px-4 pb-4 pt-5 transition-opacity lg:max-w-3xl lg:px-6 ${
           loading && court ? "opacity-80" : ""
         }`}
         aria-busy={loading}

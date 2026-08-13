@@ -396,7 +396,7 @@ function Reservation() {
   const daySwipe = useDaySwipe(shiftDay);
 
   const listShellClass =
-    "mpn-scroll-end mx-auto w-full space-y-1.5 px-3 pt-2 sm:px-4 lg:max-w-6xl lg:space-y-2 lg:px-8";
+    "mx-auto w-full space-y-1.5 px-3 pt-2 sm:px-4 lg:max-w-6xl lg:space-y-2 lg:px-8";
 
   const clearDayFilters = () => {
     setStatusSelected(null);
@@ -496,7 +496,7 @@ function Reservation() {
   return (
     <AppLayout>
       {caps.loadError ? (
-        <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-master px-4 text-text-light">
+        <section className="mpn-page items-center justify-center bg-master px-4 text-text-light">
           <EmptyState
             title="Não foi possível carregar sua conta."
             description="Sem isso não dá para saber se a agenda está liberada. Tente de novo."
@@ -513,7 +513,7 @@ function Reservation() {
         </section>
       ) : !caps.ready ? (
         <section
-          className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master px-4 py-6 text-text-light"
+          className="mpn-page bg-master px-4 py-6 text-text-light"
           aria-busy="true"
           aria-label="Carregando agenda"
         >
@@ -526,7 +526,7 @@ function Reservation() {
           </div>
         </section>
       ) : !caps.canViewAgenda ? (
-        <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-master px-4 text-text-light">
+        <section className="mpn-page items-center justify-center bg-master px-4 text-text-light">
           <EmptyState
             title="Teste grátis encerrado"
             description="Contrate um plano mensal para voltar a ver a agenda e publicar no site."
@@ -546,9 +546,9 @@ function Reservation() {
           />
         </section>
       ) : (
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master text-text-light">
+      <section className="mpn-page bg-master text-text-light">
         <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+          className="mpn-page-scroll mpn-scroll-end"
           {...daySwipe}
         >
           <div className="bg-master-light px-3 pb-3 pt-2 lg:bg-transparent lg:px-8 lg:pb-4 lg:pt-5">

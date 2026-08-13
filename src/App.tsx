@@ -68,19 +68,19 @@ function App() {
   };
 
   return (
-    <div
-      className={
-        authShell
-          ? "flex min-h-dvh flex-col bg-master"
-          : "flex h-dvh flex-col overflow-hidden bg-master"
-      }
-    >
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-master">
       {import.meta.env.VITE_ENVIRONMENT !== "production" && (
         <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
           Versão para testes
         </p>
       )}
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div
+        className={
+          authShell
+            ? "min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+            : "mpn-page"
+        }
+      >
         <ErrorsProvider>
           <InitAxiosNotifier />
           <ProductInactiveModal />
