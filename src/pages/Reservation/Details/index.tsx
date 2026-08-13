@@ -611,9 +611,7 @@ function ReservationDetails() {
     setConfirmAction({
       title: isFixed ? "Cancelar reserva deste dia?" : "Cancelar reserva?",
       description: isFixed
-        ? internal
-          ? `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica inativo só nesse dia (não aparece no site). O fixo interno continua nas outras semanas.`
-          : `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica disponível só nesse dia. O fixo continua nas outras semanas.`
+        ? `A reserva do dia ${dayLabel || "selecionado"} será cancelada e o horário fica inativo só nesse dia (não aparece no site). O fixo continua nas outras semanas.`
         : "A reserva deste horário será cancelada. Essa ação não pode ser desfeita.",
       confirmLabel: "Cancelar reserva",
       tone: "danger",
@@ -623,9 +621,10 @@ function ReservationDetails() {
         });
         returnToListAfterMutation({
           patch: {
-            status: internal
-              ? ReservationStatusEnum.INACTIVE
-              : ReservationStatusEnum.AVAILABLE,
+            status:
+              isFixed || internal
+                ? ReservationStatusEnum.INACTIVE
+                : ReservationStatusEnum.AVAILABLE,
             customerName: null,
             isBarbecueIncluded: false,
             isEvent: false,
