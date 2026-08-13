@@ -19,12 +19,17 @@ export async function googleAuth(input: {
   };
 }
 
-export async function completeProfile(input: {
-  phone?: string;
-  cpf?: string;
-  acceptedTerms?: true;
-} = {}) {
-  const response = await api.post('/auth/complete-profile', input);
+export async function completeProfile(
+  input: {
+    phone?: string;
+    cpf?: string;
+    acceptedTerms?: true;
+  } = {},
+  options?: { silentError?: boolean },
+) {
+  const response = await api.post('/auth/complete-profile', input, {
+    silentError: options?.silentError,
+  });
   return response.data as {
     access_token: string;
     needsProfileCompletion: boolean;

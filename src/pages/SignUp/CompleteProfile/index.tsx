@@ -11,7 +11,11 @@ import {
   onlyCpfDigits,
 } from '../../../utils/formatCpf';
 import { completeProfile } from '../../../api/auth';
-import { getAccessToken, setAccessToken } from '../../../utils/authCookie';
+import {
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+} from '../../../utils/authCookie';
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from '../../../constants/legal';
 import { MPN_LOGO_URL } from '../../../constants/brand';
 
@@ -56,7 +60,9 @@ function CompleteProfile() {
     let cancelled = false;
     void (async () => {
       try {
-        const result = await completeProfile();
+        // Sonda: se o servidor já tem termos, renova o JWT e sai.
+        // Conta nova responde 400 (esperado) — sem toast; o form pede CPF/termos.
+        const result = await completeProfile({}, { silentError: true });
         if (cancelled || result.needsProfileCompletion) return;
         setAccessToken(result.access_token);
         navigate(routeAfterLogin(result.access_token), { replace: true });
@@ -254,6 +260,20 @@ function CompleteProfile() {
           >
             {loading ? 'Continuando…' : 'Começar'}
           </button>
+
+          <p className="mt-5 text-center text-base text-text-light/70">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                clearAccessToken();
+                navigate('/', { replace: true });
+              }}
+              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Voltar para o login
+            </button>
+          </p>
         </form>
       </div>
     </div>
