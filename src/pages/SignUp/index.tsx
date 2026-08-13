@@ -6,7 +6,11 @@ import Input from "../../components/Input";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
 import { buttonClassName } from "../../components/Button";
 import { formatPhoneMask, onlyPhoneDigits } from "../../utils/formatPhone";
-import { formatCpfMask, onlyCpfDigits } from "../../utils/formatCpf";
+import {
+  formatCpfMask,
+  isValidCpf,
+  onlyCpfDigits,
+} from "../../utils/formatCpf";
 import { googleAuth, signup } from "../../api/auth";
 import { getAccessToken, setAccessToken } from "../../utils/authCookie";
 import {
@@ -136,7 +140,7 @@ function SignUp() {
       email.trim() &&
         ownerName.trim() &&
         phoneDigits.length === 11 &&
-        cpfDigits.length === 11 &&
+        isValidCpf(cpfDigits) &&
         passwordOk &&
         acceptedTerms,
     ) && !loading;
@@ -175,8 +179,13 @@ function SignUp() {
       return;
     }
 
-    if (cpfDigits.length !== 11) {
-      setFieldError("ownerCpf", "Informe um CPF válido com 11 dígitos.");
+    if (!isValidCpf(cpfDigits)) {
+      setFieldError(
+        "ownerCpf",
+        cpfDigits.length === 11
+          ? "Informe um CPF válido."
+          : "Informe um CPF válido com 11 dígitos.",
+      );
       return;
     }
 
@@ -408,7 +417,14 @@ function SignUp() {
                   autoComplete="off"
                   inputMode="numeric"
                   enterKeyHint="next"
-                  error={fieldError("ownerCpf")}
+                  error={
+                    fieldError("ownerCpf") ||
+                    (ownerCpf &&
+                    cpfDigits.length === 11 &&
+                    !isValidCpf(cpfDigits)
+                      ? "Informe um CPF válido."
+                      : undefined)
+                  }
                 />
                 <div className="sm:col-span-2">
                   <Input

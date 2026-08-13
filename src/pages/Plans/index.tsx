@@ -33,7 +33,7 @@ import {
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { isPaidEntitlement } from "../../utils/billingNav";
-import { formatCpfMask } from "../../utils/formatCpf";
+import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
 import { isManualPixConfigured } from "../../utils/manualPix";
 
 const WHATSAPP_CONTRACT =
@@ -191,13 +191,18 @@ function PlansPage() {
       notifyError({ message: "Informe um e-mail válido." });
       return;
     }
-    if (needCpf && digits.length !== 11) {
-      notifyError({ message: "Informe um CPF válido com 11 dígitos." });
+    if (needCpf && !isValidCpf(digits)) {
+      notifyError({
+        message:
+          digits.length === 11
+            ? "Informe um CPF válido."
+            : "Informe um CPF válido com 11 dígitos.",
+      });
       return;
     }
     await startContract({
       ...(needEmail || trimmedEmail ? { email: trimmedEmail } : {}),
-      ...(needCpf || digits.length === 11 ? { cpf: digits } : {}),
+      ...(needCpf || isValidCpf(digits) ? { cpf: digits } : {}),
     });
   };
 

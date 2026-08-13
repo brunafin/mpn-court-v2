@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdContentCopy, MdOutlinePayments } from "react-icons/md";
 import AppLayout from "../../components/AppLayout";
@@ -26,7 +26,7 @@ import {
   useCompanyCapabilities,
 } from "../../contexts/CompanyBrandingContext";
 import { isPaidEntitlement } from "../../utils/billingNav";
-import { formatCpfMask } from "../../utils/formatCpf";
+import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
 import { isManualPixConfigured } from "../../utils/manualPix";
 
 function statusLabel(status: BillingPaymentItem["status"]): string {
@@ -139,11 +139,6 @@ function BillingPage() {
     return () => window.clearInterval(timer);
   }, [paying, pix, companyPublicId, load]);
 
-  const historyPaidOrClosed = useMemo(() => {
-    if (!summary) return [];
-    return summary.history.filter((item) => item.paid || item.id !== openPayment?.id);
-  }, [summary, openPayment?.id]);
-
   const needPayerData = needEmail || needCpf;
 
   const startPay = async (
@@ -194,15 +189,20 @@ function BillingPage() {
       notifyError({ message: "Informe um e-mail válido." });
       return;
     }
-    if (needCpf && digits.length !== 11) {
-      notifyError({ message: "Informe um CPF válido com 11 dígitos." });
+    if (needCpf && !isValidCpf(digits)) {
+      notifyError({
+        message:
+          digits.length === 11
+            ? "Informe um CPF válido."
+            : "Informe um CPF válido com 11 dígitos.",
+      });
       return;
     }
     await startPay(openPayment, {
       ...(needEmail || trimmedEmail
         ? { email: trimmedEmail }
         : {}),
-      ...(needCpf || digits.length === 11 ? { cpf: digits } : {}),
+      ...(needCpf || isValidCpf(digits) ? { cpf: digits } : {}),
     });
   };
 
@@ -242,7 +242,7 @@ function BillingPage() {
           <PageEyebrow>Financeiro</PageEyebrow>
           <PageTitle>Mensalidades</PageTitle>
           <p className="mt-1 text-sm text-text-light/60">
-            Histórico e pagamento da mensalidade da plataforma.
+            Pagamento da mensalidade da plataforma.
           </p>
         </div>
 
@@ -445,39 +445,6 @@ function BillingPage() {
             </div>
           </section>
         ) : null}
-
-        <section className="rounded-2xl bg-master-light px-4 py-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-light/50">
-            Histórico
-          </p>
-          {historyPaidOrClosed.length === 0 ? (
-            <p className="mt-3 text-sm text-text-light/55">
-              Sem pagamentos registrados ainda.
-            </p>
-          ) : (
-            <ul className="mt-3 divide-y divide-text-light/10">
-              {historyPaidOrClosed.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 py-3"
-                >
-                  <div>
-                    <p className="font-semibold capitalize text-text-light">
-                      {formatMonthYear(item.dueDate)}
-                    </p>
-                    <p className="text-sm text-text-light/60">
-                      {statusLabel(item.status)}
-                      {item.paidAt ? ` · ${formatDue(item.paidAt)}` : null}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-text-light">
-                    {formatCurrencyBRL(item.value)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </main>
     </AppLayout>
   );

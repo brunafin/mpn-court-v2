@@ -5,7 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import Input from '../../../components/Input';
 import { buttonClassName } from '../../../components/Button';
 import { formatPhoneMask, onlyPhoneDigits } from '../../../utils/formatPhone';
-import { formatCpfMask, onlyCpfDigits } from '../../../utils/formatCpf';
+import {
+  formatCpfMask,
+  isValidCpf,
+  onlyCpfDigits,
+} from '../../../utils/formatCpf';
 import { completeProfile } from '../../../api/auth';
 import { getAccessToken, setAccessToken } from '../../../utils/authCookie';
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from '../../../constants/legal';
@@ -68,7 +72,7 @@ function CompleteProfile() {
   const phoneDigits = onlyPhoneDigits(ownerPhone);
   const cpfDigits = onlyCpfDigits(ownerCpf);
   const phoneOk = phoneDigits.length === 0 || phoneDigits.length === 11;
-  const cpfOk = cpfDigits.length === 11;
+  const cpfOk = isValidCpf(cpfDigits);
   const canSubmit = acceptedTerms && phoneOk && cpfOk && !loading;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -87,7 +91,11 @@ function CompleteProfile() {
       return;
     }
     if (!cpfOk) {
-      setFormError('Informe um CPF válido com 11 dígitos.');
+      setFormError(
+        cpfDigits.length === 11
+          ? 'Informe um CPF válido.'
+          : 'Informe um CPF válido com 11 dígitos.',
+      );
       return;
     }
 
@@ -162,7 +170,9 @@ function CompleteProfile() {
             autoComplete="off"
             error={
               ownerCpf && !cpfOk
-                ? 'Informe um CPF com 11 dígitos.'
+                ? cpfDigits.length === 11
+                  ? 'Informe um CPF válido.'
+                  : 'Informe um CPF com 11 dígitos.'
                 : undefined
             }
           />
