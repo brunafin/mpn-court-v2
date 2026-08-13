@@ -163,7 +163,7 @@ export type PatchCourtInput = {
   floor?: string | null;
   is_covered?: boolean;
   is_can_have_net?: boolean;
-  sports?: string[];
+  sports?: { name: string; needsNet?: boolean }[];
 };
 
 export const patchCourt = async (
@@ -171,6 +171,28 @@ export const patchCourt = async (
   data: PatchCourtInput,
 ): Promise<void> => {
   await api.patch(`/courts/${courtPublicId}`, data);
+};
+
+export type CreateOwnedCourtInput = {
+  name: string;
+  sports: { name: string; needsNet?: boolean }[];
+  floor: string;
+  price: number;
+  is_covered?: boolean;
+  is_can_have_net?: boolean;
+  copyFromCourtPublicId?: string;
+};
+
+export const createOwnedCourt = async (
+  companyPublicId: string,
+  data: CreateOwnedCourtInput,
+): Promise<{ publicId: string; name: string; schedulesReady: boolean }> => {
+  const response = await api.post<{
+    publicId: string;
+    name: string;
+    schedulesReady: boolean;
+  }>(`/companies/${companyPublicId}/courts`, data);
+  return response.data;
 };
 
 export const updatePreferencesByCompanyPublicId = async (

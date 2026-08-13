@@ -1,32 +1,68 @@
+import { getAccessTokenPayload } from "../utils/authCookie";
 import { clearPendingLogo } from "./pendingLogo";
 
 const STORAGE_KEY = "mpn_onboarding_mock";
 
-/** Esportes que uma quadra pode aceitar. */
+function ownerDraftKey(): string | null {
+  const sub = getAccessTokenPayload<{ sub?: string }>()?.sub;
+  if (typeof sub !== "string" || !sub.trim()) return null;
+  return `${STORAGE_KEY}:${sub.trim()}`;
+}
+
+/** Esportes que uma quadra pode aceitar (catálogo + variantes comuns). */
 export type CourtSport =
   | "futsal"
+  | "society"
   | "fut5"
   | "fut7"
   | "fut11"
-  | "voleibol"
+  | "volei_quadra"
+  | "volei_areia"
   | "handebol"
   | "basquete"
   | "futevolei"
   | "beach_tennis"
+  | "tenis"
+  | "padel"
+  | "badminton"
+  | "voleibol"
   | "volei_praia";
 
 export const COURT_SPORTS: { key: CourtSport; label: string }[] = [
   { key: "futsal", label: "Futsal" },
+  { key: "society", label: "Society" },
   { key: "fut5", label: "Fut5" },
   { key: "fut7", label: "Fut7" },
   { key: "fut11", label: "Fut11" },
-  { key: "voleibol", label: "Voleibol" },
+  { key: "volei_quadra", label: "Vôlei de quadra" },
+  { key: "volei_areia", label: "Vôlei de areia" },
   { key: "handebol", label: "Handebol" },
   { key: "basquete", label: "Basquete" },
   { key: "futevolei", label: "Futevôlei" },
-  { key: "beach_tennis", label: "Beach tennis" },
-  { key: "volei_praia", label: "Vôlei de praia" },
+  { key: "beach_tennis", label: "Beach Tennis" },
+  { key: "tenis", label: "Tênis" },
+  { key: "padel", label: "Padel" },
+  { key: "badminton", label: "Badminton" },
 ];
+
+const LEGACY_SPORT_KEYS: Record<string, CourtSport> = {
+  voleibol: "volei_quadra",
+  volei_praia: "volei_areia",
+};
+
+/** Nomes próprios fora do seed — a API exige needsNet na primeira criação. */
+const CUSTOM_CATALOG_SPORT_KEYS = new Set<CourtSport>(["fut5", "fut7", "fut11"]);
+
+export function sportPayloadFromKey(key: CourtSport): {
+  name: string;
+  needsNet?: boolean;
+} {
+  const name = courtSportLabel(key);
+  if (CUSTOM_CATALOG_SPORT_KEYS.has(key)) {
+    return { name, needsNet: false };
+  }
+  return { name };
+}
 
 /** Tipos de piso mais comuns em quadras/arenas no Brasil. */
 export type CourtFloor =
@@ -73,6 +109,8 @@ export type MockCourt = {
   priceOverrides?: Partial<Record<WeekDayKey, Record<string, number>>>;
   /** Esportes aceitos na quadra. */
   sports: CourtSport[];
+  /** Esporte fora do catálogo (nome + se usa rede). */
+  customSport?: { name: string; needsNet: boolean };
   /** Tipo de piso da quadra (obrigatório). */
   floor?: CourtFloor;
   /** Quadra coberta (default true na API se omitido). */
@@ -277,10 +315,20 @@ function normalizePriceOverrides(
 
 function normalizeMockCourt(court: MockCourt): MockCourt {
   const sports = Array.isArray(court.sports)
-    ? court.sports.filter((key): key is CourtSport =>
-        COURT_SPORT_KEYS.includes(key)
-      )
+    ? court.sports
+        .map((key) => LEGACY_SPORT_KEYS[key] ?? key)
+        .filter((key): key is CourtSport => COURT_SPORT_KEYS.includes(key))
     : [];
+  const customSport =
+    court.customSport &&
+    typeof court.customSport.name === "string" &&
+    court.customSport.name.trim().length > 0 &&
+    typeof court.customSport.needsNet === "boolean"
+      ? {
+          name: court.customSport.name.trim().slice(0, 20),
+          needsNet: court.customSport.needsNet,
+        }
+      : undefined;
   const floor =
     court.floor && COURT_FLOOR_KEYS.includes(court.floor)
       ? court.floor
@@ -299,6 +347,7 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
     customPricingEnabled: customPricingEnabled || undefined,
     priceOverrides,
     sports,
+    customSport,
     floor,
     isCovered: court.isCovered ?? true,
     isCanHaveNet: Boolean(court.isCanHaveNet),
@@ -397,7 +446,9 @@ function migrateLegacy(raw: unknown): MockOnboardingState | null {
 
 export function getMockOnboarding(): MockOnboardingState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const key = ownerDraftKey();
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (isMockOnboardingState(parsed)) {
@@ -426,7 +477,9 @@ export function getMockOnboarding(): MockOnboardingState | null {
 }
 
 export function saveMockOnboarding(state: MockOnboardingState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const key = ownerDraftKey();
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify(state));
 }
 
 /** Retorna o rascunho atual ou cria um vazio (após o login do dono). */
@@ -460,8 +513,20 @@ export function updateMockOnboarding(
   return next;
 }
 
-export function clearMockOnboarding(): void {
-  localStorage.removeItem(STORAGE_KEY);
+export function clearMockOnboarding(options?: { allUsers?: boolean }): void {
+  if (options?.allUsers) {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key === STORAGE_KEY || key?.startsWith(`${STORAGE_KEY}:`)) {
+        toRemove.push(key);
+      }
+    }
+    toRemove.forEach((key) => localStorage.removeItem(key));
+  } else {
+    const key = ownerDraftKey();
+    if (key) localStorage.removeItem(key);
+  }
   clearMockSession();
   clearPendingLogo();
 }
@@ -498,11 +563,24 @@ export function isArenaConfigured(state: MockOnboardingState): boolean {
 
 /** Uma quadra está completa quando tem preço, esportes e piso definidos. */
 export function isCourtComplete(court: MockCourt): boolean {
-  return (
-    court.defaultPrice > 0 &&
-    court.sports.length > 0 &&
-    Boolean(court.floor)
-  );
+  const hasSport =
+    court.sports.length > 0 || Boolean(court.customSport?.name.trim());
+  return court.defaultPrice > 0 && hasSport && Boolean(court.floor);
+}
+
+export function buildCourtSportsPayload(
+  court: MockCourt,
+): { name: string; needsNet?: boolean }[] {
+  const catalog = court.sports.map((key) => sportPayloadFromKey(key));
+  const custom = court.customSport?.name.trim()
+    ? [
+        {
+          name: court.customSport.name.trim().slice(0, 20),
+          needsNet: court.customSport.needsNet,
+        },
+      ]
+    : [];
+  return [...catalog, ...custom];
 }
 
 export function isEstablishmentReady(state: MockOnboardingState): boolean {

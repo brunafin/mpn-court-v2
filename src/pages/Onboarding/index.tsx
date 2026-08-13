@@ -11,16 +11,18 @@ import OnboardingFooter from "../../components/OnboardingFooter";
 import {
   buildChecklist,
   buildCourtPriceSlotsPayload,
+  buildCourtSportsPayload,
   buildWeekTemplatePayload,
   clearMockOnboarding,
-  courtSportLabel,
   getOnboardingProgress,
   getOrCreateOnboardingDraft,
   isEstablishmentReady,
   MockOnboardingState,
 } from "../../onboarding/mockStore";
 import { completeOnboarding } from "../../api/onboarding";
+import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import { uploadCompanyLogo } from "../../api/companies";
+import { format } from "date-fns";
 import {
   getAccessToken,
   getAccessTokenPayload,
@@ -34,6 +36,7 @@ function OnboardingChecklist() {
   const [state, setState] = useState<MockOnboardingState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [finishHint, setFinishHint] = useState("");
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -66,6 +69,7 @@ function OnboardingChecklist() {
     if (!state || !state.scheduleTemplate || submittingRef.current) return;
     submittingRef.current = true;
     setSubmitError("");
+    setFinishHint("");
     setSubmitting(true);
     try {
       const response = await completeOnboarding({
@@ -80,7 +84,7 @@ function OnboardingChecklist() {
         weekTemplate: buildWeekTemplatePayload(state.scheduleTemplate),
         courts: state.courts.slice(0, state.courtCount).map((court) => ({
           name: court.name,
-          sports: court.sports.map((key) => courtSportLabel(key)),
+          sports: buildCourtSportsPayload(court),
           floor: court.floor as string,
           is_covered: court.isCovered ?? true,
           is_can_have_net: court.isCanHaveNet ?? false,
@@ -91,18 +95,35 @@ function OnboardingChecklist() {
         })),
       });
       setAccessToken(response.access_token);
+      if (response.alreadyExisted) {
+        setFinishHint("Estabelecimento já criado — abrindo a agenda.");
+      }
 
       const pendingLogo = getPendingLogoFile();
+      let logoUploadFailed = false;
       if (pendingLogo) {
         try {
           await uploadCompanyLogo(response.companyPublicId, pendingLogo);
         } catch (logoError) {
           console.error(logoError);
+          logoUploadFailed = true;
         }
       }
 
+      const schedulesReady =
+        response.schedulesReady ?? response.schedulesPopulated;
+      if (!schedulesReady) {
+        await waitForTodaySchedules(response.companyPublicId);
+      }
+
       clearMockOnboarding();
-      navigate("/reservas", { state: { showActivateGuide: true } });
+      navigate("/reservas", {
+        state: {
+          showActivateGuide: true,
+          alreadyExisted: Boolean(response.alreadyExisted),
+          logoUploadFailed,
+        },
+      });
     } catch (error) {
       if (isCancel(error)) {
         setSubmitError(
@@ -231,7 +252,7 @@ function OnboardingChecklist() {
                 />
                 <span>
                   {submitting
-                    ? "Criando estrutura…"
+                    ? "Montando a agenda…"
                     : "Concluir e ir para a agenda"}
                 </span>
               </Button>
@@ -241,8 +262,8 @@ function OnboardingChecklist() {
                   role="status"
                   aria-live="polite"
                 >
-                  Isso pode levar alguns segundos enquanto montamos a agenda e
-                  toda a estrutura do estabelecimento.
+                  {finishHint ||
+                    "Isso pode levar alguns segundos enquanto montamos a agenda."}
                 </p>
               )}
               {submitError && (
@@ -276,6 +297,26 @@ function OnboardingChecklist() {
       </div>
     </div>
   );
+}
+
+const POLL_MS = 1500;
+const POLL_BUDGET_MS = 15000;
+
+async function waitForTodaySchedules(companyPublicId: string) {
+  const date = format(new Date(), "yyyy-MM-dd");
+  const started = Date.now();
+  while (Date.now() - started < POLL_BUDGET_MS) {
+    try {
+      const slots = await getSchedulesByCompanyPublicIdAndDate({
+        companyPublicId,
+        date,
+      });
+      if (slots.length > 0) return;
+    } catch {
+      // A company já existe; tenta de novo até o orçamento.
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+  }
 }
 
 export default OnboardingChecklist;

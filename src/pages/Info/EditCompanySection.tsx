@@ -114,6 +114,10 @@ export default function EditCompanySection({
       setFormError("Informe o nome do estabelecimento.");
       return;
     }
+    if (name.trim().length > 50) {
+      setFormError("O nome deve ter no máximo 50 caracteres.");
+      return;
+    }
     if (phoneDigits && phoneDigits.length !== 11) {
       setFormError("Telefone deve ter 11 dígitos (DDD + número).");
       return;
@@ -265,6 +269,8 @@ export default function EditCompanySection({
             title="Nome"
             mode="dark"
             required
+            maxLength={50}
+            showCount
             value={name}
             onChange={(e) => setName(e.target.value)}
           />

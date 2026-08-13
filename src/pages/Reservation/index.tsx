@@ -7,7 +7,7 @@ import {
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
-import { infosByCompanyPublicId } from "../../api/companies";
+import { IInfo, infosByCompanyPublicId } from "../../api/companies";
 import AppLayout from "../../components/AppLayout";
 import {
   getAccessToken,
@@ -45,6 +45,8 @@ import {
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import { buttonClassName } from "../../components/Button";
 import { useDaySwipe } from "../../hooks/useDaySwipe";
+import { useErrors } from "../../contexts/ErrorsContext";
+import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
 
 type ReservationLocationState = {
   date?: string;
@@ -52,7 +54,16 @@ type ReservationLocationState = {
   status?: ReservationStatusEnum | null;
   court?: string;
   customerQuery?: string;
+  logoUploadFailed?: boolean;
 };
+
+function arenaPublicUrl(info: IInfo | null): string | null {
+  if (!info) return null;
+  if (info.slug) {
+    return `${MPN_PUBLIC_SITE_URL}/encontre-onde-jogar/${info.slug}`;
+  }
+  return info.link || null;
+}
 
 function toDateKey(value: Date) {
   return format(value, "yyyy-MM-dd");
@@ -61,6 +72,7 @@ function toDateKey(value: Date) {
 function Reservation() {
   const { loading, withLoading } = useLoading();
   const { refreshUnreadCount } = useNotification();
+  const { notifyError } = useErrors();
   const caps = useCompanyCapabilities();
 
   const [showActivateGuide, setShowActivateGuide] = useState(false);
@@ -95,6 +107,7 @@ function Reservation() {
   const [dayLoadError, setDayLoadError] = useState(false);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [portalActive, setPortalActive] = useState<boolean | null>(null);
+  const [publicArenaUrl, setPublicArenaUrl] = useState<string | null>(null);
   const fetchGenRef = useRef(0);
   const forceGuideFromNavRef = useRef(Boolean(locationState?.showActivateGuide));
 
@@ -110,9 +123,20 @@ function Reservation() {
   }, []);
 
   useEffect(() => {
-    if (!locationState?.showActivateGuide) return;
-    forceGuideFromNavRef.current = true;
-    setShowActivateGuide(true);
+    if (locationState?.logoUploadFailed) {
+      notifyError({
+        type: "error",
+        message:
+          "Estabelecimento criado, mas a logo não foi enviada. Envie em Minhas informações.",
+      });
+    }
+    if (!locationState?.showActivateGuide && !locationState?.logoUploadFailed) {
+      return;
+    }
+    if (locationState?.showActivateGuide) {
+      forceGuideFromNavRef.current = true;
+      setShowActivateGuide(true);
+    }
     navigate(location.pathname, {
       replace: true,
       state: {
@@ -126,7 +150,7 @@ function Reservation() {
           : {}),
       },
     });
-  }, [dateFrom, location.pathname, locationState, navigate]);
+  }, [dateFrom, location.pathname, locationState, navigate, notifyError]);
 
   useEffect(() => {
     if (!companyPublicId) return;
@@ -141,6 +165,7 @@ function Reservation() {
             ? info.isActive
             : (info.courts ?? []).some((court) => court.show);
         setPortalActive(active);
+        setPublicArenaUrl(arenaPublicUrl(info));
         if (active) {
           setShowActivateGuide(false);
           return;
@@ -635,6 +660,11 @@ function Reservation() {
         <ActivateCourtGuideModal
           isOpen={showActivateGuide}
           onClose={handleCloseActivateGuide}
+          publicUrl={publicArenaUrl}
+          onGoToCourts={() => {
+            handleCloseActivateGuide();
+            navigate("/quadras");
+          }}
         />
       </section>
       )}

@@ -1,24 +1,30 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { BsX } from "react-icons/bs";
 import { buttonClassName } from "../Button";
 
 type ActivateCourtGuideModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onGoToCourts: () => void;
+  publicUrl?: string | null;
 };
 
 function ActivateCourtGuideModal({
   isOpen,
   onClose,
+  onGoToCourts,
+  publicUrl,
 }: ActivateCourtGuideModalProps) {
   const titleId = useId();
   const descriptionId = useId();
   const confirmRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
+  const [copied, setCopied] = useState(false);
   onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) return;
+    setCopied(false);
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -43,6 +49,16 @@ function ActivateCourtGuideModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleCopy = async () => {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div
@@ -82,12 +98,17 @@ function ActivateCourtGuideModal({
                 ocupados. Assim o público só vê o que está realmente livre.
               </p>
               <p>
-                Quando estiver pronto, toque em{" "}
+                Quando estiver pronto, ative a quadra em{" "}
                 <span className="font-semibold text-text-light">
-                  Ativar a minha quadra
-                </span>{" "}
-                na agenda para publicar a quadra no site.
+                  Minhas quadras
+                </span>
+                .
               </p>
+              {publicUrl ? (
+                <p className="break-all rounded-xl bg-master px-3 py-2 text-sm">
+                  {publicUrl}
+                </p>
+              ) : null}
             </div>
           </div>
           <button
@@ -100,18 +121,33 @@ function ActivateCourtGuideModal({
           </button>
         </div>
 
-        <button
-          ref={confirmRef}
-          type="button"
-          onClick={onClose}
-          className={buttonClassName({
-            variant: "primary",
-            size: "lg",
-            className: "w-full",
-          })}
-        >
-          Entendi
-        </button>
+        <div className="flex flex-col gap-2">
+          {publicUrl ? (
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              className={buttonClassName({
+                variant: "secondary",
+                size: "lg",
+                className: "w-full",
+              })}
+            >
+              {copied ? "Link copiado" : "Copiar link público"}
+            </button>
+          ) : null}
+          <button
+            ref={confirmRef}
+            type="button"
+            onClick={onGoToCourts}
+            className={buttonClassName({
+              variant: "primary",
+              size: "lg",
+              className: "w-full",
+            })}
+          >
+            Ir para Minhas quadras
+          </button>
+        </div>
       </div>
     </div>
   );

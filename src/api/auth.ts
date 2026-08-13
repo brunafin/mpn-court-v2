@@ -21,6 +21,7 @@ export async function googleAuth(input: {
 
 export async function completeProfile(input: {
   phone?: string;
+  cpf: string;
   acceptedTerms: true;
 }) {
   const response = await api.post('/auth/complete-profile', input);

@@ -22,6 +22,7 @@ function OnboardingSchedule() {
     buildEmptyWeekTemplate(0)
   );
   const [ready, setReady] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -85,7 +86,16 @@ function OnboardingSchedule() {
 
   const handleNextOrSave = () => {
     if (!isLast) {
+      setFormError("");
       setStepIndex((i) => i + 1);
+      return;
+    }
+
+    const hasEnabledHour = WEEK_DAYS.some(({ key }) =>
+      (template.days[key] ?? []).some((slot) => slot.enabled),
+    );
+    if (!hasEnabledHour) {
+      setFormError("Marque ao menos um horário na semana.");
       return;
     }
 
@@ -199,7 +209,13 @@ function OnboardingSchedule() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-lg gap-3">
+        <div className="mx-auto w-full max-w-lg">
+          {formError ? (
+            <p className="mb-2 text-center text-sm text-danger-400" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          <div className="flex gap-3">
           <button
             type="button"
             onClick={handleBack}
@@ -227,6 +243,7 @@ function OnboardingSchedule() {
               </>
             )}
           </Button>
+          </div>
         </div>
       </div>
     </div>

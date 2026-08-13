@@ -157,6 +157,7 @@ function CourtsPage() {
   const [info, setInfo] = useState<IInfo | null>(null);
   const [togglingCourtId, setTogglingCourtId] = useState<string | null>(null);
   const [editingCourt, setEditingCourt] = useState<IInfoCourt | null>(null);
+  const [addingCourt, setAddingCourt] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
@@ -245,6 +246,21 @@ function CourtsPage() {
             Ative no site as quadras que quer divulgar e edite nome, piso e
             esportes quando precisar.
           </p>
+          {caps.canMutate && publicId ? (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingCourt(null);
+                setAddingCourt(true);
+              }}
+              className={buttonClassName({
+                variant: "secondary",
+                className: "mt-3",
+              })}
+            >
+              Adicionar quadra
+            </button>
+          ) : null}
         </div>
 
         {isInitialLoading ? (
@@ -351,9 +367,13 @@ function CourtsPage() {
       </main>
 
       <EditCourtSheet
-        open={Boolean(editingCourt)}
-        court={editingCourt}
-        onClose={() => setEditingCourt(null)}
+        open={Boolean(editingCourt) || addingCourt}
+        court={addingCourt ? null : editingCourt}
+        companyPublicId={publicId}
+        onClose={() => {
+          setEditingCourt(null);
+          setAddingCourt(false);
+        }}
         onSaved={(next) => {
           setInfo((prev) =>
             prev
@@ -365,6 +385,10 @@ function CourtsPage() {
                 }
               : prev,
           );
+        }}
+        onCreated={() => {
+          setAddingCourt(false);
+          void loadCourts();
         }}
       />
     </AppLayout>

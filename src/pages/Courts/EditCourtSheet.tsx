@@ -5,6 +5,7 @@ import Select from "../../components/Select";
 import CheckboxGroup from "../../components/CheckboxGroup";
 import { buttonClassName } from "../../components/Button";
 import {
+  createOwnedCourt,
   IInfoCourt,
   patchCourt,
 } from "../../api/companies";
@@ -12,15 +13,21 @@ import {
   COURT_FLOORS,
   COURT_SPORTS,
   CourtFloor,
+  CourtSport,
   courtSportLabel,
+  sportPayloadFromKey,
 } from "../../onboarding/mockStore";
 import { useErrors } from "../../contexts/ErrorsContext";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { MAX_COURT_PRICE_REAIS } from "../../utils/courtPrice";
 
 type EditCourtSheetProps = {
   court: IInfoCourt | null;
   open: boolean;
+  companyPublicId?: string;
   onClose: () => void;
   onSaved: (next: IInfoCourt) => void;
+  onCreated?: () => void;
 };
 
 function sportKeysFromLabels(labels: string[]): string[] {
@@ -38,30 +45,62 @@ function sportKeysFromLabels(labels: string[]): string[] {
 export default function EditCourtSheet({
   court,
   open,
+  companyPublicId,
   onClose,
   onSaved,
+  onCreated,
 }: EditCourtSheetProps) {
   const { notifyError } = useErrors();
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   const titleId = useId();
+  const isCreate = open && !court;
   const [name, setName] = useState("");
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [sports, setSports] = useState<string[]>([]);
+  const [customSportName, setCustomSportName] = useState("");
+  const [customSportNeedsNet, setCustomSportNeedsNet] = useState(false);
   const [isCovered, setIsCovered] = useState(true);
   const [isCanHaveNet, setIsCanHaveNet] = useState(false);
+  const [price, setPrice] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
   onCloseRef.current = onClose;
 
   useEffect(() => {
-    if (!open || !court) return;
-    setName(court.name);
-    setFloor((court.floor as CourtFloor) || "");
-    setSports(sportKeysFromLabels(court.sports));
-    setIsCovered(court.isCovered ?? true);
-    setIsCanHaveNet(court.isCanHaveNet ?? false);
+    if (!open) return;
+    if (court) {
+      setName(court.name);
+      setFloor((court.floor as CourtFloor) || "");
+      const catalogKeys = sportKeysFromLabels(court.sports);
+      setSports(catalogKeys);
+      const customLabel = (court.sports ?? []).find(
+        (label) =>
+          !catalogKeys.some(
+            (key) =>
+              courtSportLabel(
+                key as Parameters<typeof courtSportLabel>[0],
+              ).toLowerCase() === label.trim().toLowerCase(),
+          ),
+      );
+      setCustomSportName(customLabel?.trim() ?? "");
+      setCustomSportNeedsNet(false);
+      setIsCovered(court.isCovered ?? true);
+      setIsCanHaveNet(court.isCanHaveNet ?? false);
+      setPrice(
+        court.price != null && court.price > 0 ? String(court.price) : "",
+      );
+    } else {
+      setName("");
+      setFloor("");
+      setSports([]);
+      setCustomSportName("");
+      setCustomSportNeedsNet(false);
+      setIsCovered(true);
+      setIsCanHaveNet(false);
+      setPrice("");
+    }
     setFormError("");
     setSaving(false);
 
@@ -80,18 +119,30 @@ export default function EditCourtSheet({
     };
   }, [open, court]);
 
-  if (!open || !court) return null;
+  if (!open) return null;
 
   const floorOptions = COURT_FLOORS.map((f) => ({
     id: f.key,
     name: f.label,
   }));
 
+  const parsedPrice = Number(price.replace(",", "."));
   const canSubmit =
     name.trim().length >= 2 &&
     Boolean(floor) &&
-    sports.length > 0 &&
+    (sports.length > 0 || customSportName.trim().length > 0) &&
+    (!isCreate || (Number.isFinite(parsedPrice) && parsedPrice >= 0.01)) &&
     !saving;
+
+  const buildSportsPayload = () => {
+    const customName = customSportName.trim();
+    return [
+      ...sports.map((key) => sportPayloadFromKey(key as CourtSport)),
+      ...(customName
+        ? [{ name: customName.slice(0, 20), needsNet: customSportNeedsNet }]
+        : []),
+    ];
+  };
 
   const handleSave = async () => {
     if (!canSubmit) return;
@@ -103,23 +154,61 @@ export default function EditCourtSheet({
       setFormError("Selecione o piso.");
       return;
     }
-    if (sports.length === 0) {
+    const customName = customSportName.trim();
+    if (sports.length === 0 && !customName) {
       setFormError("Selecione ao menos um esporte.");
+      return;
+    }
+    if (customName.length > 20) {
+      setFormError("O nome do esporte deve ter no máximo 20 caracteres.");
       return;
     }
 
     setSaving(true);
     setFormError("");
     try {
-      const sportLabels = sports.map((key) =>
-        courtSportLabel(key as Parameters<typeof courtSportLabel>[0]),
-      );
+      const payload = buildSportsPayload();
+      const sportLabels = payload.map((item) => item.name);
+
+      if (isCreate) {
+        if (!companyPublicId) {
+          setFormError("Estabelecimento não identificado.");
+          return;
+        }
+        if (!Number.isFinite(parsedPrice) || parsedPrice < 0.01) {
+          setFormError("Informe o valor por horário.");
+          return;
+        }
+        if (parsedPrice > MAX_COURT_PRICE_REAIS) {
+          setFormError(
+            `O valor máximo por horário é ${formatCurrencyBRL(MAX_COURT_PRICE_REAIS)}.`,
+          );
+          return;
+        }
+        await createOwnedCourt(companyPublicId, {
+          name: name.trim(),
+          floor,
+          price: parsedPrice,
+          is_covered: isCovered,
+          is_can_have_net: isCanHaveNet,
+          sports: payload,
+        });
+        notifyError({
+          message: "Quadra adicionada. A agenda está sendo montada.",
+          type: "success",
+        });
+        onCreated?.();
+        onClose();
+        return;
+      }
+
+      if (!court) return;
       await patchCourt(court.publicId, {
         name: name.trim(),
         floor,
         is_covered: isCovered,
         is_can_have_net: isCanHaveNet,
-        sports: sportLabels,
+        sports: payload,
       });
       onSaved({
         ...court,
@@ -136,7 +225,11 @@ export default function EditCourtSheet({
       onClose();
     } catch (error) {
       console.error(error);
-      setFormError("Não foi possível salvar. Tente novamente.");
+      setFormError(
+        isCreate
+          ? "Não foi possível adicionar a quadra. Confira se já existe uma grade na agenda."
+          : "Não foi possível salvar. Tente novamente.",
+      );
     } finally {
       setSaving(false);
     }
@@ -159,7 +252,7 @@ export default function EditCourtSheet({
       >
         <div className="flex items-center justify-between gap-3 border-b border-text-light/10 px-4 py-3">
           <h2 id={titleId} className="text-lg font-semibold">
-            Editar quadra
+            {isCreate ? "Adicionar quadra" : "Editar quadra"}
           </h2>
           <button
             type="button"
@@ -190,6 +283,17 @@ export default function EditCourtSheet({
             value={floor}
             onChange={(e) => setFloor((e.target.value as CourtFloor) || "")}
           />
+          {isCreate ? (
+            <Input
+              name="price"
+              title="Valor por horário (R$)"
+              mode="dark"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+          ) : null}
           <CheckboxGroup
             name="sports"
             title="Esportes"
@@ -202,6 +306,24 @@ export default function EditCourtSheet({
             value={sports}
             onChange={setSports}
           />
+          <Input
+            name="customSport"
+            title="Outro esporte"
+            mode="dark"
+            placeholder="Nome (máx. 20)"
+            maxLength={20}
+            value={customSportName}
+            onChange={(e) => setCustomSportName(e.target.value)}
+          />
+          <label className="flex min-h-12 cursor-pointer items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={customSportNeedsNet}
+              onChange={(e) => setCustomSportNeedsNet(e.target.checked)}
+            />
+            Usa rede
+          </label>
           <div className="flex flex-col gap-2 rounded-xl bg-master px-3 py-3">
             <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-base">
               <span>Quadra coberta</span>
@@ -233,10 +355,16 @@ export default function EditCourtSheet({
           <button
             type="button"
             disabled={!canSubmit}
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             className={buttonClassName({ variant: "primary" })}
           >
-            {saving ? "Salvando…" : "Salvar"}
+            {saving
+              ? isCreate
+                ? "Adicionando…"
+                : "Salvando…"
+              : isCreate
+                ? "Adicionar"
+                : "Salvar"}
           </button>
         </div>
       </div>

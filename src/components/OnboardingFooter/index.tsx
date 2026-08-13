@@ -7,7 +7,11 @@ function OnboardingFooter() {
       <button
         type="button"
         onClick={() => {
-          void logoutAndRedirect();
+          if (!window.confirm("Sair da configuração?")) return;
+          const wipe = window.confirm(
+            "Apagar o rascunho deste aparelho?\n\nOK = apagar. Cancelar = sair e manter o rascunho.",
+          );
+          void logoutAndRedirect({ keepOnboardingDraft: !wipe });
         }}
         className="text-base font-semibold text-text-light/55 underline-offset-2 hover:text-text-light/80 hover:underline"
       >

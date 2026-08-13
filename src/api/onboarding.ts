@@ -13,8 +13,7 @@ export interface OnboardingPriceSlot {
 
 export interface OnboardingCourt {
   name: string;
-  /** Nomes dos esportes aceitos (mapeados para o catálogo no backend). */
-  sports: string[];
+  sports: { name: string; needsNet?: boolean }[];
   /** Tipo de piso (obrigatório). */
   floor: string;
   is_covered?: boolean;
@@ -41,6 +40,9 @@ export interface CompleteOnboardingResponse {
   companyPublicId: string;
   companyName: string;
   courts: { publicId: string; name: string }[];
+  alreadyExisted?: boolean;
+  schedulesReady?: boolean;
+  /** @deprecated alias de schedulesReady */
   schedulesPopulated: boolean;
   access_token: string;
 }

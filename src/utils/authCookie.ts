@@ -1,6 +1,5 @@
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-import { clearMockOnboarding } from "../onboarding/mockStore";
 import { invalidateSchedulesDayCache } from "./schedulesDayCache";
 
 const COOKIE_NAME = "access_token";
@@ -84,9 +83,14 @@ async function clearServiceWorkerAndCaches() {
   }
 }
 
-export async function logoutAndRedirect() {
+export async function logoutAndRedirect(options?: {
+  keepOnboardingDraft?: boolean;
+}) {
   clearAccessToken();
-  clearMockOnboarding();
+  const { clearMockOnboarding } = await import("../onboarding/mockStore");
+  if (!options?.keepOnboardingDraft) {
+    clearMockOnboarding({ allUsers: true });
+  }
   invalidateSchedulesDayCache();
 
   try {

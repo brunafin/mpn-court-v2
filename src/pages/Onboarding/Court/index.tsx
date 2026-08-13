@@ -13,6 +13,7 @@ import {
   CourtFloor,
   CourtSport,
   getEnabledScheduleSlots,
+  isCourtComplete,
   getOrCreateOnboardingDraft,
   isArenaConfigured,
   MockCourt,
@@ -61,6 +62,8 @@ function OnboardingCourt() {
     {},
   );
   const [sports, setSports] = useState<CourtSport[]>([]);
+  const [customSportName, setCustomSportName] = useState("");
+  const [customSportNeedsNet, setCustomSportNeedsNet] = useState(false);
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [isCovered, setIsCovered] = useState(true);
   const [isCanHaveNet, setIsCanHaveNet] = useState(false);
@@ -96,6 +99,8 @@ function OnboardingCourt() {
     }
     setSlotPriceDigits(digits);
     setSports(court?.sports ?? []);
+    setCustomSportName(court?.customSport?.name ?? "");
+    setCustomSportNeedsNet(Boolean(court?.customSport?.needsNet));
     setFloor(court?.floor ?? "");
     setIsCovered(court?.isCovered ?? true);
     setIsCanHaveNet(court?.isCanHaveNet ?? false);
@@ -145,9 +150,7 @@ function OnboardingCourt() {
     (_, i) => state.courts[i] ?? null,
   );
   const doneCount = Math.min(
-    state.courts.filter(
-      (c) => c.defaultPrice > 0 && c.sports.length > 0 && !!c.floor,
-    ).length,
+    state.courts.filter(isCourtComplete).length,
     state.courtCount,
   );
 
@@ -182,8 +185,13 @@ function OnboardingCourt() {
       return;
     }
 
-    if (sports.length === 0) {
+    const customName = customSportName.trim();
+    if (sports.length === 0 && !customName) {
       setFormError("Selecione ao menos um esporte.");
+      return;
+    }
+    if (customName && customName.length > 20) {
+      setFormError("O nome do esporte deve ter no máximo 20 caracteres.");
       return;
     }
 
@@ -232,6 +240,9 @@ function OnboardingCourt() {
         customPricingEnabled: customPricing || undefined,
         priceOverrides,
         sports,
+        customSport: customName
+          ? { name: customName.slice(0, 20), needsNet: customSportNeedsNet }
+          : undefined,
         floor,
         isCovered,
         isCanHaveNet,
@@ -499,6 +510,29 @@ function OnboardingCourt() {
                   }}
                   error={formError.includes("esporte") ? formError : undefined}
                 />
+                <div className="mt-3 space-y-2 rounded-xl bg-master px-3 py-3">
+                  <Input
+                    name="customSport"
+                    title="Outro esporte"
+                    mode="dark"
+                    placeholder="Nome (máx. 20)"
+                    maxLength={20}
+                    value={customSportName}
+                    onChange={(e) => {
+                      setCustomSportName(e.target.value);
+                      if (formError) setFormError("");
+                    }}
+                  />
+                  <label className="flex cursor-pointer items-center gap-3 text-sm text-text-light">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={customSportNeedsNet}
+                      onChange={(e) => setCustomSportNeedsNet(e.target.checked)}
+                    />
+                    Usa rede
+                  </label>
+                </div>
 
                 <Select
                   name="floor"

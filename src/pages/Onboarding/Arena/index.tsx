@@ -141,6 +141,10 @@ function OnboardingArena() {
       setFormError("Informe o nome.");
       return;
     }
+    if (arenaName.trim().length > 50) {
+      setFormError("O nome deve ter no máximo 50 caracteres.");
+      return;
+    }
     if (!isValidCep(cep)) {
       setFormError("Informe um CEP válido.");
       return;
@@ -220,6 +224,8 @@ function OnboardingArena() {
             }}
             required
             autoComplete="organization"
+            maxLength={50}
+            showCount
           />
 
           <div className="border-t border-text-light/10 pt-4">

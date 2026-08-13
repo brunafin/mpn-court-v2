@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Input from '../../../components/Input';
 import { buttonClassName } from '../../../components/Button';
 import { formatPhoneMask, onlyPhoneDigits } from '../../../utils/formatPhone';
+import { formatCpfMask, onlyCpfDigits } from '../../../utils/formatCpf';
 import { completeProfile } from '../../../api/auth';
 import { getAccessToken, setAccessToken } from '../../../utils/authCookie';
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from '../../../constants/legal';
@@ -26,6 +27,7 @@ function routeAfterLogin(token: string): string {
 function CompleteProfile() {
   const navigate = useNavigate();
   const [ownerPhone, setOwnerPhone] = useState('');
+  const [ownerCpf, setOwnerCpf] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,8 +49,10 @@ function CompleteProfile() {
   }, [navigate]);
 
   const phoneDigits = onlyPhoneDigits(ownerPhone);
+  const cpfDigits = onlyCpfDigits(ownerCpf);
   const phoneOk = phoneDigits.length === 0 || phoneDigits.length === 11;
-  const canSubmit = acceptedTerms && phoneOk && !loading;
+  const cpfOk = cpfDigits.length === 11;
+  const canSubmit = acceptedTerms && phoneOk && cpfOk && !loading;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -65,11 +69,16 @@ function CompleteProfile() {
       setFormError('Informe um celular com DDD (11 dígitos) ou deixe em branco.');
       return;
     }
+    if (!cpfOk) {
+      setFormError('Informe um CPF válido com 11 dígitos.');
+      return;
+    }
 
     setLoading(true);
     try {
       const result = await completeProfile({
         acceptedTerms: true,
+        cpf: cpfDigits,
         ...(phoneDigits.length === 11 ? { phone: phoneDigits } : {}),
       });
       setAccessToken(result.access_token);
@@ -110,7 +119,7 @@ function CompleteProfile() {
             Quase lá
           </h1>
           <p className="mt-2 text-sm leading-5 text-text-light/70">
-            Aceite os termos para começar.
+            Informe seu CPF e aceite os termos para começar.
           </p>
         </div>
 
@@ -120,6 +129,27 @@ function CompleteProfile() {
           noValidate
           aria-busy={loading || undefined}
         >
+          <Input
+            name="ownerCpf"
+            title="CPF"
+            placeholder="000.000.000-00"
+            type="text"
+            mode="dark"
+            disabled={loading}
+            value={ownerCpf}
+            onChange={(e) => {
+              setOwnerCpf(formatCpfMask(e.target.value));
+              if (formError) setFormError('');
+            }}
+            inputMode="numeric"
+            autoComplete="off"
+            error={
+              ownerCpf && !cpfOk
+                ? 'Informe um CPF com 11 dígitos.'
+                : undefined
+            }
+          />
+
           <Input
             name="ownerPhone"
             title="Telefone"
