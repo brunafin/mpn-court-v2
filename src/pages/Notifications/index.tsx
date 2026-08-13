@@ -14,7 +14,9 @@ import {
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
 import { useErrors } from "../../contexts/ErrorsContext";
-import EmptyState from "../../components/EmptyState";
+import EmptyState, {
+  emptyStateActionClassName,
+} from "../../components/EmptyState";
 import { PageTitle } from "../../components/PageTitle";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import {
@@ -53,6 +55,8 @@ function DayReminders() {
   const [message, setMessage] = useState<string>("");
   const [creatingNote, setCreatingNote] = useState(false);
   const [markingId, setMarkingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -68,14 +72,20 @@ function DayReminders() {
   const fetchNotifications = useCallback(async () => {
     if (!companyPublicId) return;
     const dateInput = format(date, "yyyy-MM-dd");
+    setLoadError(false);
     await withLoading(async () => {
       try {
         const response = await notesByDate(companyPublicId, dateInput);
         setNotifications(response);
+        setLoadedDateKey(dateInput);
+        setLoadError(false);
         if (date.toDateString() === new Date().toDateString()) {
           await refreshUnreadCount();
         }
       } catch (error) {
+        setLoadError(true);
+        setLoadedDateKey(dateInput);
+        setNotifications([]);
         console.error("Erro ao buscar lembretes da empresa:", error);
       }
     });
@@ -137,8 +147,8 @@ function DayReminders() {
     className: "justify-center",
   });
 
-  const showListLoading = loading && notifications.length === 0;
   const dateKey = format(date, "yyyy-MM-dd");
+  const showListLoading = loadedDateKey !== dateKey && !loadError;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
@@ -205,6 +215,21 @@ function DayReminders() {
               </li>
             ))}
           </ul>
+        ) : loadError ? (
+          <EmptyState
+            title="Não foi possível carregar os lembretes."
+            description="Tente de novo. Nada foi apagado."
+            action={
+              <button
+                type="button"
+                onClick={() => void fetchNotifications()}
+                className={emptyStateActionClassName()}
+              >
+                Tentar de novo
+              </button>
+            }
+            className="pb-16"
+          />
         ) : notifications.length > 0 ? (
           <ul className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:content-start lg:px-6">
             {notifications.map((notification) => (

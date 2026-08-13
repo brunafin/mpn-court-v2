@@ -221,7 +221,7 @@ function PlansPage() {
     setNeedEmail(false);
   };
 
-  const expired = caps.entitlement === "none";
+  const expired = caps.ready && caps.entitlement === "none";
   const fee = summary?.monthlyFee ?? null;
   const trialEndsLabel = summary?.trialEndsAt
     ? formatDateToDDMMYYYY(summary.trialEndsAt)

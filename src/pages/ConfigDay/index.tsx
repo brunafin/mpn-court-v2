@@ -19,6 +19,9 @@ import {
 } from "../../utils/authCookie";
 import { StatusIcons } from "../Reservation/statusIcons";
 import { buttonClassName } from "../../components/Button";
+import EmptyState, {
+  emptyStateActionClassName,
+} from "../../components/EmptyState";
 import { PageTitle } from "../../components/PageTitle";
 import ConfirmSheet, { ConfirmTone } from "../../components/ConfirmSheet";
 import { useErrors } from "../../contexts/ErrorsContext";
@@ -59,6 +62,7 @@ function ConfigDay() {
     () => new Set(),
   );
   const [batchActivateLoading, setBatchActivateLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const dateKey = format(date, "yyyy-MM-dd");
   const dateLabel = format(date, "dd/MM/yyyy", { locale: ptBR });
@@ -80,6 +84,7 @@ function ConfigDay() {
         return;
       }
       try {
+        setLoadError(false);
         await withLoading(async () => {
           const [dayData, courtsResponse] = await Promise.all([
             getAllSchedulesByCompanyPublicIdAndDate({
@@ -91,8 +96,10 @@ function ConfigDay() {
           setList(dayData.schedules);
           setSelectedInactiveIds(new Set());
           setCourts(courtsResponse);
+          setLoadError(false);
         });
       } catch (error: any) {
+        setLoadError(true);
         if (error?.response?.status !== 401) {
           console.error(error);
         }
@@ -306,6 +313,22 @@ function ConfigDay() {
           </p>
         ) : null}
 
+        {loadError ? (
+          <EmptyState
+            title="Não foi possível carregar o dia."
+            description="Os horários continuam no servidor. Tente de novo."
+            action={
+              <button
+                type="button"
+                onClick={() => void fetchData(dateKey)}
+                className={emptyStateActionClassName()}
+              >
+                Tentar de novo
+              </button>
+            }
+          />
+        ) : (
+        <>
         <div
           className={`mb-4 rounded-2xl bg-master-light px-4 py-2 transition-opacity lg:px-5 lg:py-4 ${
             loading && list.length > 0 ? "opacity-70" : ""
@@ -537,6 +560,8 @@ function ConfigDay() {
               })}
             </ul>
           </section>
+        )}
+        </>
         )}
       </section>
 

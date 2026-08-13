@@ -92,6 +92,7 @@ function Reservation() {
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
+  const [dayLoadError, setDayLoadError] = useState(false);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [portalActive, setPortalActive] = useState<boolean | null>(null);
   const fetchGenRef = useRef(0);
@@ -181,6 +182,7 @@ function Reservation() {
       setList(response);
       setCourtsNameList(uniqueCourts);
       setLoadedDateKey(dateInput);
+      setDayLoadError(false);
       if (companyPublicId) {
         setSchedulesDayCache(
           companyPublicId,
@@ -199,6 +201,7 @@ function Reservation() {
         return;
       }
       const gen = ++fetchGenRef.current;
+      if (!opts?.silent) setDayLoadError(false);
       const run = async () => {
         const response = await getSchedulesByCompanyPublicIdAndDate({
           companyPublicId,
@@ -215,9 +218,9 @@ function Reservation() {
           await withLoading(run);
         }
       } catch (error: any) {
-        // Evita skeleton infinito se a carga do dia falhar
         if (gen === fetchGenRef.current && !opts?.silent) {
           setLoadedDateKey(dateInput);
+          setDayLoadError(true);
           setList([]);
           setCourtsNameList([]);
         }
@@ -262,6 +265,8 @@ function Reservation() {
   );
 
   useEffect(() => {
+    // Só busca agenda com entitlement confirmado (trial expirado = paywall, não readonly).
+    if (!caps.ready || !caps.canViewAgenda) return;
     if (!companyPublicId || !date) return;
     const dateInput = toDateKey(date);
     const cached = getSchedulesDayCache(companyPublicId, dateInput);
@@ -270,6 +275,7 @@ function Reservation() {
       setList(cached.list);
       setCourtsNameList(cached.courtsNameList);
       setLoadedDateKey(dateInput);
+      setDayLoadError(false);
       // Fresco: não refetch. Velho: revalida sem spinner.
       if (!isSchedulesDayCacheFresh(companyPublicId, dateInput)) {
         void fetchData(dateInput, { silent: true });
@@ -279,16 +285,24 @@ function Reservation() {
 
     void fetchData(dateInput);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
-  }, [companyPublicId, date]);
+  }, [companyPublicId, date, caps.ready, caps.canViewAgenda]);
 
   useEffect(() => {
+    if (!caps.ready || !caps.canViewAgenda) return;
     if (!companyPublicId || !date) return;
     if (loadedDateKey !== toDateKey(date)) return;
     const timer = window.setTimeout(() => {
       prefetchAdjacentDays(date);
     }, 280);
     return () => window.clearTimeout(timer);
-  }, [companyPublicId, date, loadedDateKey, prefetchAdjacentDays]);
+  }, [
+    companyPublicId,
+    date,
+    loadedDateKey,
+    prefetchAdjacentDays,
+    caps.ready,
+    caps.canViewAgenda,
+  ]);
 
   useEffect(() => {
     refreshUnreadCount();
@@ -375,6 +389,20 @@ function Reservation() {
         </li>
       ))}
     </ul>
+  ) : dayLoadError ? (
+    <EmptyState
+      title="Não foi possível carregar a agenda."
+      description="Sua grade continua no servidor. Tente de novo."
+      action={
+        <button
+          type="button"
+          onClick={() => void fetchData(toDateKey(date))}
+          className={emptyStateActionClassName()}
+        >
+          Tentar de novo
+        </button>
+      }
+    />
   ) : filteredList.length > 0 ? (
     <ul
       className={`transition-opacity ${listShellClass} ${
@@ -442,7 +470,37 @@ function Reservation() {
 
   return (
     <AppLayout>
-      {!caps.canViewAgenda ? (
+      {caps.loadError ? (
+        <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-master px-4 text-text-light">
+          <EmptyState
+            title="Não foi possível carregar sua conta."
+            description="Sem isso não dá para saber se a agenda está liberada. Tente de novo."
+            action={
+              <button
+                type="button"
+                onClick={() => void caps.retry()}
+                className={emptyStateActionClassName()}
+              >
+                Tentar de novo
+              </button>
+            }
+          />
+        </section>
+      ) : !caps.ready ? (
+        <section
+          className="flex min-h-0 flex-1 flex-col overflow-hidden bg-master px-4 py-6 text-text-light"
+          aria-busy="true"
+          aria-label="Carregando agenda"
+        >
+          <div className="mx-auto w-full max-w-6xl animate-pulse space-y-3">
+            <div className="h-11 rounded-xl bg-master-light/70" />
+            <div className="h-14 rounded-xl bg-master-light/70" />
+            <div className="h-24 rounded-2xl bg-master-light/70" />
+            <div className="h-24 rounded-2xl bg-master-light/70" />
+            <div className="h-24 rounded-2xl bg-master-light/70" />
+          </div>
+        </section>
+      ) : !caps.canViewAgenda ? (
         <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-master px-4 text-text-light">
           <EmptyState
             title="Teste grátis encerrado"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
 import { useLoading } from "../../hooks/useLoading";
@@ -15,6 +15,9 @@ import {
   getAccessTokenPayload,
 } from "../../utils/authCookie";
 import { buttonClassName } from "../../components/Button";
+import EmptyState, {
+  emptyStateActionClassName,
+} from "../../components/EmptyState";
 import { PageEyebrow } from "../../components/PageTitle";
 import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
@@ -154,6 +157,7 @@ function CourtsPage() {
   const [info, setInfo] = useState<IInfo | null>(null);
   const [togglingCourtId, setTogglingCourtId] = useState<string | null>(null);
   const [editingCourt, setEditingCourt] = useState<IInfoCourt | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -166,18 +170,24 @@ function CourtsPage() {
     setPublicId(payload?.companyPublicId || "");
   }, []);
 
-  useEffect(() => {
+  const loadCourts = useCallback(async () => {
     if (!publicId) return;
-    withLoading(async () => {
+    setLoadError(false);
+    await withLoading(async () => {
       try {
         const response = await infosByCompanyPublicId(publicId);
         setInfo(response);
+        setLoadError(false);
       } catch (error) {
+        setLoadError(true);
         console.error(error);
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicId]);
+  }, [publicId, withLoading]);
+
+  useEffect(() => {
+    void loadCourts();
+  }, [loadCourts]);
 
   const handleToggleCourtVisibility = async (
     courtPublicId: string,
@@ -213,7 +223,7 @@ function CourtsPage() {
   };
 
   const courts = info?.courts ?? [];
-  const isInitialLoading = loading && !info;
+  const isInitialLoading = loading && !info && !loadError;
   const companyPortalStatus = resolveCompanyPortalStatus({
     isActive: info?.isActive,
     capabilities: caps.ready ? caps : info?.capabilities,
@@ -266,7 +276,21 @@ function CourtsPage() {
                 horários livres no site.
               </p>
             )}
-            {courts.length === 0 ? (
+            {loadError && !info ? (
+              <EmptyState
+                title="Não foi possível carregar as quadras."
+                description="Tente de novo. Nada foi apagado."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => void loadCourts()}
+                    className={emptyStateActionClassName()}
+                  >
+                    Tentar de novo
+                  </button>
+                }
+              />
+            ) : courts.length === 0 ? (
               <p className="rounded-2xl bg-master-light px-4 py-5 text-base text-text-light/65">
                 Nenhuma quadra cadastrada.
               </p>

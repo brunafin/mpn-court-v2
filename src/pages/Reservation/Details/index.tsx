@@ -664,7 +664,8 @@ function ReservationDetails() {
 
   const booked = isBookedStatus(court?.status);
   const isPastConsultation = Boolean(isPastSchedule && booked);
-  const consultationOnly = isPastConsultation || !canMutate;
+  const consultationOnly =
+    isPastConsultation || (caps.ready && !canMutate);
   // Passado abre em leitura; cancelamento só com escrita liberada.
   const showCancelSticky = Boolean(booked && canMutate);
   const showCreateSticky = Boolean(
@@ -930,6 +931,32 @@ function ReservationDetails() {
 
             {court?.status === ReservationStatusEnum.AVAILABLE &&
               !isPastSchedule &&
+              caps.loadError && (
+                <div className="mb-4 rounded-2xl bg-master-light p-4 sm:p-5">
+                  <p className="text-lg font-semibold text-text-light">
+                    Não foi possível confirmar o acesso
+                  </p>
+                  <p className="mt-2 text-base leading-6 text-text-light/75">
+                    Tente de novo para reservar ou cancelar.
+                  </p>
+                  <button
+                    type="button"
+                    className={buttonClassName({
+                      variant: "secondary",
+                      size: "md",
+                      className: "mt-3 w-auto",
+                      fullWidth: false,
+                    })}
+                    onClick={() => void caps.retry()}
+                  >
+                    Tentar de novo
+                  </button>
+                </div>
+              )}
+
+            {court?.status === ReservationStatusEnum.AVAILABLE &&
+              !isPastSchedule &&
+              caps.ready &&
               !canMutate && (
                 <div className="rounded-2xl bg-master-light p-4 sm:p-5">
                   <p className="text-lg font-semibold text-text-light">

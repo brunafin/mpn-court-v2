@@ -23,18 +23,23 @@ type CompanyBrandingContextValue = {
   setCompanyName: (name: string) => void;
   /** `null` até o infos carregar — não assumir paid/teste grátis. */
   capabilities: CompanyCapabilities | null;
+  /** Primeiro /infos falhou e ainda não há capabilities. */
+  capabilitiesError: boolean;
   refreshCapabilities: () => Promise<void>;
 };
 
-/** Fallback só para flags de UI; entitlement real exige `capabilities` carregado. */
+/**
+ * Fallback fail-closed até o /infos: sem agenda, sem mutate, sem portal.
+ * Trial expirado = paywall (canViewAgenda false); só inadimplente pago é readonly.
+ */
 const defaultCapabilities: CompanyCapabilities = {
-  entitlement: "trial",
+  entitlement: "none",
   accessMode: "full",
   accessReason: null,
-  canViewAgenda: true,
+  canViewAgenda: false,
   canMutate: false,
   canPayBilling: false,
-  portalEligible: true,
+  portalEligible: false,
 };
 
 const CompanyBrandingContext =
@@ -46,6 +51,7 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
   const [capabilities, setCapabilities] = useState<CompanyCapabilities | null>(
     null,
   );
+  const [capabilitiesError, setCapabilitiesError] = useState(false);
 
   const loadInfos = useCallback(async () => {
     const payload = getAccessTokenPayload<{
@@ -60,13 +66,17 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
     const companyPublicId = payload?.companyPublicId;
     if (!companyPublicId || !getAccessToken()) return;
 
+    setCapabilitiesError(false);
     try {
       const info = await infosByCompanyPublicId(companyPublicId);
       if (info.companyName) setCompanyName(info.companyName);
       setCompanyLogoUrl(info.logoUrl || null);
-      if (info.capabilities) setCapabilities(info.capabilities);
+      if (info.capabilities) {
+        setCapabilities(info.capabilities);
+        setCapabilitiesError(false);
+      }
     } catch {
-      // Sem logo: a UI mostra as iniciais do estabelecimento.
+      setCapabilitiesError(true);
     }
   }, []);
 
@@ -85,9 +95,17 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
       setLogoUrl,
       setCompanyName,
       capabilities,
+      capabilitiesError,
       refreshCapabilities: loadInfos,
     }),
-    [companyName, companyLogoUrl, setLogoUrl, capabilities, loadInfos],
+    [
+      companyName,
+      companyLogoUrl,
+      setLogoUrl,
+      capabilities,
+      capabilitiesError,
+      loadInfos,
+    ],
   );
 
   return (
@@ -97,18 +115,20 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const brandingFallback: CompanyBrandingContextValue = {
+  companyName: "",
+  logoUrl: null,
+  setLogoUrl: () => undefined,
+  setCompanyName: () => undefined,
+  capabilities: null,
+  capabilitiesError: false,
+  refreshCapabilities: async () => undefined,
+};
+
 export function useCompanyBranding() {
   const ctx = useContext(CompanyBrandingContext);
   if (!ctx) {
-    return {
-      companyName: "",
-      logoUrl: null,
-      setLogoUrl: () => undefined,
-      setCompanyName: () => undefined,
-      /** Sem provider: null (não fingir trial/paid carregados). */
-      capabilities: null,
-      refreshCapabilities: async () => undefined,
-    };
+    return brandingFallback;
   }
   return ctx;
 }
@@ -116,12 +136,25 @@ export function useCompanyBranding() {
 export type CompanyCapabilitiesState = CompanyCapabilities & {
   /** `false` enquanto infos/capabilities ainda não chegaram da API. */
   ready: boolean;
+  /** /infos falhou e não há capabilities — não é paywall nem skeleton eterno. */
+  loadError: boolean;
+  retry: () => Promise<void>;
 };
 
 export function useCompanyCapabilities(): CompanyCapabilitiesState {
   const ctx = useContext(CompanyBrandingContext);
   if (!ctx?.capabilities) {
-    return { ...defaultCapabilities, ready: false };
+    return {
+      ...defaultCapabilities,
+      ready: false,
+      loadError: Boolean(ctx?.capabilitiesError),
+      retry: ctx?.refreshCapabilities ?? (async () => undefined),
+    };
   }
-  return { ...ctx.capabilities, ready: true };
+  return {
+    ...ctx.capabilities,
+    ready: true,
+    loadError: false,
+    retry: ctx.refreshCapabilities,
+  };
 }
