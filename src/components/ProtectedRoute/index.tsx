@@ -39,11 +39,18 @@ export default function ProtectedRoute() {
     return <Navigate to="/alterar-senha" replace />;
   }
 
+  // Onboarding rola no shell do App (como login); mpn-page truncaria o formulário no mobile.
+  const isOnboarding = location.pathname.startsWith("/comecar");
+
   return (
     <CompanyBrandingProvider>
-      <div className="mpn-page">
+      {isOnboarding ? (
         <Outlet />
-      </div>
+      ) : (
+        <div className="mpn-page">
+          <Outlet />
+        </div>
+      )}
     </CompanyBrandingProvider>
   );
 }

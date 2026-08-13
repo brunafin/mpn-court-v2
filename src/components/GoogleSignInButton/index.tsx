@@ -40,6 +40,30 @@ function buttonWidthFor(el: HTMLElement): number {
   return Math.min(Math.max(raw, 200), 400);
 }
 
+/**
+ * O botão “Continuar como …” pode nascer mais largo que o card.
+ * Forçar max-width no iframe corta só a direita; scale uniforme mantém os dois raios.
+ */
+function fitGoogleButton(container: HTMLElement, maxWidth: number) {
+  const iframe = container.querySelector('iframe');
+  if (!iframe || maxWidth <= 0) return;
+
+  iframe.style.transform = '';
+  iframe.style.transformOrigin = '';
+  container.style.height = '';
+
+  const iframeWidth =
+    iframe.offsetWidth || Math.ceil(iframe.getBoundingClientRect().width);
+  if (iframeWidth <= maxWidth + 0.5) return;
+
+  const scale = maxWidth / iframeWidth;
+  const iframeHeight =
+    iframe.offsetHeight || Math.ceil(iframe.getBoundingClientRect().height);
+  iframe.style.transform = `scale(${scale})`;
+  iframe.style.transformOrigin = 'top left';
+  container.style.height = `${Math.ceil(iframeHeight * scale)}px`;
+}
+
 type GoogleSignInButtonProps = {
   onCredential: (idToken: string) => void;
   disabled?: boolean;
@@ -96,6 +120,10 @@ export default function GoogleSignInButton({
       const next = buttonWidthFor(shell);
       if (next <= 0) return;
       setShellWidth((prev) => (Math.abs(prev - next) < 8 ? prev : next));
+      // Só reajusta scale; não remonta o iframe.
+      if (containerRef.current && renderedWidthRef.current > 0) {
+        fitGoogleButton(containerRef.current, next);
+      }
     };
 
     measure();
@@ -120,6 +148,7 @@ export default function GoogleSignInButton({
     }
 
     let cancelled = false;
+    let disposeFit: (() => void) | undefined;
 
     (async () => {
       try {
@@ -137,6 +166,7 @@ export default function GoogleSignInButton({
           shellWidth;
         renderedWidthRef.current = width;
         containerRef.current.innerHTML = '';
+        containerRef.current.style.height = '';
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => {
@@ -158,7 +188,36 @@ export default function GoogleSignInButton({
           width,
           locale: 'pt-BR',
         });
+
+        const container = containerRef.current;
+        const applyFit = () => {
+          if (cancelled || !container) return;
+          const maxW =
+            (shellRef.current ? buttonWidthFor(shellRef.current) : 0) || width;
+          fitGoogleButton(container, maxW);
+        };
+        requestAnimationFrame(() => {
+          applyFit();
+          requestAnimationFrame(applyFit);
+        });
+        const iframe = container.querySelector('iframe');
+        iframe?.addEventListener('load', applyFit);
+
+        // Personalizado (“Continuar como …”) muda o tamanho depois do render;
+        // só reajusta o scale — não remonta o iframe.
+        let fitObserver: ResizeObserver | undefined;
+        if (iframe && typeof ResizeObserver !== 'undefined') {
+          fitObserver = new ResizeObserver(() => applyFit());
+          fitObserver.observe(iframe);
+        }
+
+        disposeFit = () => {
+          fitObserver?.disconnect();
+          iframe?.removeEventListener('load', applyFit);
+        };
+
         if (!cancelled) setReady(true);
+        else disposeFit();
       } catch {
         if (!cancelled) {
           setFailed(true);
@@ -169,6 +228,7 @@ export default function GoogleSignInButton({
 
     return () => {
       cancelled = true;
+      disposeFit?.();
     };
   }, [clientId, text, failed, shellWidth]);
 
@@ -185,11 +245,13 @@ export default function GoogleSignInButton({
     >
       {/*
         O botão personalizado (Continuar como …) do GIS vem sem border-radius.
-        Clipamos no mesmo raio do Entrar (rounded-xl).
+        Clipamos no mesmo raio do Entrar (rounded-xl). Não use max-width no
+        iframe — isso cortava só a direita; o fit escala por igual.
       */}
       <div
         ref={containerRef}
-        className="flex min-h-10 w-full max-w-full justify-center overflow-hidden rounded-xl [&_div]:!max-w-full [&_iframe]:!max-w-full"
+        className="mx-auto min-h-10 w-full max-w-full overflow-hidden rounded-xl"
+        style={shellWidth > 0 ? { width: shellWidth, maxWidth: '100%' } : undefined}
       />
       {!ready && (
         <p className="mt-2 text-center text-sm text-text-light/55">

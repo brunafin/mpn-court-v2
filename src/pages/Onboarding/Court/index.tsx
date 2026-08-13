@@ -31,6 +31,13 @@ import {
 function scrollCourtPageToTop(pageEl: HTMLElement | null) {
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   pageEl?.scrollTo({ top: 0, behavior: "smooth" });
+  let el = pageEl?.parentElement ?? null;
+  while (el) {
+    if (el.scrollTop > 0) {
+      el.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    el = el.parentElement;
+  }
 }
 
 function digitsFromReais(value: number): string {
@@ -266,44 +273,26 @@ function OnboardingCourt() {
   };
 
   return (
-    <div
-      ref={pageRef}
-      className="min-h-dvh bg-master px-4 py-6 text-text-light lg:h-full lg:min-h-0 lg:overflow-y-auto"
-    >
-      <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col lg:min-h-full">
-        <div className="-ml-2 flex items-center gap-1">
-          <Link
-            to="/comecar"
-            aria-label="Voltar"
-            className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
-          >
-            <MdChevronLeft size={28} aria-hidden />
-          </Link>
-          <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight">
-            Quadras
-          </h1>
-        </div>
-        <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
-          Informe o preço padrão; se quiser, personalize por horário
-        </p>
-
-        {blocked ? (
-          <div className="mt-6 rounded-2xl bg-master-light p-5">
-            <p className="text-base text-text-light/80">
-              Configure o horário antes de criar as quadras.
-            </p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-master text-text-light">
+      <div className="shrink-0 px-4 pt-6">
+        <div className="mx-auto w-full max-w-lg">
+          <div className="-ml-2 flex items-center gap-1">
             <Link
-              to="/comecar/horario"
-              className={buttonClassName({
-                variant: "primary",
-                className: "mt-4",
-              })}
+              to="/comecar"
+              aria-label="Voltar"
+              className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
             >
-              Ir para horário
+              <MdChevronLeft size={28} aria-hidden />
             </Link>
+            <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight">
+              Quadras
+            </h1>
           </div>
-        ) : (
-          <>
+          <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+            Informe o preço padrão; se quiser, personalize por horário
+          </p>
+
+          {!blocked ? (
             <div className="mt-6">
               <div className="mb-2 flex items-center justify-between text-sm text-text-light/60">
                 <span>
@@ -355,8 +344,33 @@ function OnboardingCourt() {
                 })}
               </div>
             </div>
+          ) : null}
+        </div>
+      </div>
 
-            {editingIndex !== null && (
+      <div
+        ref={pageRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-6"
+      >
+        <div className="relative z-10 mx-auto w-full max-w-lg">
+          {blocked ? (
+            <div className="mt-6 rounded-2xl bg-master-light p-5">
+              <p className="text-base text-text-light/80">
+                Configure o horário antes de criar as quadras.
+              </p>
+              <Link
+                to="/comecar/horario"
+                className={buttonClassName({
+                  variant: "primary",
+                  className: "mt-4",
+                })}
+              >
+                Ir para horário
+              </Link>
+            </div>
+          ) : (
+            <>
+              {editingIndex !== null && (
               <form
                 onSubmit={handleSave}
                 className="mt-4 rounded-2xl bg-master-light p-5"
@@ -368,7 +382,7 @@ function OnboardingCourt() {
                 <Input
                   name="courtName"
                   title="Nome da quadra"
-                  placeholder={`Q${editingIndex + 1}`}
+                  placeholder="Nome da sua quadra"
                   type="text"
                   mode="dark"
                   value={courtName}
@@ -616,7 +630,8 @@ function OnboardingCourt() {
           </>
         )}
 
-        <OnboardingFooter />
+          <OnboardingFooter />
+        </div>
       </div>
     </div>
   );

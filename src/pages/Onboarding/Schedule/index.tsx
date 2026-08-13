@@ -115,27 +115,29 @@ function OnboardingSchedule() {
   }
 
   return (
-    <div className="min-h-dvh bg-master pb-28 text-text-light lg:h-full lg:min-h-0 lg:overflow-y-auto">
-      <div className="mx-auto w-full max-w-lg px-4 pt-6">
-        <div className="-ml-2 flex items-center gap-1">
-          <Link
-            to="/comecar"
-            aria-label="Voltar"
-            className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
-          >
-            <MdChevronLeft size={28} aria-hidden />
-          </Link>
-          <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight">
-            Horário de funcionamento
-          </h1>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-master text-text-light">
+      <div className="shrink-0 px-4 pt-6">
+        <div className="mx-auto w-full max-w-lg">
+          <div className="-ml-2 flex items-center gap-1">
+            <Link
+              to="/comecar"
+              aria-label="Voltar"
+              className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
+            >
+              <MdChevronLeft size={28} aria-hidden />
+            </Link>
+            <h1 className="min-w-0 truncate text-2xl font-bold tracking-tight">
+              Horário de funcionamento
+            </h1>
+          </div>
+          <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+            Marque os horários em que a arena funciona; o preço fica em cada
+            quadra
+          </p>
         </div>
-        <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
-          Marque os horários em que a arena funciona; o preço fica em cada
-          quadra
-        </p>
       </div>
 
-      <div className="sticky top-0 z-10 border-b border-text-light/10 bg-master/95 px-4 py-3 backdrop-blur-sm">
+      <div className="shrink-0 border-b border-text-light/10 bg-master px-4 py-3">
         <div className="mx-auto w-full max-w-lg">
           <div className="flex items-end justify-between gap-3">
             <div>
@@ -170,8 +172,11 @@ function OnboardingSchedule() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-lg px-4 pt-4">
-        <ul className="space-y-2" aria-label={`Horários de ${dayMeta.label}`}>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]">
+        <ul
+          className="mx-auto w-full max-w-lg space-y-2"
+          aria-label={`Horários de ${dayMeta.label}`}
+        >
           {daySlots.map((slot) => (
             <li key={slot.hour}>
               <label
@@ -216,33 +221,33 @@ function OnboardingSchedule() {
             </p>
           ) : null}
           <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className={buttonClassName({
-              variant: "ghost",
-              size: "lg",
-              className: "flex-1 justify-center bg-master-light",
-            })}
-          >
-            <MdChevronLeft size={22} aria-hidden />
-            {isFirst ? "Checklist" : "Anterior"}
-          </button>
-          <Button
-            type="button"
-            variant="primary"
-            className="flex-1"
-            onClick={handleNextOrSave}
-          >
-            {isLast ? (
-              "Salvar grade"
-            ) : (
-              <>
-                Próximo
-                <MdChevronRight size={22} aria-hidden />
-              </>
-            )}
-          </Button>
+            <button
+              type="button"
+              onClick={handleBack}
+              className={buttonClassName({
+                variant: "ghost",
+                size: "lg",
+                className: "flex-1 justify-center bg-master-light",
+              })}
+            >
+              <MdChevronLeft size={22} aria-hidden />
+              {isFirst ? "Checklist" : "Anterior"}
+            </button>
+            <Button
+              type="button"
+              variant="primary"
+              className="flex-1"
+              onClick={handleNextOrSave}
+            >
+              {isLast ? (
+                "Salvar grade"
+              ) : (
+                <>
+                  Próximo
+                  <MdChevronRight size={22} aria-hidden />
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>

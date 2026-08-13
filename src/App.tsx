@@ -25,18 +25,19 @@ import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
 import { setAxiosErrorNotifier } from "./api/axios";
 import ProductInactiveModal from "./components/ProductInactiveModal";
 
-/** Login/cadastro são altos no desktop — não podem herdar overflow-hidden do shell. */
-function isPublicAuthPath(pathname: string): boolean {
+/** Telas altas (auth + onboarding) — não podem herdar overflow-hidden do shell. */
+function isScrollableShellPath(pathname: string): boolean {
   return (
     pathname === "/" ||
     pathname.startsWith("/cadastro") ||
-    pathname.startsWith("/esqueci-senha")
+    pathname.startsWith("/esqueci-senha") ||
+    pathname.startsWith("/comecar")
   );
 }
 
 function App() {
   const { pathname } = useLocation();
-  const authShell = isPublicAuthPath(pathname);
+  const scrollableShell = isScrollableShellPath(pathname);
 
   useEffect(() => {
     if (import.meta.env.VITE_ENVIRONMENT === "production") {
@@ -76,8 +77,8 @@ function App() {
       )}
       <div
         className={
-          authShell
-            ? "min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+          scrollableShell
+            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain"
             : "mpn-page"
         }
       >
