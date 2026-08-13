@@ -48,7 +48,9 @@ export default defineConfig({
         name: 'Marca Pra Nós',
         short_name: 'MPN',
         description: 'Gerenciamento de reservas de horários em quadras esportivas',
-        theme_color: '#2C3043',
+        display: 'standalone',
+        background_color: '#081425',
+        theme_color: '#081425',
         icons: isProduction
           ? [
             {

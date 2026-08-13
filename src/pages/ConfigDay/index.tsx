@@ -277,7 +277,7 @@ function ConfigDay() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
-      <header className="sticky top-0 z-10 bg-master px-4 py-3 lg:px-6">
+      <header className="mpn-chrome-top z-10 shrink-0 bg-master px-4 pb-3 lg:px-6">
         <div className="mx-auto flex w-full max-w-lg items-center gap-3 lg:max-w-5xl">
           <button
             type="button"
@@ -300,7 +300,7 @@ function ConfigDay() {
         </div>
       </header>
 
-      <section className="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-8 pt-4 lg:max-w-5xl lg:px-6">
+      <section className="mpn-scroll-end mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-4 lg:max-w-5xl lg:px-6">
         {!canMutate && caps.ready ? (
           <p className="mb-4 rounded-xl bg-master-light px-4 py-3 text-base text-text-light/70">
             Conta em somente leitura — não é possível alterar horários.{" "}

@@ -152,7 +152,7 @@ function DayReminders() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-master text-text-light">
-      <header className="sticky top-0 z-10 bg-master px-4 py-3 lg:px-6">
+      <header className="mpn-chrome-top z-10 shrink-0 bg-master px-4 pb-3 lg:px-6">
         <div className="mx-auto flex w-full max-w-lg items-center gap-3 lg:max-w-5xl">
           <button
             type="button"
@@ -202,7 +202,7 @@ function DayReminders() {
 
         {showListLoading ? (
           <ul
-            className="mx-auto flex w-full max-w-lg flex-1 animate-pulse flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5 lg:max-w-5xl lg:px-6"
+            className="mpn-scroll-end mx-auto flex w-full max-w-lg flex-1 animate-pulse flex-col gap-3 overflow-y-auto px-4 pt-5 lg:max-w-5xl lg:px-6"
             aria-label="Carregando lembretes"
           >
             {Array.from({ length: 3 }).map((_, index) => (
@@ -231,7 +231,7 @@ function DayReminders() {
             className="pb-16"
           />
         ) : notifications.length > 0 ? (
-          <ul className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 pt-5 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:content-start lg:px-6">
+          <ul className="mpn-scroll-end mx-auto flex w-full max-w-lg flex-1 flex-col gap-3 overflow-y-auto px-4 pt-5 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:content-start lg:px-6">
             {notifications.map((notification) => (
               <li
                 key={notification.id}

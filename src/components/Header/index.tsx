@@ -121,7 +121,7 @@ function Header() {
     }`;
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
+    <header className="mpn-header-safe sticky top-0 z-20 flex min-h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
       <Link
         to="/reservas"
         className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
@@ -169,7 +169,7 @@ function Header() {
             aria-labelledby={titleId}
             className="relative z-10 flex h-full w-[min(100%,20rem)] flex-col bg-master text-text-light shadow-2xl"
           >
-            <div className="px-4 pb-4 pt-4">
+            <div className="mpn-chrome-top px-4 pb-4">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <CompanyAvatar

@@ -264,7 +264,7 @@ export function getMeanByStatus(
         aria-label={ariaSummary}
         className={`mb-5 overflow-hidden rounded-2xl ${accent.surface}`}
       >
-        <div className="flex min-h-14 items-center gap-3 px-4 py-3">
+        <div className="flex min-h-16 items-center gap-3 px-4 py-4">
           <div
             className={`flex size-11 shrink-0 items-center justify-center rounded-full ${accent.iconBg}`}
             aria-hidden

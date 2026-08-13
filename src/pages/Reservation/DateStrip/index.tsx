@@ -36,14 +36,14 @@ function DateStrip({
   useEffect(() => {
     selectedRef.current?.scrollIntoView({
       behavior: "smooth",
-      inline: "center",
+      inline: "nearest",
       block: "nearest",
     });
   }, [selectedDate]);
 
   return (
     <div className="overflow-hidden rounded-2xl bg-master lg:rounded-2xl lg:bg-master-light">
-      <div className="flex gap-3 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-2.5 lg:px-2 lg:py-1.5">
+      <div className="flex gap-3 overflow-x-auto scroll-px-3 px-3 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-2.5 lg:scroll-px-2 lg:px-2 lg:py-1.5">
         {days.map((day) => {
           const selected = isSameDay(day, selectedDate);
           const isPast = day < today;
@@ -73,6 +73,7 @@ function DateStrip({
             </button>
           );
         })}
+        <span className="w-1 shrink-0" aria-hidden />
       </div>
     </div>
   );

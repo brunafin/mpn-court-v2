@@ -396,7 +396,7 @@ function Reservation() {
   const daySwipe = useDaySwipe(shiftDay);
 
   const listShellClass =
-    "mx-auto w-full space-y-1.5 px-3 pb-6 pt-2 sm:px-4 lg:max-w-6xl lg:space-y-2 lg:px-8";
+    "mpn-scroll-end mx-auto w-full space-y-1.5 px-3 pt-2 sm:px-4 lg:max-w-6xl lg:space-y-2 lg:px-8";
 
   const clearDayFilters = () => {
     setStatusSelected(null);

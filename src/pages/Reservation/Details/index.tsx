@@ -349,6 +349,20 @@ function ReservationDetails() {
     });
   };
 
+  const handleSaveObservation = async () => {
+    if (savingObservation) return;
+    setSavingObservation(true);
+    try {
+      await updateObservationByReservation({
+        observation,
+        isBarbecueIncluded,
+        isEvent,
+      });
+    } finally {
+      setSavingObservation(false);
+    }
+  };
+
   const handleCreateNote = async (event?: React.FormEvent): Promise<void> => {
     event?.preventDefault?.();
     if (creatingNote) return;
@@ -658,7 +672,6 @@ function ReservationDetails() {
     : "Carregando…";
 
   const isInitialLoading = loading && !court;
-  const secondaryBtnClass = buttonClassName({ variant: "secondary" });
   const primaryBtnClass = buttonClassName({ variant: "primary", size: "md" });
 
   const booked = isBookedStatus(court?.status);
@@ -667,16 +680,21 @@ function ReservationDetails() {
     isPastConsultation || (caps.ready && !canMutate);
   // Passado abre em leitura; cancelamento só com escrita liberada.
   const showCancelSticky = Boolean(booked && canMutate);
+  const showSaveSticky = Boolean(
+    booked &&
+      canMutate &&
+      !consultationOnly &&
+      court?.reservation?.publicId,
+  );
   const showCreateSticky = Boolean(
     canMutate &&
       court?.status === ReservationStatusEnum.AVAILABLE &&
       !isPastSchedule,
   );
-  const showStickyFooter = showCancelSticky || showCreateSticky;
 
   return (
     <div className="flex h-full min-h-0 max-h-dvh flex-1 flex-col bg-master text-text-light">
-      <header className="sticky top-0 z-20 shrink-0 bg-master px-4 py-3 lg:px-6">
+      <header className="mpn-chrome-top z-20 shrink-0 bg-master px-4 pb-3 lg:px-6">
         <div className="relative mx-auto flex w-full max-w-lg items-center justify-center lg:max-w-3xl">
           <button
             type="button"
@@ -693,9 +711,9 @@ function ReservationDetails() {
       </header>
 
       <section
-        className={`mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto px-4 pt-5 transition-opacity lg:max-w-3xl lg:px-6 ${
-          showStickyFooter ? "pb-28" : "pb-8"
-        } ${loading && court ? "opacity-80" : ""}`}
+        className={`mpn-scroll-end mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto px-4 pt-5 transition-opacity lg:max-w-3xl lg:px-6 ${
+          loading && court ? "opacity-80" : ""
+        }`}
         aria-busy={loading}
       >
         {isInitialLoading ? (
@@ -834,7 +852,17 @@ function ReservationDetails() {
                   </div>
                 </div>
               ) : (
-                <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
+                <form
+                  id="reservation-edit-form"
+                  className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleSaveObservation();
+                  }}
+                  noValidate
+                  aria-label="Editar reserva"
+                  aria-busy={savingObservation || undefined}
+                >
                   <fieldset
                     className="mb-4 space-y-2"
                     disabled={savingObservation}
@@ -890,30 +918,9 @@ function ReservationDetails() {
                     mode="dark"
                     maxLength={OBSERVATION_MAX_LENGTH}
                     rows={3}
+                    className="mb-0"
                   />
-                  <button
-                    type="button"
-                    disabled={savingObservation}
-                    onClick={async () => {
-                      if (savingObservation) return;
-                      setSavingObservation(true);
-                      try {
-                        await updateObservationByReservation({
-                          observation,
-                          isBarbecueIncluded,
-                          isEvent,
-                        });
-                      } finally {
-                        setSavingObservation(false);
-                      }
-                    }}
-                    className={secondaryBtnClass}
-                  >
-                    {savingObservation
-                      ? "Salvando…"
-                      : "Salvar alterações"}
-                  </button>
-                </div>
+                </form>
               ))}
 
             {court?.status === ReservationStatusEnum.AVAILABLE &&
@@ -972,6 +979,7 @@ function ReservationDetails() {
               !isPastSchedule &&
               canMutate && (
               <form
+                id="reservation-create-form"
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSubmit();
@@ -1128,22 +1136,6 @@ function ReservationDetails() {
                     className="mb-0"
                   />
                 </div>
-
-                <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
-                  <div className="mx-auto w-full max-w-lg lg:max-w-3xl">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || !customerReservationName?.trim()}
-                      className={buttonClassName({
-                        variant: "primary",
-                        className: "justify-center",
-                      })}
-                    >
-                      <StatusIcons.reserved size={20} className="shrink-0" aria-hidden />
-                      {isSubmitting ? "Reservando…" : "Reservar horário"}
-                    </button>
-                  </div>
-                </div>
               </form>
             )}
           </>
@@ -1156,23 +1148,57 @@ function ReservationDetails() {
         )}
       </section>
 
-      {showCancelSticky && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
+      {showCreateSticky ? (
+        <div className="mpn-action-bar z-20 shrink-0 border-t border-text-light/10 bg-master/95 px-4 pt-3 backdrop-blur-sm">
           <div className="mx-auto w-full max-w-lg lg:max-w-3xl">
             <button
-              type="button"
-              disabled={loading || confirmLoading}
-              onClick={askCancelReservation}
+              type="submit"
+              form="reservation-create-form"
+              disabled={isSubmitting || !customerReservationName?.trim()}
               className={buttonClassName({
-                variant: "danger",
+                variant: "primary",
                 className: "justify-center",
               })}
             >
-              Cancelar reserva
+              <StatusIcons.reserved size={20} className="shrink-0" aria-hidden />
+              {isSubmitting ? "Reservando…" : "Reservar horário"}
             </button>
           </div>
         </div>
-      )}
+      ) : null}
+
+      {showSaveSticky || showCancelSticky ? (
+        <div className="mpn-action-bar z-20 shrink-0 border-t border-text-light/10 bg-master/95 px-4 pt-3 backdrop-blur-sm">
+          <div className="mx-auto flex w-full max-w-lg flex-col gap-2 lg:max-w-3xl">
+            {showSaveSticky ? (
+              <button
+                type="submit"
+                form="reservation-edit-form"
+                disabled={savingObservation || loading || confirmLoading}
+                className={buttonClassName({
+                  variant: "primary",
+                  className: "justify-center",
+                })}
+              >
+                {savingObservation ? "Salvando…" : "Salvar alterações"}
+              </button>
+            ) : null}
+            {showCancelSticky ? (
+              <button
+                type="button"
+                disabled={loading || confirmLoading || savingObservation}
+                onClick={askCancelReservation}
+                className={buttonClassName({
+                  variant: "danger",
+                  className: "justify-center",
+                })}
+              >
+                Cancelar reserva
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {showInfoCustomer && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
@@ -1190,7 +1216,7 @@ function ReservationDetails() {
             aria-modal="true"
             aria-labelledby={contactTitleId}
             aria-busy={loading || undefined}
-            className="relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 shadow-2xl sm:rounded-3xl sm:p-6"
+            className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 shadow-2xl sm:rounded-3xl sm:p-6"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
             <div className="mb-4 flex items-start justify-between gap-3">

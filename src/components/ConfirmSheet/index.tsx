@@ -94,7 +94,7 @@ function ConfirmSheet({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         aria-busy={loading}
-        className="relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 text-text-light shadow-2xl sm:rounded-3xl sm:p-6"
+        className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 text-text-light shadow-2xl sm:rounded-3xl sm:p-6"
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
 

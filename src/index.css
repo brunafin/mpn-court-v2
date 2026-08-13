@@ -77,6 +77,23 @@ body {
   color-scheme: dark;
 }
 
+/* PWA / iOS standalone: notch e home indicator */
+.mpn-header-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.mpn-chrome-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+}
+
+.mpn-action-bar {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.mpn-scroll-end {
+  padding-bottom: max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)));
+}
+
 /* Evita fundo claro do autofill do navegador nos campos escuros */
 @keyframes mpn-autofill-dark {
   from,
