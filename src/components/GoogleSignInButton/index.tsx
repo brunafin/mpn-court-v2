@@ -33,7 +33,7 @@ function loadGisScript(): Promise<void> {
   });
 }
 
-/** Largura do botão GIS: cabe no container (mobile ~256px) e respeita o range do Google. */
+/** Largura do botão GIS: cabe no card (mobile) e no range do Google (200–400). */
 function buttonWidthFor(el: HTMLElement): number {
   const raw = Math.floor(el.clientWidth || el.getBoundingClientRect().width);
   if (raw <= 0) return 0;
@@ -53,6 +53,9 @@ type GoogleSignInButtonProps = {
  * Botão oficial do Google Identity Services.
  * Só renderiza se VITE_GOOGLE_CLIENT_ID estiver definido.
  * Em falha de CSP/rede, some sem quebrar o layout do formulário.
+ *
+ * Importante: não recria o iframe quando o Google mostra o e-mail da conta
+ * (mudança de altura do widget). Só remonta em resize real da janela.
  */
 export default function GoogleSignInButton({
   onCredential,
@@ -60,13 +63,14 @@ export default function GoogleSignInButton({
   text = 'continue_with',
   onReadyChange,
 }: GoogleSignInButtonProps) {
+  const shellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onCredential);
   const onReadyChangeRef = useRef(onReadyChange);
-  const lastWidthRef = useRef(0);
+  const renderedWidthRef = useRef(0);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [layoutWidth, setLayoutWidth] = useState(0);
+  const [shellWidth, setShellWidth] = useState(0);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
 
   useEffect(() => {
@@ -81,32 +85,39 @@ export default function GoogleSignInButton({
     onReadyChangeRef.current?.(ready);
   }, [ready]);
 
-  // Mede a largura real do card (evita fallback 320px que corta no mobile).
+  // Mede o shell externo (largura estável). Não observa o nó do iframe —
+  // quando o Google preenche o e-mail, a altura muda e um ResizeObserver
+  // no container destruiria o botão no meio do clique.
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el || !clientId || failed) return;
+    const shell = shellRef.current;
+    if (!shell || !clientId || failed) return;
 
     const measure = () => {
-      const next = buttonWidthFor(el);
-      if (next > 0) {
-        setLayoutWidth((prev) => (Math.abs(prev - next) < 2 ? prev : next));
-      }
+      const next = buttonWidthFor(shell);
+      if (next <= 0) return;
+      setShellWidth((prev) => (Math.abs(prev - next) < 8 ? prev : next));
     };
 
     measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
+    // rAF: após padding/fonte do card estabilizar no mobile.
+    const raf = requestAnimationFrame(measure);
+    window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
     return () => {
-      ro.disconnect();
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', measure);
       window.removeEventListener('orientationchange', measure);
     };
   }, [clientId, failed]);
 
   useEffect(() => {
-    if (!clientId || disabled || failed || layoutWidth <= 0) return;
-    // Evita re-render do iframe a cada pixel (só quando muda de fato).
-    if (Math.abs(layoutWidth - lastWidthRef.current) < 2 && ready) return;
+    if (!clientId || failed || shellWidth <= 0) return;
+    if (
+      renderedWidthRef.current > 0 &&
+      Math.abs(shellWidth - renderedWidthRef.current) < 8
+    ) {
+      return;
+    }
 
     let cancelled = false;
 
@@ -121,8 +132,10 @@ export default function GoogleSignInButton({
           return;
         }
 
-        const width = buttonWidthFor(containerRef.current) || layoutWidth;
-        lastWidthRef.current = width;
+        const width =
+          (shellRef.current ? buttonWidthFor(shellRef.current) : 0) ||
+          shellWidth;
+        renderedWidthRef.current = width;
         containerRef.current.innerHTML = '';
         window.google.accounts.id.initialize({
           client_id: clientId,
@@ -131,6 +144,9 @@ export default function GoogleSignInButton({
               callbackRef.current(response.credential);
             }
           },
+          // Evita One Tap automático; só o botão.
+          auto_select: false,
+          cancel_on_tap_outside: true,
         });
         window.google.accounts.id.renderButton(containerRef.current, {
           theme: 'outline',
@@ -152,7 +168,7 @@ export default function GoogleSignInButton({
     return () => {
       cancelled = true;
     };
-  }, [clientId, disabled, text, failed, layoutWidth, ready]);
+  }, [clientId, text, failed, shellWidth]);
 
   if (!clientId || failed) {
     return null;
@@ -160,13 +176,14 @@ export default function GoogleSignInButton({
 
   return (
     <div
+      ref={shellRef}
       className={`w-full max-w-full ${
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
     >
       <div
         ref={containerRef}
-        className="flex min-h-10 w-full max-w-full justify-center [&_div]:!max-w-full [&_iframe]:!max-w-full"
+        className="flex min-h-10 w-full max-w-full justify-center overflow-x-auto [&_iframe]:max-w-full"
       />
       {!ready && (
         <p className="mt-2 text-center text-sm text-text-light/55">
