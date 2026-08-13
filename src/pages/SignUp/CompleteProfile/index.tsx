@@ -42,10 +42,27 @@ function CompleteProfile() {
       const payload = jwtDecode<LoginTokenPayload>(token);
       if (payload.termsAccepted !== false) {
         navigate(routeAfterLogin(token), { replace: true });
+        return;
       }
     } catch {
       navigate('/', { replace: true });
+      return;
     }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await completeProfile();
+        if (cancelled || result.needsProfileCompletion) return;
+        setAccessToken(result.access_token);
+        navigate(routeAfterLogin(result.access_token), { replace: true });
+      } catch {
+        // Conta nova: permanece no form (termos + CPF).
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   const phoneDigits = onlyPhoneDigits(ownerPhone);

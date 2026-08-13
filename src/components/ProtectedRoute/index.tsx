@@ -27,7 +27,7 @@ export default function ProtectedRoute() {
 
   const payload = getAccessTokenPayload<TokenClaims>();
 
-  // Contas sem terms_accepted_at (claim explícito false). Token antigo sem claim passa.
+  // Só contas novas (sem terms_accepted_at). Claim false; token antigo sem claim passa.
   if (payload?.termsAccepted === false) {
     return <Navigate to="/cadastro/completar" replace />;
   }
