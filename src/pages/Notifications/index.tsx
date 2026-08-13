@@ -43,7 +43,7 @@ function DayReminders() {
   const location = useLocation();
   const { refreshUnreadCount } = useNotification();
   const { notifyError } = useErrors();
-  const { loading, withLoading } = useLoading();
+  const { withLoading } = useLoading();
   const caps = useCompanyCapabilities();
   const canMutate = caps.canMutate;
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
