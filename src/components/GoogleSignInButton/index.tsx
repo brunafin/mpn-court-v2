@@ -152,6 +152,8 @@ export default function GoogleSignInButton({
           theme: 'outline',
           size: 'large',
           text,
+          // "rectangular" no botão genérico; no personalizado (e-mail) o GIS
+          // ignora e fica quadrado — o radius vem do wrapper abaixo.
           shape: 'rectangular',
           width,
           locale: 'pt-BR',
@@ -181,9 +183,13 @@ export default function GoogleSignInButton({
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
     >
+      {/*
+        O botão personalizado (Continuar como …) do GIS vem sem border-radius.
+        Clipamos no mesmo raio do Entrar (rounded-xl).
+      */}
       <div
         ref={containerRef}
-        className="flex min-h-10 w-full max-w-full justify-center overflow-x-auto [&_iframe]:max-w-full"
+        className="flex min-h-10 w-full max-w-full justify-center overflow-hidden rounded-xl [&_div]:!max-w-full [&_iframe]:!max-w-full"
       />
       {!ready && (
         <p className="mt-2 text-center text-sm text-text-light/55">
