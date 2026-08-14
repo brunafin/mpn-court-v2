@@ -22,11 +22,15 @@ import { PageEyebrow } from "../../components/PageTitle";
 import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import EditCourtSheet from "./EditCourtSheet";
-import PortalStatusBanner from "../../components/PortalStatusBanner";
 import {
   resolveCompanyPortalStatus,
   resolveCourtPortalStatus,
 } from "../../utils/portalVisibility";
+
+/** Temporário: edição pós-onboarding fica oculta; dados vêm do fluxo /comecar. */
+const SHOW_EDIT_COURT_DATA = false;
+/** Temporário: novas quadras só no onboarding. */
+const SHOW_ADD_COURT = false;
 
 function formatFloorLabel(floor: string | null | undefined): string | null {
   if (!floor) return null;
@@ -112,7 +116,7 @@ function CourtCard({
         )}
       </dl>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        {canMutate && onEdit && (
+        {SHOW_EDIT_COURT_DATA && canMutate && onEdit && (
           <button
             type="button"
             onClick={onEdit}
@@ -234,8 +238,6 @@ function CourtsPage() {
     !companyPortalStatus.onSite &&
     (caps.portalEligible ?? true) &&
     courts.every((c) => !c.show);
-  const offSiteNeedsPlan =
-    !companyPortalStatus.onSite && caps.ready && !caps.portalEligible;
 
   return (
     <AppLayout>
@@ -243,10 +245,9 @@ function CourtsPage() {
         <div>
           <PageEyebrow className="mb-2">Minhas quadras</PageEyebrow>
           <p className="text-base leading-6 text-text-light/70">
-            Ative no site as quadras que quer divulgar e edite nome, piso e
-            esportes quando precisar.
+            Ative no site as quadras que quer divulgar.
           </p>
-          {caps.canMutate && publicId ? (
+          {SHOW_ADD_COURT && caps.canMutate && publicId ? (
             <button
               type="button"
               onClick={() => {
@@ -273,19 +274,6 @@ function CourtsPage() {
           </div>
         ) : (
           <section className="mt-5">
-            {(caps.ready || info) && (
-              <PortalStatusBanner
-                className="mb-3"
-                status={companyPortalStatus}
-                showActivateCourtsCta={false}
-                showBillingCta={offSiteNeedsPlan}
-                entitlement={
-                  caps.ready
-                    ? caps.entitlement
-                    : info?.capabilities?.entitlement
-                }
-              />
-            )}
             {offSiteNeedsCourts && (
               <p className="mb-3 rounded-lg bg-master-light px-3 py-2 text-sm leading-5 text-text-light/70">
                 Cadastre na agenda o que já está ocupado e compartilhe só os
@@ -344,7 +332,7 @@ function CourtsPage() {
                       canMutate={caps.canMutate}
                       toggling={togglingCourtId === court.publicId}
                       onEdit={
-                        caps.canMutate
+                        SHOW_EDIT_COURT_DATA && caps.canMutate
                           ? () => setEditingCourt(court)
                           : undefined
                       }

@@ -4,9 +4,7 @@ import AppLayout from "../../components/AppLayout";
 import {
   MdClose,
   MdContentCopy,
-  MdOpenInNew,
   MdOutlineInfo,
-  MdOutlineLink,
   MdOutlinePhotoCamera,
 } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
@@ -356,13 +354,7 @@ function RealInfo() {
 
                 {publicArenaUrl && (
                   <div className="mt-5 rounded-xl bg-master/50 p-3.5 sm:p-4">
-                    <div className="flex items-start gap-2.5">
-                      <MdOutlineLink
-                        size={22}
-                        className="mt-0.5 shrink-0 text-accent-blue-soft"
-                        aria-hidden
-                      />
-                      <div className="min-w-0 flex-1">
+                    <div className="min-w-0">
                         <p className="text-base font-semibold text-text-light">
                           Link da sua quadra
                         </p>
@@ -393,33 +385,6 @@ function RealInfo() {
                             <MdContentCopy size={18} aria-hidden />
                             {linkCopied ? "Copiado!" : "Copiar link"}
                           </button>
-                          <a
-                            href={publicArenaUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={buttonClassName({
-                              variant: "ghost",
-                              size: "md",
-                              fullWidth: false,
-                              className: "inline-flex items-center gap-1.5 !min-h-11 px-3.5 text-sm",
-                            })}
-                          >
-                            <MdOpenInNew size={18} aria-hidden />
-                            Abrir
-                          </a>
-                          {offSiteNeedsCourts ? (
-                            <Link
-                              to="/quadras"
-                              className={buttonClassName({
-                                variant: "primary",
-                                size: "md",
-                                fullWidth: false,
-                                className: "inline-flex !min-h-11 px-3.5 text-sm",
-                              })}
-                            >
-                              Ativar no site
-                            </Link>
-                          ) : null}
                           {offSiteNeedsPlan ? (
                             <Link
                               to={billingNavPath(
@@ -443,7 +408,6 @@ function RealInfo() {
                             </Link>
                           ) : null}
                         </div>
-                      </div>
                     </div>
                   </div>
                 )}

@@ -77,6 +77,7 @@ function OnboardingChecklist() {
       const response = await completeOnboarding({
         companyName: state.arenaName.trim(),
         companyPhone: state.companyPhone?.replace(/\D/g, "") || undefined,
+        instagramUrl: state.instagramUrl?.trim() || undefined,
         cep: formatCepForStorage(state.cep),
         street: state.street.trim(),
         number: state.number.trim(),

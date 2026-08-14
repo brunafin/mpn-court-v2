@@ -26,6 +26,7 @@ export interface OnboardingCourt {
 export interface CompleteOnboardingInput {
   companyName: string;
   companyPhone?: string;
+  instagramUrl?: string;
   cep: string;
   street: string;
   number: string;

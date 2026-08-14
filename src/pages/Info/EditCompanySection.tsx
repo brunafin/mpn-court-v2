@@ -13,15 +13,7 @@ import { formatPhoneMask, onlyPhoneDigits } from "../../utils/formatPhone";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
 import { COMPANY_CHARACTERISTICS } from "../../constants/companyCharacteristics";
-
-function normalizeInstagramUrl(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  const handle = trimmed.replace(/^@/, "").replace(/^instagram\.com\//i, "");
-  if (!/^[A-Za-z0-9._]{1,30}$/.test(handle)) return trimmed;
-  return `https://instagram.com/${handle}`;
-}
+import { normalizeInstagramUrl } from "../../utils/normalizeInstagramUrl";
 
 type EditCompanySectionProps = {
   publicId: string;

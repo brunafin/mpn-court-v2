@@ -265,6 +265,8 @@ export type MockOnboardingState = {
   arenaName: string;
   /** Telefone de contato do estabelecimento. */
   companyPhone: string;
+  /** Instagram (@ ou URL) — opcional. */
+  instagramUrl: string;
   /** Quantas quadras cadastrar (definido na config do estabelecimento). */
   courtCount: number;
   /** Endereço do estabelecimento (CEP obrigatório; restante via ViaCEP + número). */
@@ -382,6 +384,7 @@ function withAddressDefaults(
     | "city"
     | "uf"
     | "companyPhone"
+    | "instagramUrl"
   > &
     Partial<
       Pick<
@@ -393,12 +396,14 @@ function withAddressDefaults(
         | "city"
         | "uf"
         | "companyPhone"
+        | "instagramUrl"
       >
     >
 ): MockOnboardingState {
   return {
     ...state,
     companyPhone: readOptionalString(state.companyPhone),
+    instagramUrl: readOptionalString(state.instagramUrl),
     cep: readOptionalString(state.cep),
     street: readOptionalString(state.street),
     number: readOptionalString(state.number),

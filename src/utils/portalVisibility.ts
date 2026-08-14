@@ -94,7 +94,7 @@ export function resolveCourtPortalStatus(input: {
     return {
       onSite: false,
       label: "Fora do site",
-      reason: "Oculta pelo estabelecimento.",
+      reason: "",
     };
   }
   if (!input.portalEligible) {

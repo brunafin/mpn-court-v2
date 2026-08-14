@@ -28,12 +28,14 @@ import {
   imageUploadTooLargeMessage,
   isAllowedImageFile,
 } from "../../../utils/imageUpload";
+import { normalizeInstagramUrl } from "../../../utils/normalizeInstagramUrl";
 
 function OnboardingArena() {
   const navigate = useNavigate();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [arenaName, setArenaName] = useState("");
   const [companyPhone, setCompanyPhone] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [courtCount, setCourtCount] = useState("1");
   const [cep, setCep] = useState("");
   const [street, setStreet] = useState("");
@@ -57,6 +59,7 @@ function OnboardingArena() {
     setCompanyPhone(
       mock.companyPhone ? formatPhoneMask(mock.companyPhone) : ""
     );
+    setInstagram(mock.instagramUrl || "");
     setCourtCount(String(mock.courtCount || 1));
     setCep(formatCepMask(mock.cep));
     setStreet(mock.street);
@@ -177,6 +180,7 @@ function OnboardingArena() {
     updateMockOnboarding({
       arenaName: arenaName.trim(),
       companyPhone: phoneDigits,
+      instagramUrl: normalizeInstagramUrl(instagram) ?? "",
       courtCount: courtCountNumber,
       cep: formatCepMask(cep),
       street: street.trim(),
@@ -339,25 +343,46 @@ function OnboardingArena() {
             </div>
           </div>
 
-          <div className="border-t border-text-light/10 pt-4">
-            <Input
-              name="companyPhone"
-              title="Contato"
-              placeholder="(00) 90000-0000"
-              type="tel"
-              mode="dark"
-              value={companyPhone}
-              onChange={(e) => {
-                setCompanyPhone(formatPhoneMask(e.target.value));
-                if (formError) setFormError("");
-              }}
-              required
-              autoComplete="tel"
-              inputMode="tel"
-            />
-            <p className="-mt-1 text-sm text-text-light/55">
-              Telefone do estabelecimento (WhatsApp)
-            </p>
+          <div className="border-t border-text-light/10 pt-4 space-y-4">
+            <div>
+              <Input
+                name="companyPhone"
+                title="Contato"
+                placeholder="(00) 90000-0000"
+                type="tel"
+                mode="dark"
+                value={companyPhone}
+                onChange={(e) => {
+                  setCompanyPhone(formatPhoneMask(e.target.value));
+                  if (formError) setFormError("");
+                }}
+                required
+                autoComplete="tel"
+                inputMode="tel"
+              />
+              <p className="-mt-1 text-sm text-text-light/55">
+                Telefone do estabelecimento (WhatsApp)
+              </p>
+            </div>
+            <div>
+              <Input
+                name="instagram"
+                title="Instagram"
+                placeholder="@suaarena ou URL"
+                type="text"
+                mode="dark"
+                value={instagram}
+                onChange={(e) => {
+                  setInstagram(e.target.value);
+                  if (formError) setFormError("");
+                }}
+                autoComplete="off"
+                maxLength={200}
+              />
+              <p className="-mt-1 text-sm text-text-light/55">
+                Opcional — aparece no perfil da arena
+              </p>
+            </div>
           </div>
 
           <div className="border-t border-text-light/10 pt-4">
