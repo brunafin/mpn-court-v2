@@ -50,18 +50,32 @@ const LEGACY_SPORT_KEYS: Record<string, CourtSport> = {
   volei_praia: "volei_areia",
 };
 
-/** Nomes próprios fora do seed — a API exige needsNet na primeira criação. */
-const CUSTOM_CATALOG_SPORT_KEYS = new Set<CourtSport>(["fut5", "fut7", "fut11"]);
+/** Nomes do catálogo UI → se usa rede (alinhado ao seed da API). */
+const SPORT_NEEDS_NET: Record<CourtSport, boolean> = {
+  futsal: false,
+  society: false,
+  fut5: false,
+  fut7: false,
+  fut11: false,
+  volei_quadra: true,
+  volei_areia: true,
+  handebol: false,
+  basquete: false,
+  futevolei: true,
+  beach_tennis: true,
+  tenis: true,
+  padel: true,
+  badminton: true,
+  voleibol: true,
+  volei_praia: true,
+};
 
 export function sportPayloadFromKey(key: CourtSport): {
   name: string;
   needsNet?: boolean;
 } {
   const name = courtSportLabel(key);
-  if (CUSTOM_CATALOG_SPORT_KEYS.has(key)) {
-    return { name, needsNet: false };
-  }
-  return { name };
+  return { name, needsNet: SPORT_NEEDS_NET[key] };
 }
 
 /** Tipos de piso mais comuns em quadras/arenas no Brasil. */

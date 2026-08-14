@@ -42,43 +42,6 @@ function buttonWidthFor(el: HTMLElement): number {
   return Math.min(Math.max(raw, 200), 400);
 }
 
-/**
- * O botão “Continuar como …” pode nascer mais largo que o card.
- * Escala para caber; 1px a menos evita sangrar o canto direito do clip.
- */
-function fitGoogleButton(container: HTMLElement, maxWidth: number) {
-  const iframe = container.querySelector('iframe');
-  if (!iframe || maxWidth <= 0) return;
-
-  iframe.style.transform = '';
-  iframe.style.transformOrigin = '';
-  container.style.height = '';
-
-  const targetWidth = Math.max(1, maxWidth - 1);
-  const iframeWidth =
-    iframe.offsetWidth || Math.ceil(iframe.getBoundingClientRect().width);
-  if (iframeWidth <= targetWidth + 0.5) return;
-
-  const scale = targetWidth / iframeWidth;
-  const iframeHeight =
-    iframe.offsetHeight || Math.ceil(iframe.getBoundingClientRect().height);
-  iframe.style.transform = `scale(${scale})`;
-  iframe.style.transformOrigin = 'top left';
-  container.style.height = `${Math.ceil(iframeHeight * scale)}px`;
-}
-
-function applyButtonClip(container: HTMLElement) {
-  const radius = `${BUTTON_RADIUS_PX}px`;
-  container.style.overflow = 'hidden';
-  container.style.borderRadius = radius;
-  container.style.clipPath = `inset(0 round ${radius})`;
-  // Safari/WebKit: iframe ignora overflow+radius; máscara opaca força o canto.
-  const mask = '-webkit-radial-gradient(circle, #fff 100%, #000 100%)';
-  container.style.webkitMaskImage = mask;
-  container.style.maskImage = 'radial-gradient(circle, #fff 100%, #000 100%)';
-  container.style.transform = 'translateZ(0)';
-}
-
 type GoogleSignInButtonProps = {
   onCredential: (idToken: string) => void;
   disabled?: boolean;
@@ -95,6 +58,10 @@ type GoogleSignInButtonProps = {
  *
  * Importante: não recria o iframe quando o Google mostra o e-mail da conta
  * (mudança de altura do widget). Só remonta em resize real da janela.
+ *
+ * O botão personalizado (“Continuar como …”) pinta cantos retos no iframe —
+ * overflow/clip-path no pai costuma falhar no mobile. Cobramos os 4 cantos
+ * com o fundo do card (master-light) para forçar o mesmo raio do Entrar.
  */
 export default function GoogleSignInButton({
   onCredential,
@@ -124,9 +91,6 @@ export default function GoogleSignInButton({
     onReadyChangeRef.current?.(ready);
   }, [ready]);
 
-  // Mede o shell externo (largura estável). Não observa o nó do iframe —
-  // quando o Google preenche o e-mail, a altura muda e um ResizeObserver
-  // no container destruiria o botão no meio do clique.
   useEffect(() => {
     const shell = shellRef.current;
     if (!shell || !clientId || failed) return;
@@ -135,15 +99,9 @@ export default function GoogleSignInButton({
       const next = buttonWidthFor(shell);
       if (next <= 0) return;
       setShellWidth((prev) => (Math.abs(prev - next) < 8 ? prev : next));
-      // Só reajusta scale; não remonta o iframe.
-      if (containerRef.current && renderedWidthRef.current > 0) {
-        applyButtonClip(containerRef.current);
-        fitGoogleButton(containerRef.current, next);
-      }
     };
 
     measure();
-    // rAF: após padding/fonte do card estabilizar no mobile.
     const raf = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
@@ -164,7 +122,6 @@ export default function GoogleSignInButton({
     }
 
     let cancelled = false;
-    let disposeFit: (() => void) | undefined;
 
     (async () => {
       try {
@@ -182,8 +139,6 @@ export default function GoogleSignInButton({
           shellWidth;
         renderedWidthRef.current = width;
         containerRef.current.innerHTML = '';
-        containerRef.current.style.height = '';
-        applyButtonClip(containerRef.current);
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => {
@@ -191,7 +146,6 @@ export default function GoogleSignInButton({
               callbackRef.current(response.credential);
             }
           },
-          // Evita One Tap automático; só o botão.
           auto_select: false,
           cancel_on_tap_outside: true,
         });
@@ -199,43 +153,12 @@ export default function GoogleSignInButton({
           theme: 'outline',
           size: 'large',
           text,
-          // "rectangular" no botão genérico; no personalizado (e-mail) o GIS
-          // ignora e fica quadrado — o radius vem do wrapper abaixo.
           shape: 'rectangular',
           width,
           locale: 'pt-BR',
         });
 
-        const container = containerRef.current;
-        const applyFit = () => {
-          if (cancelled || !container) return;
-          const maxW =
-            (shellRef.current ? buttonWidthFor(shellRef.current) : 0) || width;
-          applyButtonClip(container);
-          fitGoogleButton(container, maxW);
-        };
-        requestAnimationFrame(() => {
-          applyFit();
-          requestAnimationFrame(applyFit);
-        });
-        const iframe = container.querySelector('iframe');
-        iframe?.addEventListener('load', applyFit);
-
-        // Personalizado (“Continuar como …”) muda o tamanho depois do render;
-        // só reajusta o scale — não remonta o iframe.
-        let fitObserver: ResizeObserver | undefined;
-        if (iframe && typeof ResizeObserver !== 'undefined') {
-          fitObserver = new ResizeObserver(() => applyFit());
-          fitObserver.observe(iframe);
-        }
-
-        disposeFit = () => {
-          fitObserver?.disconnect();
-          iframe?.removeEventListener('load', applyFit);
-        };
-
         if (!cancelled) setReady(true);
-        else disposeFit();
       } catch {
         if (!cancelled) {
           setFailed(true);
@@ -246,13 +169,14 @@ export default function GoogleSignInButton({
 
     return () => {
       cancelled = true;
-      disposeFit?.();
     };
   }, [clientId, text, failed, shellWidth]);
 
   if (!clientId || failed) {
     return null;
   }
+
+  const r = BUTTON_RADIUS_PX;
 
   return (
     <div
@@ -261,27 +185,61 @@ export default function GoogleSignInButton({
         disabled ? 'pointer-events-none opacity-60' : ''
       }`}
     >
-      {/*
-        O botão personalizado (Continuar como …) do GIS vem sem border-radius.
-        Iframe no WebKit costuma furar overflow+radius — usamos clip-path + máscara.
-      */}
       <div
-        ref={containerRef}
-        className="mx-auto min-h-10 w-full max-w-full overflow-hidden rounded-xl"
+        className="relative mx-auto w-full max-w-full overflow-hidden rounded-xl"
         style={
           shellWidth > 0
             ? {
                 width: shellWidth,
                 maxWidth: '100%',
-                clipPath: `inset(0 round ${BUTTON_RADIUS_PX}px)`,
-                WebkitMaskImage:
-                  '-webkit-radial-gradient(circle, #fff 100%, #000 100%)',
-                maskImage: 'radial-gradient(circle, #fff 100%, #000 100%)',
-                transform: 'translateZ(0)',
+                // body usa color-scheme: dark — sem isso o texto do GIS some (branco no branco).
+                colorScheme: 'light',
               }
-            : undefined
+            : { colorScheme: 'light' }
         }
-      />
+      >
+        <div ref={containerRef} className="min-h-10 w-full" />
+        {/*
+          Iframe do GIS ignora border-radius no mobile. Máscaras nos cantos
+          com a cor do card (master-light) arredondam os 4 lados de verdade.
+        */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-0 z-10"
+          style={{
+            width: r,
+            height: r,
+            background: `radial-gradient(circle at 100% 100%, transparent ${r}px, var(--color-master-light, #0C1728) ${r + 0.5}px)`,
+          }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-0 z-10"
+          style={{
+            width: r,
+            height: r,
+            background: `radial-gradient(circle at 0% 100%, transparent ${r}px, var(--color-master-light, #0C1728) ${r + 0.5}px)`,
+          }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 left-0 z-10"
+          style={{
+            width: r,
+            height: r,
+            background: `radial-gradient(circle at 100% 0%, transparent ${r}px, var(--color-master-light, #0C1728) ${r + 0.5}px)`,
+          }}
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 right-0 z-10"
+          style={{
+            width: r,
+            height: r,
+            background: `radial-gradient(circle at 0% 0%, transparent ${r}px, var(--color-master-light, #0C1728) ${r + 0.5}px)`,
+          }}
+        />
+      </div>
       {!ready && (
         <p className="mt-2 text-center text-sm text-text-light/55">
           Carregando Google…

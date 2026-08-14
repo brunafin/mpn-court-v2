@@ -214,7 +214,7 @@ function OnboardingArena() {
           <Input
             name="arenaName"
             title="Nome"
-            placeholder="LR Sports"
+            placeholder="Arena Marca Pra Nós"
             type="text"
             mode="dark"
             value={arenaName}
