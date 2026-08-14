@@ -20,9 +20,7 @@ import {
   MockOnboardingState,
 } from "../../onboarding/mockStore";
 import { completeOnboarding } from "../../api/onboarding";
-import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import { uploadCompanyLogo } from "../../api/companies";
-import { format } from "date-fns";
 import {
   getAccessToken,
   getAccessTokenPayload,
@@ -30,9 +28,13 @@ import {
 } from "../../utils/authCookie";
 import { getPendingLogoFile } from "../../onboarding/pendingLogo";
 import { formatCepForStorage } from "../../utils/formatCep";
+import { useErrors } from "../../contexts/ErrorsContext";
+import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
 
 function OnboardingChecklist() {
   const navigate = useNavigate();
+  const { notifyError } = useErrors();
+  const { refreshCapabilities, setCompanyName } = useCompanyBranding();
   const [state, setState] = useState<MockOnboardingState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -95,33 +97,36 @@ function OnboardingChecklist() {
         })),
       });
       setAccessToken(response.access_token);
+      setCompanyName(response.companyName);
+      // Garante /infos + capabilities antes da agenda (provider já estava montado no /comecar).
+      await refreshCapabilities();
       if (response.alreadyExisted) {
         setFinishHint("Estabelecimento já criado — abrindo a agenda.");
+      } else {
+        setFinishHint("Configurando os horários…");
       }
 
       const pendingLogo = getPendingLogoFile();
-      let logoUploadFailed = false;
       if (pendingLogo) {
-        try {
-          await uploadCompanyLogo(response.companyPublicId, pendingLogo);
-        } catch (logoError) {
-          console.error(logoError);
-          logoUploadFailed = true;
-        }
+        void uploadCompanyLogo(response.companyPublicId, pendingLogo).catch(
+          (logoError) => {
+            console.error(logoError);
+            notifyError({
+              type: "error",
+              message:
+                "Estabelecimento criado, mas a logo não foi enviada. Envie em Minhas informações.",
+            });
+          },
+        );
       }
 
-      const schedulesReady =
-        response.schedulesReady ?? response.schedulesPopulated;
-      if (!schedulesReady) {
-        await waitForTodaySchedules(response.companyPublicId);
-      }
-
+      // Populate roda no servidor em background — abre a agenda sem esperar.
       clearMockOnboarding();
       navigate("/reservas", {
         state: {
           showActivateGuide: true,
+          agendaBootstrapping: true,
           alreadyExisted: Boolean(response.alreadyExisted),
-          logoUploadFailed,
         },
       });
     } catch (error) {
@@ -252,7 +257,7 @@ function OnboardingChecklist() {
                 />
                 <span>
                   {submitting
-                    ? "Montando a agenda…"
+                    ? "Abrindo a agenda…"
                     : "Concluir e ir para a agenda"}
                 </span>
               </Button>
@@ -262,8 +267,7 @@ function OnboardingChecklist() {
                   role="status"
                   aria-live="polite"
                 >
-                  {finishHint ||
-                    "Isso pode levar alguns segundos enquanto montamos a agenda."}
+                  {finishHint || "Configurando os horários do estabelecimento…"}
                 </p>
               )}
               {submitError && (
@@ -297,26 +301,6 @@ function OnboardingChecklist() {
       </div>
     </div>
   );
-}
-
-const POLL_MS = 1500;
-const POLL_BUDGET_MS = 15000;
-
-async function waitForTodaySchedules(companyPublicId: string) {
-  const date = format(new Date(), "yyyy-MM-dd");
-  const started = Date.now();
-  while (Date.now() - started < POLL_BUDGET_MS) {
-    try {
-      const slots = await getSchedulesByCompanyPublicIdAndDate({
-        companyPublicId,
-        date,
-      });
-      if (slots.length > 0) return;
-    } catch {
-      // A company já existe; tenta de novo até o orçamento.
-    }
-    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
-  }
 }
 
 export default OnboardingChecklist;

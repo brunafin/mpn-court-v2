@@ -51,11 +51,36 @@ import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
 type ReservationLocationState = {
   date?: string;
   showActivateGuide?: boolean;
+  agendaBootstrapping?: boolean;
   status?: ReservationStatusEnum | null;
   court?: string;
   customerQuery?: string;
   logoUploadFailed?: boolean;
 };
+
+const AGENDA_BOOTSTRAP_MS = 5000;
+const AGENDA_BOOTSTRAP_POLL_MS = 700;
+
+function AgendaConfiguringPanel({
+  detail = "Montando a agenda do seu estabelecimento. Isso costuma levar poucos segundos.",
+}: {
+  detail?: string;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-10 text-text-light">
+      <div className="w-full max-w-sm text-center">
+        <div
+          className="mx-auto mb-5 size-12 rounded-full border-2 border-accent-blue/25 border-t-accent-blue animate-spin"
+          aria-hidden
+        />
+        <p className="text-lg font-semibold tracking-tight">
+          Configurando os horários…
+        </p>
+        <p className="mt-2 text-base leading-6 text-text-light/65">{detail}</p>
+      </div>
+    </div>
+  );
+}
 
 function arenaPublicUrl(info: IInfo | null): string | null {
   if (!info) return null;
@@ -108,6 +133,9 @@ function Reservation() {
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
   const [portalActive, setPortalActive] = useState<boolean | null>(null);
   const [publicArenaUrl, setPublicArenaUrl] = useState<string | null>(null);
+  const [agendaBootstrapping, setAgendaBootstrapping] = useState(
+    () => Boolean(locationState?.agendaBootstrapping),
+  );
   const fetchGenRef = useRef(0);
   const forceGuideFromNavRef = useRef(Boolean(locationState?.showActivateGuide));
 
@@ -130,12 +158,19 @@ function Reservation() {
           "Estabelecimento criado, mas a logo não foi enviada. Envie em Minhas informações.",
       });
     }
-    if (!locationState?.showActivateGuide && !locationState?.logoUploadFailed) {
+    if (
+      !locationState?.showActivateGuide &&
+      !locationState?.logoUploadFailed &&
+      !locationState?.agendaBootstrapping
+    ) {
       return;
     }
     if (locationState?.showActivateGuide) {
       forceGuideFromNavRef.current = true;
       setShowActivateGuide(true);
+    }
+    if (locationState?.agendaBootstrapping) {
+      setAgendaBootstrapping(true);
     }
     navigate(location.pathname, {
       replace: true,
@@ -220,6 +255,46 @@ function Reservation() {
     [companyPublicId],
   );
 
+  // Pós-onboarding: espera até 5s pelos horários do dia, sem skeleton infinito.
+  useEffect(() => {
+    if (!agendaBootstrapping || !companyPublicId) return;
+
+    let cancelled = false;
+    const deadline = Date.now() + AGENDA_BOOTSTRAP_MS;
+    const dateInput = toDateKey(date);
+
+    const poll = async () => {
+      while (!cancelled && Date.now() < deadline) {
+        try {
+          const response = await getSchedulesByCompanyPublicIdAndDate({
+            companyPublicId,
+            date: dateInput,
+          });
+          if (cancelled) return;
+          if (response.length > 0) {
+            applyDayData(response, dateInput);
+            setAgendaBootstrapping(false);
+            return;
+          }
+        } catch {
+          // Ainda montando — tenta de novo até o prazo.
+        }
+        await new Promise((resolve) =>
+          setTimeout(resolve, AGENDA_BOOTSTRAP_POLL_MS),
+        );
+      }
+      if (!cancelled) {
+        setAgendaBootstrapping(false);
+      }
+    };
+
+    void poll();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap one-shot após onboarding
+  }, [agendaBootstrapping, companyPublicId, applyDayData]);
+
   const fetchData = useCallback(
     async (dateInput: string, opts?: { silent?: boolean }) => {
       if (!companyPublicId) {
@@ -292,6 +367,7 @@ function Reservation() {
   useEffect(() => {
     // Só busca agenda com entitlement confirmado (trial expirado = paywall, não readonly).
     if (!caps.ready || !caps.canViewAgenda) return;
+    if (agendaBootstrapping) return;
     if (!companyPublicId || !date) return;
     const dateInput = toDateKey(date);
     const cached = getSchedulesDayCache(companyPublicId, dateInput);
@@ -310,7 +386,7 @@ function Reservation() {
 
     void fetchData(dateInput);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com withLoading instável
-  }, [companyPublicId, date, caps.ready, caps.canViewAgenda]);
+  }, [companyPublicId, date, caps.ready, caps.canViewAgenda, agendaBootstrapping]);
 
   useEffect(() => {
     if (!caps.ready || !caps.canViewAgenda) return;
@@ -403,18 +479,10 @@ function Reservation() {
     setCustomerQuery("");
   };
 
-  const hoursList = showListLoading ? (
-    <ul className={`animate-pulse ${listShellClass}`} aria-label="Carregando horários">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <li
-          key={index}
-          className="flex min-h-14 items-stretch rounded-2xl border border-text-light/8 bg-master-light/70"
-        >
-          <span className="mx-4 my-3.5 h-5 flex-1 rounded bg-text-light/10" />
-        </li>
-      ))}
-    </ul>
-  ) : dayLoadError ? (
+  const hoursList =
+    agendaBootstrapping || showListLoading ? (
+      <AgendaConfiguringPanel />
+    ) : dayLoadError ? (
     <EmptyState
       title="Não foi possível carregar a agenda."
       description="Sua grade continua no servidor. Tente de novo."
@@ -511,19 +579,13 @@ function Reservation() {
             }
           />
         </section>
-      ) : !caps.ready ? (
+      ) : !caps.ready || agendaBootstrapping ? (
         <section
-          className="mpn-page bg-master px-4 py-6 text-text-light"
+          className="mpn-page bg-master text-text-light"
           aria-busy="true"
-          aria-label="Carregando agenda"
+          aria-label="Configurando os horários"
         >
-          <div className="mx-auto w-full max-w-6xl animate-pulse space-y-3">
-            <div className="h-11 rounded-xl bg-master-light/70" />
-            <div className="h-14 rounded-xl bg-master-light/70" />
-            <div className="h-24 rounded-2xl bg-master-light/70" />
-            <div className="h-24 rounded-2xl bg-master-light/70" />
-            <div className="h-24 rounded-2xl bg-master-light/70" />
-          </div>
+          <AgendaConfiguringPanel />
         </section>
       ) : !caps.canViewAgenda ? (
         <section className="mpn-page items-center justify-center bg-master px-4 text-text-light">

@@ -11,6 +11,7 @@ import { infosByCompanyPublicId, type IInfo } from "../api/companies";
 import {
   getAccessToken,
   getAccessTokenPayload,
+  ACCESS_TOKEN_CHANGE_EVENT,
 } from "../utils/authCookie";
 
 type CompanyCapabilities = NonNullable<IInfo["capabilities"]>;
@@ -46,7 +47,10 @@ const CompanyBrandingContext =
   createContext<CompanyBrandingContextValue | null>(null);
 
 export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
-  const [companyName, setCompanyName] = useState("");
+  const [companyName, setCompanyName] = useState(() => {
+    const payload = getAccessTokenPayload<{ companyName?: string }>();
+    return payload?.companyName?.trim() || "";
+  });
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<CompanyCapabilities | null>(
     null,
@@ -64,7 +68,15 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
     }
 
     const companyPublicId = payload?.companyPublicId;
-    if (!companyPublicId || !getAccessToken()) return;
+    if (!companyPublicId || !getAccessToken()) {
+      // Sem estabelecimento ainda (onboarding) — não fica “ready” falso eterno
+      // depois que o JWT ganhar companyPublicId; só limpa se perdeu a conta.
+      if (!companyPublicId) {
+        setCapabilities(null);
+        setCapabilitiesError(false);
+      }
+      return;
+    }
 
     setCapabilitiesError(false);
     try {
@@ -82,6 +94,17 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void loadInfos();
+  }, [loadInfos]);
+
+  // Pós-onboarding (e login) atualiza o JWT sem remount do provider.
+  useEffect(() => {
+    const onTokenChange = () => {
+      void loadInfos();
+    };
+    window.addEventListener(ACCESS_TOKEN_CHANGE_EVENT, onTokenChange);
+    return () => {
+      window.removeEventListener(ACCESS_TOKEN_CHANGE_EVENT, onTokenChange);
+    };
   }, [loadInfos]);
 
   const setLogoUrl = useCallback((url: string | null) => {

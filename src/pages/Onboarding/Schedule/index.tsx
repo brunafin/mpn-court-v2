@@ -131,8 +131,7 @@ function OnboardingSchedule() {
             </h1>
           </div>
           <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
-            Marque os horários em que a arena funciona; o preço fica em cada
-            quadra
+            Marque os horários em que a arena funciona.
           </p>
         </div>
       </div>

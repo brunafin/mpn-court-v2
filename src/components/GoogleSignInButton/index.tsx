@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const GIS_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 const GIS_SCRIPT_ID = 'google-gsi-client';
+/** Mesmo raio do botão Entrar (rounded-xl = 12px). */
+const BUTTON_RADIUS_PX = 12;
 
 function loadGisScript(): Promise<void> {
   if (window.google?.accounts?.id) {
@@ -42,7 +44,7 @@ function buttonWidthFor(el: HTMLElement): number {
 
 /**
  * O botão “Continuar como …” pode nascer mais largo que o card.
- * Forçar max-width no iframe corta só a direita; scale uniforme mantém os dois raios.
+ * Escala para caber; 1px a menos evita sangrar o canto direito do clip.
  */
 function fitGoogleButton(container: HTMLElement, maxWidth: number) {
   const iframe = container.querySelector('iframe');
@@ -52,16 +54,29 @@ function fitGoogleButton(container: HTMLElement, maxWidth: number) {
   iframe.style.transformOrigin = '';
   container.style.height = '';
 
+  const targetWidth = Math.max(1, maxWidth - 1);
   const iframeWidth =
     iframe.offsetWidth || Math.ceil(iframe.getBoundingClientRect().width);
-  if (iframeWidth <= maxWidth + 0.5) return;
+  if (iframeWidth <= targetWidth + 0.5) return;
 
-  const scale = maxWidth / iframeWidth;
+  const scale = targetWidth / iframeWidth;
   const iframeHeight =
     iframe.offsetHeight || Math.ceil(iframe.getBoundingClientRect().height);
   iframe.style.transform = `scale(${scale})`;
   iframe.style.transformOrigin = 'top left';
   container.style.height = `${Math.ceil(iframeHeight * scale)}px`;
+}
+
+function applyButtonClip(container: HTMLElement) {
+  const radius = `${BUTTON_RADIUS_PX}px`;
+  container.style.overflow = 'hidden';
+  container.style.borderRadius = radius;
+  container.style.clipPath = `inset(0 round ${radius})`;
+  // Safari/WebKit: iframe ignora overflow+radius; máscara opaca força o canto.
+  const mask = '-webkit-radial-gradient(circle, #fff 100%, #000 100%)';
+  container.style.webkitMaskImage = mask;
+  container.style.maskImage = 'radial-gradient(circle, #fff 100%, #000 100%)';
+  container.style.transform = 'translateZ(0)';
 }
 
 type GoogleSignInButtonProps = {
@@ -122,6 +137,7 @@ export default function GoogleSignInButton({
       setShellWidth((prev) => (Math.abs(prev - next) < 8 ? prev : next));
       // Só reajusta scale; não remonta o iframe.
       if (containerRef.current && renderedWidthRef.current > 0) {
+        applyButtonClip(containerRef.current);
         fitGoogleButton(containerRef.current, next);
       }
     };
@@ -167,6 +183,7 @@ export default function GoogleSignInButton({
         renderedWidthRef.current = width;
         containerRef.current.innerHTML = '';
         containerRef.current.style.height = '';
+        applyButtonClip(containerRef.current);
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => {
@@ -194,6 +211,7 @@ export default function GoogleSignInButton({
           if (cancelled || !container) return;
           const maxW =
             (shellRef.current ? buttonWidthFor(shellRef.current) : 0) || width;
+          applyButtonClip(container);
           fitGoogleButton(container, maxW);
         };
         requestAnimationFrame(() => {
@@ -245,13 +263,24 @@ export default function GoogleSignInButton({
     >
       {/*
         O botão personalizado (Continuar como …) do GIS vem sem border-radius.
-        Clipamos no mesmo raio do Entrar (rounded-xl). Não use max-width no
-        iframe — isso cortava só a direita; o fit escala por igual.
+        Iframe no WebKit costuma furar overflow+radius — usamos clip-path + máscara.
       */}
       <div
         ref={containerRef}
         className="mx-auto min-h-10 w-full max-w-full overflow-hidden rounded-xl"
-        style={shellWidth > 0 ? { width: shellWidth, maxWidth: '100%' } : undefined}
+        style={
+          shellWidth > 0
+            ? {
+                width: shellWidth,
+                maxWidth: '100%',
+                clipPath: `inset(0 round ${BUTTON_RADIUS_PX}px)`,
+                WebkitMaskImage:
+                  '-webkit-radial-gradient(circle, #fff 100%, #000 100%)',
+                maskImage: 'radial-gradient(circle, #fff 100%, #000 100%)',
+                transform: 'translateZ(0)',
+              }
+            : undefined
+        }
       />
       {!ready && (
         <p className="mt-2 text-center text-sm text-text-light/55">

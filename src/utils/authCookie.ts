@@ -3,8 +3,16 @@ import { jwtDecode } from "jwt-decode";
 import { invalidateSchedulesDayCache } from "./schedulesDayCache";
 
 const COOKIE_NAME = "access_token";
+/** Disparado após set/clear do JWT — branding/capabilities precisam reagir (ex.: pós-onboarding). */
+export const ACCESS_TOKEN_CHANGE_EVENT = "mpn:access-token";
+
 /** Fallback se o JWT não tiver `exp` — alinhado ao TTL 1h da API. */
 const ACCESS_TOKEN_FALLBACK_DAYS = 1 / 24;
+
+function notifyAccessTokenChange() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(ACCESS_TOKEN_CHANGE_EVENT));
+}
 
 /** Em http://localhost o flag Secure impede o cookie de gravar — login “200” e UI de senha inválida. */
 function cookieOptions(expires?: Date | number) {
@@ -36,6 +44,7 @@ export function setAccessToken(token: string) {
     token,
     cookieOptions(tokenExpiryDate(token) ?? ACCESS_TOKEN_FALLBACK_DAYS),
   );
+  notifyAccessTokenChange();
 }
 
 export function getAccessToken(): string | undefined {
@@ -69,6 +78,7 @@ export function clearAccessToken() {
   // Fallback para limpeza via document.cookie
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; Secure; SameSite=Strict`;
+  notifyAccessTokenChange();
 }
 
 /** Remove SW + Cache Storage sem deixar worker órfão (causa ERR_FAILED no refresh). */

@@ -54,8 +54,8 @@ export async function completeOnboarding(
     "/onboarding",
     input,
     {
-      // Criação + commit; populate roda em background no server.
-      timeout: 60000,
+      // Criação + commit; populate do dia roda em background no server.
+      timeout: 20000,
     }
   );
   return response.data;

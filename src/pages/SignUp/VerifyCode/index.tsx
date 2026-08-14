@@ -159,7 +159,7 @@ function SignUpVerifyCode() {
 
   if (!email) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center bg-master px-4 py-4 text-text-light sm:py-8">
+      <div className="relative flex min-h-full flex-col items-center justify-center bg-master px-4 py-4 text-text-light sm:py-8">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
         <div className="relative z-10 w-full max-w-md">
@@ -230,7 +230,7 @@ function SignUpVerifyCode() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-master px-4 py-4 text-text-light sm:py-8">
+    <div className="relative flex min-h-full flex-col items-center justify-center bg-master px-4 py-4 text-text-light sm:py-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
       <div className="relative z-10 w-full max-w-md">

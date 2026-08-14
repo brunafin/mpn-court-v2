@@ -46,7 +46,11 @@ function CompanyAvatar({
       aria-label={decorative ? undefined : alt}
       role={decorative ? undefined : "img"}
     >
-      <span className="select-none text-[0.85em] leading-none">{initials}</span>
+      {initials ? (
+        <span className="select-none text-[0.85em] leading-none">{initials}</span>
+      ) : (
+        <span className="size-1/2 rounded-full bg-accent-blue/35" aria-hidden />
+      )}
     </span>
   );
 }
