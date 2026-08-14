@@ -27,7 +27,7 @@ import {
 } from "../../contexts/CompanyBrandingContext";
 import { isPaidEntitlement } from "../../utils/billingNav";
 import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
-import { isManualPixConfigured } from "../../utils/manualPix";
+import { isManualPixConfigured, isMercadoPagoPixUiEnabled } from "../../utils/manualPix";
 
 function statusLabel(status: BillingPaymentItem["status"]): string {
   switch (status) {
@@ -235,6 +235,9 @@ function BillingPage() {
         : "CPF.",
   ].join(" ");
 
+  const showAutoPix =
+    isMercadoPagoPixUiEnabled() && Boolean(summary?.pixEnabled);
+
   return (
     <AppLayout>
       <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 lg:px-8">
@@ -286,7 +289,7 @@ function BillingPage() {
 
             {!paying ? (
               <>
-                {summary?.pixEnabled && canGeneratePix ? (
+                {showAutoPix && canGeneratePix ? (
                   <button
                     type="button"
                     disabled={generating}
@@ -301,13 +304,13 @@ function BillingPage() {
                 {manualPix && canGeneratePix ? (
                   <ManualPixPay
                     className="mt-4"
-                    primary={!summary?.pixEnabled}
+                    primary={!showAutoPix}
                     amount={openPayment.value}
                     companyName={companyName || null}
                     dueLabel={formatMonthYear(openPayment.dueDate)}
                   />
                 ) : null}
-                {canGeneratePix && !summary?.pixEnabled && !manualPix ? (
+                {canGeneratePix && !showAutoPix && !manualPix ? (
                   <p className="mt-4 text-sm text-text-light/60">
                     PIX automático indisponível no momento. Contate o suporte.
                   </p>

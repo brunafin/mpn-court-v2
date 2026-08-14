@@ -34,7 +34,7 @@ import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { isPaidEntitlement } from "../../utils/billingNav";
 import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
-import { isManualPixConfigured } from "../../utils/manualPix";
+import { isManualPixConfigured, isMercadoPagoPixUiEnabled } from "../../utils/manualPix";
 
 const WHATSAPP_CONTRACT =
   import.meta.env.VITE_WHATSAPP_CONTRACT_URL ||
@@ -249,6 +249,9 @@ function PlansPage() {
         : "CPF.",
   ].join(" ");
 
+  const showAutoPix =
+    isMercadoPagoPixUiEnabled() && Boolean(summary?.pixEnabled);
+
   return (
     <AppLayout>
       <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 lg:px-8">
@@ -310,7 +313,7 @@ function PlansPage() {
 
               {!paying ? (
                 <>
-                  {summary?.pixEnabled ? (
+                  {showAutoPix ? (
                     <button
                       type="button"
                       disabled={generating}
@@ -326,7 +329,7 @@ function PlansPage() {
                     </button>
                   ) : null}
                   <p className="mt-3 text-center text-sm text-text-light/55">
-                    {summary?.pixEnabled
+                    {showAutoPix
                       ? "Pague com PIX e o acesso libera na hora — ou use a chave abaixo e envie o comprovante."
                       : manualPix
                         ? "Copie a chave PIX e envie o comprovante no WhatsApp para liberarmos o acesso."
@@ -334,13 +337,13 @@ function PlansPage() {
                   </p>
                   {manualPix ? (
                     <ManualPixPay
-                      className={summary?.pixEnabled ? "mt-4" : "mt-6"}
-                      primary={!summary?.pixEnabled}
+                      className={showAutoPix ? "mt-4" : "mt-6"}
+                      primary={!showAutoPix}
                       amount={fee}
                       companyName={companyName || null}
                     />
                   ) : null}
-                  {!summary?.pixEnabled && !manualPix ? (
+                  {!showAutoPix && !manualPix ? (
                     <button
                       type="button"
                       onClick={openWhatsAppContract}
@@ -351,7 +354,7 @@ function PlansPage() {
                     >
                       Contrate pelo WhatsApp
                     </button>
-                  ) : summary?.pixEnabled ? (
+                  ) : showAutoPix ? (
                     <button
                       type="button"
                       onClick={openWhatsAppContract}

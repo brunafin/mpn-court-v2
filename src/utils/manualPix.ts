@@ -1,5 +1,17 @@
 import { formatCurrencyBRL } from "./formatCurrency";
 
+/**
+ * PIX dinâmico (Mercado Pago) no manager.
+ * Default: desligado — só chave PIX manual + comprovante no WhatsApp.
+ * Para ligar: VITE_MERCADO_PAGO_PIX_UI_ENABLED=true no build.
+ */
+export function isMercadoPagoPixUiEnabled(): boolean {
+  const raw = (import.meta.env.VITE_MERCADO_PAGO_PIX_UI_ENABLED || "")
+    .trim()
+    .toLowerCase();
+  return raw === "true" || raw === "1";
+}
+
 /** Chave PIX estática da plataforma (além do PIX dinâmico do Mercado Pago). */
 export function getManualPixKey(): string {
   return (import.meta.env.VITE_MANUAL_PIX_KEY || "").trim();
