@@ -6,6 +6,10 @@ import { formatPhoneMask } from "../../../utils/formatPhone";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 import { getStatusIcon, StatusIcons } from "../statusIcons";
 import { buttonClassName } from "../../../components/Button";
+import {
+  CourtFloor,
+  courtFloorLabel,
+} from "../../../onboarding/mockStore";
 
 /** Ex.: 16/07/2026 (qui) — 10:00 */
 export function formatSchedulePageTitle(
@@ -46,6 +50,50 @@ export function formatSchedulePageTitle(
     weekday.replace(/-feira$/i, "").slice(0, 3).toLowerCase();
 
   return `${shortDate} (${shortWeekday}) — ${time}`;
+}
+
+export function CourtSummaryCard({
+  name,
+  sports,
+  floor,
+  isCovered,
+  isCanHaveNet,
+}: {
+  name: string;
+  sports?: { id: number; name: string }[] | null;
+  floor?: string | null;
+  isCovered?: boolean;
+  isCanHaveNet?: boolean;
+}) {
+  const floorLabel = floor
+    ? courtFloorLabel(floor as CourtFloor) || floor
+    : null;
+  const sportsLabel =
+    sports && sports.length > 0
+      ? sports.map((sport) => sport.name).join(" · ")
+      : null;
+  const meta = [
+    sportsLabel,
+    floorLabel,
+    isCovered === false ? "Descoberta" : isCovered === true ? "Coberta" : null,
+    isCanHaveNet ? "Rede" : null,
+  ].filter(Boolean) as string[];
+
+  return (
+    <section
+      aria-label={`Quadra ${name}`}
+      className="mb-3 rounded-xl bg-master-light px-3.5 py-3"
+    >
+      <p className="text-base font-bold tracking-tight text-text-light">
+        {name}
+      </p>
+      {meta.length > 0 ? (
+        <p className="mt-0.5 text-sm leading-snug text-text-light/65">
+          {meta.join(" · ")}
+        </p>
+      ) : null}
+    </section>
+  );
 }
 
 export function getReservationIcon(

@@ -34,6 +34,11 @@ function sportKeysFromLabels(labels: string[]): string[] {
   const byLabel = new Map(
     COURT_SPORTS.map((s) => [courtSportLabel(s.key).toLowerCase(), s.key]),
   );
+  byLabel.set("society", "fut7");
+  byLabel.set("fut7", "fut7");
+  byLabel.set("fut11", "fut11");
+  byLabel.set("futebol de campo", "fut11");
+  byLabel.set("futebol de campo 11", "fut11");
   const keys: string[] = [];
   for (const label of labels) {
     const key = byLabel.get(label.trim().toLowerCase());
@@ -58,8 +63,6 @@ export default function EditCourtSheet({
   const [name, setName] = useState("");
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [sports, setSports] = useState<string[]>([]);
-  const [customSportName, setCustomSportName] = useState("");
-  const [customSportNeedsNet, setCustomSportNeedsNet] = useState(false);
   const [isCovered, setIsCovered] = useState(true);
   const [isCanHaveNet, setIsCanHaveNet] = useState(false);
   const [price, setPrice] = useState("");
@@ -75,17 +78,6 @@ export default function EditCourtSheet({
       setFloor((court.floor as CourtFloor) || "");
       const catalogKeys = sportKeysFromLabels(court.sports);
       setSports(catalogKeys);
-      const customLabel = (court.sports ?? []).find(
-        (label) =>
-          !catalogKeys.some(
-            (key) =>
-              courtSportLabel(
-                key as Parameters<typeof courtSportLabel>[0],
-              ).toLowerCase() === label.trim().toLowerCase(),
-          ),
-      );
-      setCustomSportName(customLabel?.trim() ?? "");
-      setCustomSportNeedsNet(false);
       setIsCovered(court.isCovered ?? true);
       setIsCanHaveNet(court.isCanHaveNet ?? false);
       setPrice(
@@ -95,8 +87,6 @@ export default function EditCourtSheet({
       setName("");
       setFloor("");
       setSports([]);
-      setCustomSportName("");
-      setCustomSportNeedsNet(false);
       setIsCovered(true);
       setIsCanHaveNet(false);
       setPrice("");
@@ -130,18 +120,12 @@ export default function EditCourtSheet({
   const canSubmit =
     name.trim().length >= 2 &&
     Boolean(floor) &&
-    (sports.length > 0 || customSportName.trim().length > 0) &&
+    sports.length > 0 &&
     (!isCreate || (Number.isFinite(parsedPrice) && parsedPrice >= 0.01)) &&
     !saving;
 
   const buildSportsPayload = () => {
-    const customName = customSportName.trim();
-    return [
-      ...sports.map((key) => sportPayloadFromKey(key as CourtSport)),
-      ...(customName
-        ? [{ name: customName.slice(0, 20), needsNet: customSportNeedsNet }]
-        : []),
-    ];
+    return sports.map((key) => sportPayloadFromKey(key as CourtSport));
   };
 
   const handleSave = async () => {
@@ -154,13 +138,8 @@ export default function EditCourtSheet({
       setFormError("Selecione o piso.");
       return;
     }
-    const customName = customSportName.trim();
-    if (sports.length === 0 && !customName) {
+    if (sports.length === 0) {
       setFormError("Selecione ao menos um esporte.");
-      return;
-    }
-    if (customName.length > 20) {
-      setFormError("O nome do esporte deve ter no máximo 20 caracteres.");
       return;
     }
 
@@ -306,24 +285,6 @@ export default function EditCourtSheet({
             value={sports}
             onChange={setSports}
           />
-          <Input
-            name="customSport"
-            title="Outro esporte"
-            mode="dark"
-            placeholder="Nome (máx. 20)"
-            maxLength={20}
-            value={customSportName}
-            onChange={(e) => setCustomSportName(e.target.value)}
-          />
-          <label className="flex min-h-12 cursor-pointer items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={customSportNeedsNet}
-              onChange={(e) => setCustomSportNeedsNet(e.target.checked)}
-            />
-            Usa rede
-          </label>
           <div className="flex flex-col gap-2 rounded-xl bg-master px-3 py-3">
             <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-base">
               <span>Quadra coberta</span>

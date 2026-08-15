@@ -26,6 +26,7 @@ import { ptBR } from "date-fns/locale";
 import {
   MdChevronRight,
   MdOutlineEventNote,
+  MdOutlineFilterList,
   MdOutlineNotifications,
   MdOutlinePublic,
 } from "react-icons/md";
@@ -47,6 +48,11 @@ import { buttonClassName } from "../../components/Button";
 import { useDaySwipe } from "../../hooks/useDaySwipe";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
+import AgendaFiltersSheet, {
+  agendaPeriodLabel,
+  AgendaPeriodFilter,
+  hourInAgendaPeriod,
+} from "./AgendaFiltersSheet";
 
 type ReservationLocationState = {
   date?: string;
@@ -126,6 +132,13 @@ function Reservation() {
   const [customerQuery, setCustomerQuery] = useState(
     () => locationState?.customerQuery || "",
   );
+  const [sportSelected, setSportSelected] = useState("");
+  const [periodSelected, setPeriodSelected] =
+    useState<AgendaPeriodFilter>("");
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
+  const [courtSportsByName, setCourtSportsByName] = useState<
+    Record<string, string[]>
+  >({});
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
@@ -195,6 +208,17 @@ function Reservation() {
       try {
         const info = await infosByCompanyPublicId(companyPublicId);
         if (cancelled) return;
+
+        const byName: Record<string, string[]> = {};
+        for (const court of info.courts ?? []) {
+          const name = court.name?.trim();
+          if (!name) continue;
+          byName[name] = (court.sports ?? [])
+            .map((sport) => sport.trim())
+            .filter(Boolean);
+        }
+        setCourtSportsByName(byName);
+
         const active =
           typeof info.isActive === "boolean"
             ? info.isActive
@@ -212,7 +236,10 @@ function Reservation() {
           setShowActivateGuide(true);
         }
       } catch {
-        if (!cancelled) setPortalActive(null);
+        if (!cancelled) {
+          setPortalActive(null);
+          setCourtSportsByName({});
+        }
       }
     };
 
@@ -431,8 +458,34 @@ function Reservation() {
     };
   }, [companyPublicId, date]);
 
+  const sportOptions = useMemo(() => {
+    const unique = new Map<string, string>();
+    for (const sports of Object.values(courtSportsByName)) {
+      for (const sport of sports) {
+        const key = normalizeText(sport);
+        if (!key || unique.has(key)) continue;
+        unique.set(key, sport);
+      }
+    }
+    return [...unique.values()].sort((a, b) =>
+      a.localeCompare(b, "pt-BR", { sensitivity: "base" }),
+    );
+  }, [courtSportsByName]);
+
+  const showSportFilter = sportOptions.length > 2;
+
+  useEffect(() => {
+    if (!sportSelected) return;
+    const selectedKey = normalizeText(sportSelected);
+    const stillExists = sportOptions.some(
+      (sport) => normalizeText(sport) === selectedKey,
+    );
+    if (!stillExists) setSportSelected("");
+  }, [sportOptions, sportSelected]);
+
   const filteredList = useMemo(() => {
     const query = normalizeText(customerQuery.trim());
+    const sportKey = normalizeText(sportSelected);
     return list
       .filter((elementDate) => {
         if (!date) return elementDate;
@@ -451,18 +504,40 @@ function Reservation() {
         if (!courtSelected || courtSelected === "all") return elementCourt;
         return elementCourt.court === courtSelected;
       })
+      .filter((elementSport) => {
+        if (!sportKey) return true;
+        const courtSports = courtSportsByName[elementSport.court] ?? [];
+        return courtSports.some(
+          (sport) => normalizeText(sport) === sportKey,
+        );
+      })
+      .filter((elementPeriod) =>
+        hourInAgendaPeriod(elementPeriod.time, periodSelected),
+      )
       .filter((elementCustomer) => {
         if (!query) return true;
         return normalizeText(elementCustomer.customerName || "").includes(
           query
         );
       });
-  }, [list, date, statusSelected, courtSelected, customerQuery]);
+  }, [
+    list,
+    date,
+    statusSelected,
+    courtSelected,
+    customerQuery,
+    sportSelected,
+    periodSelected,
+    courtSportsByName,
+  ]);
 
   // Skeleton enquanto o dia selecionado ainda não foi aplicado (evita empty state piscando)
   const showListLoading = loadedDateKey !== toDateKey(date);
   const showUnreadBadge = dayUnreadCount > 0;
-  const hasActiveFilters = Boolean(statusSelected || customerQuery.trim());
+  const sheetFiltersActive = Boolean(sportSelected || periodSelected);
+  const hasActiveFilters = Boolean(
+    statusSelected || customerQuery.trim() || sheetFiltersActive,
+  );
   const dayTitle = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
 
   const shiftDay = useCallback((deltaDays: -1 | 1) => {
@@ -477,7 +552,14 @@ function Reservation() {
   const clearDayFilters = () => {
     setStatusSelected(null);
     setCustomerQuery("");
+    setSportSelected("");
+    setPeriodSelected("");
   };
+
+  const filterSummaryParts = [
+    sportSelected || null,
+    periodSelected ? agendaPeriodLabel(periodSelected) : null,
+  ].filter(Boolean) as string[];
 
   const hoursList =
     agendaBootstrapping || showListLoading ? (
@@ -528,15 +610,15 @@ function Reservation() {
       title={
         customerQuery.trim()
           ? "Nenhum horário com este cliente."
-          : statusSelected
+          : sheetFiltersActive || statusSelected
             ? "Nenhum horário para o filtro selecionado."
             : "Nenhum horário encontrado."
       }
       description={
         customerQuery.trim()
           ? "Tente outro nome ou limpe a busca."
-          : statusSelected
-            ? "Limpe o filtro de status para ver todos os horários do dia."
+          : sheetFiltersActive || statusSelected
+            ? "Limpe os filtros para ver todos os horários do dia."
             : undefined
       }
       action={
@@ -682,18 +764,50 @@ function Reservation() {
                 />
               </div>
 
-              <label className="mt-3 block">
-                <span className="sr-only">Buscar cliente no dia</span>
-                <input
-                  type="search"
-                  value={customerQuery}
-                  onChange={(e) => setCustomerQuery(e.target.value)}
-                  placeholder="Buscar cliente no dia"
-                  autoComplete="off"
-                  enterKeyHint="search"
-                  className="mpn-tap h-11 w-full rounded-xl border border-text-light/10 bg-master px-3.5 text-base text-text-light placeholder:text-text-light/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:bg-master-light"
-                />
-              </label>
+              <div className="mt-3 flex items-center gap-2">
+                <label className="min-w-0 flex-1">
+                  <span className="sr-only">Buscar cliente no dia</span>
+                  <input
+                    type="search"
+                    value={customerQuery}
+                    onChange={(e) => setCustomerQuery(e.target.value)}
+                    placeholder="Buscar cliente no dia"
+                    autoComplete="off"
+                    enterKeyHint="search"
+                    className="mpn-tap h-11 w-full rounded-xl border border-text-light/10 bg-master px-3.5 text-base text-text-light placeholder:text-text-light/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:bg-master-light"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setFiltersSheetOpen(true)}
+                  aria-label={
+                    sheetFiltersActive
+                      ? `Filtros ativos: ${filterSummaryParts.join(", ")}`
+                      : "Filtros"
+                  }
+                  aria-pressed={sheetFiltersActive}
+                  className={`mpn-tap relative flex h-11 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+                    sheetFiltersActive
+                      ? "border-accent-blue/50 bg-accent-blue/20 text-accent-blue-soft"
+                      : "border-text-light/10 bg-master text-text-light/80 hover:bg-master/80 lg:bg-master-light"
+                  }`}
+                >
+                  <MdOutlineFilterList size={20} aria-hidden />
+                  <span className="hidden sm:inline">Filtros</span>
+                  {sheetFiltersActive ? (
+                    <span
+                      className="absolute -right-1 -top-1 size-2.5 rounded-full bg-accent-blue"
+                      aria-hidden
+                    />
+                  ) : null}
+                </button>
+              </div>
+
+              {filterSummaryParts.length > 0 ? (
+                <p className="mt-2 truncate px-1 text-sm text-text-light/60">
+                  {filterSummaryParts.join(" · ")}
+                </p>
+              ) : null}
 
               {portalActive === false && (
                 <Link
@@ -727,6 +841,16 @@ function Reservation() {
             handleCloseActivateGuide();
             navigate("/quadras");
           }}
+        />
+        <AgendaFiltersSheet
+          open={filtersSheetOpen}
+          sports={sportOptions}
+          showSportSection={showSportFilter}
+          selectedSport={sportSelected}
+          selectedPeriod={periodSelected}
+          onClose={() => setFiltersSheetOpen(false)}
+          onSelectSport={setSportSelected}
+          onSelectPeriod={setPeriodSelected}
         />
       </section>
       )}

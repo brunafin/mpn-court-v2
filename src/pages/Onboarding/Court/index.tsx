@@ -69,8 +69,6 @@ function OnboardingCourt() {
     {},
   );
   const [sports, setSports] = useState<CourtSport[]>([]);
-  const [customSportName, setCustomSportName] = useState("");
-  const [customSportNeedsNet, setCustomSportNeedsNet] = useState(false);
   const [floor, setFloor] = useState<CourtFloor | "">("");
   const [isCovered, setIsCovered] = useState(true);
   const [isCanHaveNet, setIsCanHaveNet] = useState(false);
@@ -106,8 +104,6 @@ function OnboardingCourt() {
     }
     setSlotPriceDigits(digits);
     setSports(court?.sports ?? []);
-    setCustomSportName(court?.customSport?.name ?? "");
-    setCustomSportNeedsNet(Boolean(court?.customSport?.needsNet));
     setFloor(court?.floor ?? "");
     setIsCovered(court?.isCovered ?? true);
     setIsCanHaveNet(court?.isCanHaveNet ?? false);
@@ -192,13 +188,8 @@ function OnboardingCourt() {
       return;
     }
 
-    const customName = customSportName.trim();
-    if (sports.length === 0 && !customName) {
+    if (sports.length === 0) {
       setFormError("Selecione ao menos um esporte.");
-      return;
-    }
-    if (customName && customName.length > 20) {
-      setFormError("O nome do esporte deve ter no máximo 20 caracteres.");
       return;
     }
 
@@ -247,9 +238,6 @@ function OnboardingCourt() {
         customPricingEnabled: customPricing || undefined,
         priceOverrides,
         sports,
-        customSport: customName
-          ? { name: customName.slice(0, 20), needsNet: customSportNeedsNet }
-          : undefined,
         floor,
         isCovered,
         isCanHaveNet,
@@ -442,18 +430,28 @@ function OnboardingCourt() {
                 </label>
 
                 {customPricing && (
-                  <div className="mt-4 space-y-4">
+                  <div className="mt-3 space-y-3 rounded-2xl border border-accent-blue/25 bg-master px-3 py-4">
+                    <p className="px-1 text-sm font-semibold uppercase tracking-wider text-accent-blue-soft">
+                      Preços por dia
+                    </p>
                     {enabledDays.length === 0 ? (
-                      <p className="text-base text-text-light/70">
+                      <p className="px-1 text-base text-text-light/70">
                         Nenhum horário aberto na grade. Volte e ajuste o horário.
                       </p>
                     ) : (
                       enabledDays.map((day) => (
-                        <fieldset key={day.dayKey} className="min-w-0">
-                          <legend className="mb-2 text-base font-semibold text-text-light/80">
+                        <section
+                          key={day.dayKey}
+                          className="min-w-0 overflow-hidden rounded-xl bg-master-light"
+                          aria-labelledby={`price-day-${day.dayKey}`}
+                        >
+                          <h3
+                            id={`price-day-${day.dayKey}`}
+                            className="border-b border-text-light/10 bg-master-light px-3 py-2.5 text-base font-bold tracking-tight text-text-light"
+                          >
                             {day.dayLabel}
-                          </legend>
-                          <ul className="space-y-3">
+                          </h3>
+                          <ul className="space-y-2 px-3 py-3">
                             {day.hours.map((hour) => {
                               const key = slotKey(day.dayKey, hour);
                               const digits = slotPriceDigits[key];
@@ -465,7 +463,7 @@ function OnboardingCourt() {
                                 >
                                   <label
                                     htmlFor={inputId}
-                                    className="w-14 shrink-0 text-base font-medium tabular-nums text-text-light/80"
+                                    className="w-14 shrink-0 text-base font-semibold tabular-nums text-text-light"
                                   >
                                     {hour}
                                   </label>
@@ -501,7 +499,7 @@ function OnboardingCourt() {
                               );
                             })}
                           </ul>
-                        </fieldset>
+                        </section>
                       ))
                     )}
                   </div>
@@ -524,29 +522,6 @@ function OnboardingCourt() {
                   }}
                   error={formError.includes("esporte") ? formError : undefined}
                 />
-                <div className="mt-3 space-y-2 rounded-xl bg-master px-3 py-3">
-                  <Input
-                    name="customSport"
-                    title="Outro esporte"
-                    mode="dark"
-                    placeholder="Nome (máx. 20)"
-                    maxLength={20}
-                    value={customSportName}
-                    onChange={(e) => {
-                      setCustomSportName(e.target.value);
-                      if (formError) setFormError("");
-                    }}
-                  />
-                  <label className="flex cursor-pointer items-center gap-3 text-sm text-text-light">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={customSportNeedsNet}
-                      onChange={(e) => setCustomSportNeedsNet(e.target.checked)}
-                    />
-                    Usa rede
-                  </label>
-                </div>
 
                 <Select
                   name="floor"

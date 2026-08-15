@@ -9,43 +9,38 @@ function ownerDraftKey(): string | null {
   return `${STORAGE_KEY}:${sub.trim()}`;
 }
 
-/** Esportes que uma quadra pode aceitar (catálogo + variantes comuns). */
+/** Esportes disponíveis para novas quadras. */
 export type CourtSport =
   | "futsal"
-  | "society"
   | "fut5"
   | "fut7"
   | "fut11"
   | "volei_quadra"
   | "volei_areia"
-  | "handebol"
   | "basquete"
   | "futevolei"
   | "beach_tennis"
   | "tenis"
   | "padel"
-  | "badminton"
-  | "voleibol"
-  | "volei_praia";
+  | "pickleball";
 
 export const COURT_SPORTS: { key: CourtSport; label: string }[] = [
   { key: "futsal", label: "Futsal" },
-  { key: "society", label: "Society" },
   { key: "fut5", label: "Fut5" },
-  { key: "fut7", label: "Fut7" },
-  { key: "fut11", label: "Fut11" },
+  { key: "fut7", label: "Fut7 (Society)" },
+  { key: "fut11", label: "Futebol de campo 11" },
+  { key: "beach_tennis", label: "Beach Tennis" },
   { key: "volei_quadra", label: "Vôlei de quadra" },
   { key: "volei_areia", label: "Vôlei de areia" },
-  { key: "handebol", label: "Handebol" },
-  { key: "basquete", label: "Basquete" },
   { key: "futevolei", label: "Futevôlei" },
-  { key: "beach_tennis", label: "Beach Tennis" },
-  { key: "tenis", label: "Tênis" },
+  { key: "basquete", label: "Basquete" },
   { key: "padel", label: "Padel" },
-  { key: "badminton", label: "Badminton" },
+  { key: "pickleball", label: "Pickleball" },
+  { key: "tenis", label: "Tênis" },
 ];
 
 const LEGACY_SPORT_KEYS: Record<string, CourtSport> = {
+  society: "fut7",
   voleibol: "volei_quadra",
   volei_praia: "volei_areia",
 };
@@ -53,21 +48,17 @@ const LEGACY_SPORT_KEYS: Record<string, CourtSport> = {
 /** Nomes do catálogo UI → se usa rede (alinhado ao seed da API). */
 const SPORT_NEEDS_NET: Record<CourtSport, boolean> = {
   futsal: false,
-  society: false,
   fut5: false,
   fut7: false,
   fut11: false,
   volei_quadra: true,
   volei_areia: true,
-  handebol: false,
   basquete: false,
   futevolei: true,
   beach_tennis: true,
   tenis: true,
   padel: true,
-  badminton: true,
-  voleibol: true,
-  volei_praia: true,
+  pickleball: true,
 };
 
 export function sportPayloadFromKey(key: CourtSport): {
@@ -85,6 +76,7 @@ export type CourtFloor =
   | "poliesportivo"
   | "cimento"
   | "grama_sintetica"
+  | "gramado_natural"
   | "areia"
   | "saibro";
 
@@ -94,6 +86,7 @@ export const COURT_FLOORS: { key: CourtFloor; label: string }[] = [
   { key: "poliesportivo", label: "Poliesportivo (pintado)" },
   { key: "cimento", label: "Cimento / piso queimado" },
   { key: "grama_sintetica", label: "Grama sintética" },
+  { key: "gramado_natural", label: "Gramado natural" },
   { key: "areia", label: "Areia" },
   { key: "saibro", label: "Saibro" },
 ];
@@ -123,8 +116,6 @@ export type MockCourt = {
   priceOverrides?: Partial<Record<WeekDayKey, Record<string, number>>>;
   /** Esportes aceitos na quadra. */
   sports: CourtSport[];
-  /** Esporte fora do catálogo (nome + se usa rede). */
-  customSport?: { name: string; needsNet: boolean };
   /** Tipo de piso da quadra (obrigatório). */
   floor?: CourtFloor;
   /** Quadra coberta (default true na API se omitido). */
@@ -335,16 +326,6 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
         .map((key) => LEGACY_SPORT_KEYS[key] ?? key)
         .filter((key): key is CourtSport => COURT_SPORT_KEYS.includes(key))
     : [];
-  const customSport =
-    court.customSport &&
-    typeof court.customSport.name === "string" &&
-    court.customSport.name.trim().length > 0 &&
-    typeof court.customSport.needsNet === "boolean"
-      ? {
-          name: court.customSport.name.trim().slice(0, 20),
-          needsNet: court.customSport.needsNet,
-        }
-      : undefined;
   const floor =
     court.floor && COURT_FLOOR_KEYS.includes(court.floor)
       ? court.floor
@@ -363,7 +344,6 @@ function normalizeMockCourt(court: MockCourt): MockCourt {
     customPricingEnabled: customPricingEnabled || undefined,
     priceOverrides,
     sports,
-    customSport,
     floor,
     isCovered: court.isCovered ?? true,
     isCanHaveNet: Boolean(court.isCanHaveNet),
@@ -582,24 +562,13 @@ export function isArenaConfigured(state: MockOnboardingState): boolean {
 
 /** Uma quadra está completa quando tem preço, esportes e piso definidos. */
 export function isCourtComplete(court: MockCourt): boolean {
-  const hasSport =
-    court.sports.length > 0 || Boolean(court.customSport?.name.trim());
-  return court.defaultPrice > 0 && hasSport && Boolean(court.floor);
+  return court.defaultPrice > 0 && court.sports.length > 0 && Boolean(court.floor);
 }
 
 export function buildCourtSportsPayload(
   court: MockCourt,
 ): { name: string; needsNet?: boolean }[] {
-  const catalog = court.sports.map((key) => sportPayloadFromKey(key));
-  const custom = court.customSport?.name.trim()
-    ? [
-        {
-          name: court.customSport.name.trim().slice(0, 20),
-          needsNet: court.customSport.needsNet,
-        },
-      ]
-    : [];
-  return [...catalog, ...custom];
+  return court.sports.map((key) => sportPayloadFromKey(key));
 }
 
 export function isEstablishmentReady(state: MockOnboardingState): boolean {

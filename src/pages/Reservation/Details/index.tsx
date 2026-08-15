@@ -41,7 +41,7 @@ import {
   sanitizeNoteText,
   sanitizeNoteTextInput,
 } from "../../../utils/sanitizeNoteText";
-import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle } from "./utils";
+import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle, CourtSummaryCard } from "./utils";
 import {
   isInternalSchedule,
   willFixAsInternal,
@@ -739,6 +739,14 @@ function ReservationDetails() {
               </p>
             )}
 
+            <CourtSummaryCard
+              name={court.court}
+              sports={court.sports}
+              floor={court.floor}
+              isCovered={court.isCovered}
+              isCanHaveNet={court.isCanHaveNet}
+            />
+
             {getMeanByStatus(
               consultationOnly ? undefined : openEditContact,
               court?.status,
@@ -746,7 +754,6 @@ function ReservationDetails() {
                 sportName: court?.reservation?.sportName,
                 contactName: court?.reservation?.contactName,
                 contactPhone: court?.reservation?.contactPhone ?? undefined,
-                courtName: court?.court,
                 price: court?.price,
                 isPublic: court?.isPublic,
               }
@@ -1054,7 +1061,7 @@ function ReservationDetails() {
                     autoComplete="tel"
                     enterKeyHint={courtSports.length > 1 ? "next" : "done"}
                   />
-                  {courtSports.length > 1 && (
+                  {courtSports.length > 1 ? (
                     <Select
                       name="court-sport"
                       title="Esporte"
@@ -1071,7 +1078,16 @@ function ReservationDetails() {
                         setSportSelected(selectedSport || null);
                       }}
                     />
-                  )}
+                  ) : courtSports.length === 1 ? (
+                    <Input
+                      name="court-sport"
+                      title="Esporte"
+                      mode="dark"
+                      value={courtSports[0].name}
+                      readOnly
+                      required
+                    />
+                  ) : null}
 
                   <fieldset
                     className="mt-3 border-t border-text-light/10 pt-5"

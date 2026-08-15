@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MdCheck, MdChevronLeft, MdChevronRight } from "react-icons/md";
 import Button, { buttonClassName } from "../../../components/Button";
@@ -8,6 +8,7 @@ import {
   WeekScheduleTemplate,
   ScheduleHourSlot,
   buildEmptyWeekTemplate,
+  formatHourLabel,
   getOrCreateOnboardingDraft,
   isArenaConfigured,
   normalizeWeekTemplate,
@@ -15,8 +16,13 @@ import {
 } from "../../../onboarding/mockStore";
 import { getAccessToken } from "../../../utils/authCookie";
 
+/** Abre a lista já rolada nesta hora (checks default continuam 16h–23h). */
+const LIST_SCROLL_START_LABEL = formatHourLabel(15);
+
 function OnboardingSchedule() {
   const navigate = useNavigate();
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const listScrollStartRef = useRef<HTMLLIElement>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [template, setTemplate] = useState<WeekScheduleTemplate>(() =>
     buildEmptyWeekTemplate(0)
@@ -42,6 +48,20 @@ function OnboardingSchedule() {
     }
     setReady(true);
   }, [navigate]);
+
+  // Posiciona a lista nas 15h (um slot antes do bloco default 16h–23h).
+  useLayoutEffect(() => {
+    if (!ready) return;
+    const container = listScrollRef.current;
+    const target = listScrollStartRef.current;
+    if (!container || !target) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const nextTop =
+      container.scrollTop + (targetRect.top - containerRect.top) - 8;
+    container.scrollTo({ top: Math.max(0, nextTop), behavior: "auto" });
+  }, [ready, stepIndex]);
 
   const dayMeta = WEEK_DAYS[stepIndex];
   const daySlots = template.days[dayMeta.key];
@@ -171,13 +191,23 @@ function OnboardingSchedule() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]">
+      <div
+        ref={listScrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
+      >
         <ul
           className="mx-auto w-full max-w-lg space-y-2"
           aria-label={`Horários de ${dayMeta.label}`}
         >
           {daySlots.map((slot) => (
-            <li key={slot.hour}>
+            <li
+              key={slot.hour}
+              ref={
+                slot.hour === LIST_SCROLL_START_LABEL
+                  ? listScrollStartRef
+                  : undefined
+              }
+            >
               <label
                 className={`mpn-tap flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 ${
                   slot.enabled ? "bg-master-light" : "bg-master-light/50"

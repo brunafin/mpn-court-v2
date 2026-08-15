@@ -32,6 +32,9 @@ export interface IReservationDetailsItemProps {
     sportName: string;
   } | null;
   court: string;
+  floor?: string | null;
+  isCovered?: boolean;
+  isCanHaveNet?: boolean;
   sports: {
     id: number;
     name: string;

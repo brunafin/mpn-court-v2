@@ -38,7 +38,7 @@ function ManualPixPay({
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       notifyError({
-        message: "Não foi possível copiar. Selecione a chave manualmente.",
+        message: "Não foi possível copiar a chave. Tente novamente.",
       });
     }
   };
@@ -49,12 +49,6 @@ function ManualPixPay({
     >
       <p className="text-xs font-semibold uppercase tracking-wider text-text-light/50">
         {primary ? "Pagar com chave PIX" : "Ou pague com nossa chave PIX"}
-      </p>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-text-light/50">
-        Chave PIX
-      </p>
-      <p className="mt-1 break-all rounded-xl border border-text-light/15 bg-master-light px-3 py-2 font-mono text-sm text-text-light">
-        {key}
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <button

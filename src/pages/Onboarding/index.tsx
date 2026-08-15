@@ -238,16 +238,59 @@ function OnboardingChecklist() {
             </ul>
           </>
         ) : (
-          <div className="rounded-2xl bg-master-light p-5">
-            <div className="text-center">
-              <p className="text-lg font-medium text-text-light">Tudo pronto</p>
-              <p className="mt-2 text-base leading-6 text-text-light/65">
-                Você já pode usar a agenda
-              </p>
+          <div className="flex flex-1 flex-col">
+            <div className="rounded-2xl bg-master-light p-5">
+              <div className="text-center">
+                <p className="text-lg font-medium text-text-light">Tudo pronto</p>
+                <p className="mt-2 text-base leading-6 text-text-light/65">
+                  Você já pode usar a agenda
+                </p>
+                {submitting && (
+                  <p
+                    className="mt-3 text-center text-sm leading-5 text-text-light/60"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {finishHint ||
+                      "Configurando os horários do estabelecimento…"}
+                  </p>
+                )}
+                {submitError && (
+                  <p
+                    className="mt-2 text-center text-sm text-danger-400"
+                    role="alert"
+                  >
+                    {submitError}
+                  </p>
+                )}
+              </div>
+              <ul className="mt-4 flex flex-col gap-2 border-t border-text-light/10 pt-4">
+                {items.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      to={item.to || "/comecar"}
+                      className="mpn-tap flex min-h-12 items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light"
+                    >
+                      <MdCheckCircle
+                        size={26}
+                        className="shrink-0 text-accent-green"
+                        aria-label="Concluído"
+                      />
+                      <span className="min-w-0 flex-1">{item.title}</span>
+                      <span className="shrink-0 text-sm font-medium text-accent-blue-soft">
+                        Editar
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-auto pt-6">
               <Button
                 type="button"
                 variant="primary"
-                className="mt-5 h-auto min-h-14 justify-center whitespace-normal px-3 py-3 text-center leading-snug"
+                className="h-auto min-h-14 w-full justify-center whitespace-normal px-3 py-3 text-center leading-snug"
                 disabled={submitting}
                 onClick={handleFinish}
               >
@@ -262,39 +305,7 @@ function OnboardingChecklist() {
                     : "Concluir e ir para a agenda"}
                 </span>
               </Button>
-              {submitting && (
-                <p
-                  className="mt-3 text-center text-sm leading-5 text-text-light/60"
-                  role="status"
-                  aria-live="polite"
-                >
-                  {finishHint || "Configurando os horários do estabelecimento…"}
-                </p>
-              )}
-              {submitError && (
-                <p
-                  className="mt-2 text-center text-sm text-danger-400"
-                  role="alert"
-                >
-                  {submitError}
-                </p>
-              )}
             </div>
-            <ul className="mt-4 flex flex-col gap-2 border-t border-text-light/10 pt-4">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    to={item.to || "/comecar"}
-                    className="mpn-tap flex min-h-12 items-center justify-between rounded-xl px-3 text-base font-semibold text-text-light"
-                  >
-                    <span>{item.title}</span>
-                    <span className="text-sm font-medium text-accent-blue-soft">
-                      Editar
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
           </div>
         )}
 
