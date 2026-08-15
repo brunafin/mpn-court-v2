@@ -35,6 +35,14 @@ function isScrollableShellPath(pathname: string): boolean {
   );
 }
 
+function showTestEnvBanner(): boolean {
+  if (import.meta.env.VITE_ENVIRONMENT !== "production") return true;
+  return (
+    typeof window !== "undefined" &&
+    /sandbox/i.test(window.location.hostname)
+  );
+}
+
 function App() {
   const { pathname } = useLocation();
   const scrollableShell = isScrollableShellPath(pathname);
@@ -70,9 +78,9 @@ function App() {
 
   return (
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-master">
-      {import.meta.env.VITE_ENVIRONMENT !== "production" && (
+      {showTestEnvBanner() && (
         <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
-          Versão para testes
+          Ambiente de teste — dados podem ser fictícios
         </p>
       )}
       <div
