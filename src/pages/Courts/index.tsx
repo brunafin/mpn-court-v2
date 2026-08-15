@@ -276,8 +276,9 @@ function CourtsPage() {
           <section className="mt-5">
             {offSiteNeedsCourts && (
               <p className="mb-3 rounded-lg bg-master-light px-3 py-2 text-sm leading-5 text-text-light/70">
-                Cadastre na agenda o que já está ocupado e compartilhe só os
-                horários livres no site.
+                Marque na agenda o que já está ocupado e ative a quadra no site.
+                Depois compartilhe o link com clientes no WhatsApp, Instagram ou
+                grupos — eles veem só os horários livres.
               </p>
             )}
             {loadError && !info ? (

@@ -360,7 +360,7 @@ function RealInfo() {
                         </p>
                         <p className="mt-1 text-sm leading-relaxed text-text-light/60">
                           {arenaPublished
-                            ? "Compartilhe com clientes para verem horários e reservar."
+                            ? "Envie no WhatsApp, Instagram ou grupos: o cliente vê os horários livres e fala com você para reservar."
                             : portalStatus.reason}
                         </p>
                         <a

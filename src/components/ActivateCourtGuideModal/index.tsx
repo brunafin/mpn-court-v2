@@ -87,22 +87,26 @@ function ActivateCourtGuideModal({
               id={titleId}
               className="text-xl font-semibold leading-7 text-text-light"
             >
-              Compartilhe horários livres no site
+              Mostre horários livres aos seus clientes
             </h2>
             <div
               id={descriptionId}
               className="mt-2 space-y-2 text-base leading-6 text-text-light/75"
             >
               <p>
-                Cadastre na agenda as reservas e os horários fixos que já estão
-                ocupados. Assim o público só vê o que está realmente livre.
+                Com um link da sua arena, você divulga a agenda no WhatsApp, no
+                Instagram ou em grupos. A pessoa vê só o que está livre e fala
+                com você para reservar — sem ligar perguntando horário.
               </p>
               <p>
-                Quando estiver pronto, ative a quadra em{" "}
+                <span className="font-semibold text-text-light">
+                  Em 2 passos:
+                </span>{" "}
+                marque na agenda o que já está ocupado e, em{" "}
                 <span className="font-semibold text-text-light">
                   Minhas quadras
                 </span>
-                .
+                , ative a quadra no site. Depois é só compartilhar o link.
               </p>
               {publicUrl ? (
                 <p className="break-all rounded-xl bg-master px-3 py-2 text-sm">
@@ -132,7 +136,7 @@ function ActivateCourtGuideModal({
                 className: "w-full",
               })}
             >
-              {copied ? "Link copiado" : "Copiar link público"}
+              {copied ? "Link copiado" : "Copiar link para compartilhar"}
             </button>
           ) : null}
           <button
