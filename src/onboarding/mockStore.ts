@@ -13,6 +13,7 @@ function ownerDraftKey(): string | null {
 export type CourtSport =
   | "futsal"
   | "fut5"
+  | "fut6"
   | "fut7"
   | "fut11"
   | "volei_quadra"
@@ -27,6 +28,7 @@ export type CourtSport =
 export const COURT_SPORTS: { key: CourtSport; label: string }[] = [
   { key: "futsal", label: "Futsal" },
   { key: "fut5", label: "Fut5" },
+  { key: "fut6", label: "Fut6" },
   { key: "fut7", label: "Fut7 (Society)" },
   { key: "fut11", label: "Futebol de campo 11" },
   { key: "beach_tennis", label: "Beach Tennis" },
@@ -49,6 +51,7 @@ const LEGACY_SPORT_KEYS: Record<string, CourtSport> = {
 const SPORT_NEEDS_NET: Record<CourtSport, boolean> = {
   futsal: false,
   fut5: false,
+  fut6: false,
   fut7: false,
   fut11: false,
   volei_quadra: true,

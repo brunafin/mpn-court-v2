@@ -35,6 +35,7 @@ function sportKeysFromLabels(labels: string[]): string[] {
     COURT_SPORTS.map((s) => [courtSportLabel(s.key).toLowerCase(), s.key]),
   );
   byLabel.set("society", "fut7");
+  byLabel.set("fut6", "fut6");
   byLabel.set("fut7", "fut7");
   byLabel.set("fut11", "fut11");
   byLabel.set("futebol de campo", "fut11");
