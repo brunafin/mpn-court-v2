@@ -171,10 +171,10 @@ function ForgotPasswordReset() {
   if (!email) return null;
 
   return (
-    <div className="relative flex min-h-full flex-col items-center justify-center bg-master px-4 py-4 text-text-light sm:py-8">
+    <div className="relative flex min-h-full flex-col items-center bg-master px-4 py-4 text-text-light sm:py-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 my-auto w-full max-w-md">
         <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
           <div className="mb-3 flex w-32 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-4 sm:w-40 sm:rounded-2xl sm:p-2">
             <img

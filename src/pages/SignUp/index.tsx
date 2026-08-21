@@ -257,10 +257,10 @@ function SignUp() {
   const generalError = errorField === null && formError ? formError : undefined;
 
   return (
-    <div className="relative flex min-h-full flex-col items-center justify-center bg-master px-4 py-8 text-text-light sm:py-10">
+    <div className="relative flex min-h-full flex-col items-center bg-master px-4 py-8 text-text-light sm:py-10">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
 
-      <div className="relative z-10 w-full max-w-md sm:max-w-xl">
+      <div className="relative z-10 my-auto w-full max-w-md sm:max-w-xl">
         <div className="mb-3 flex flex-col items-center text-center sm:mb-4">
           <div className="mb-2 flex w-24 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-3 sm:w-28 sm:rounded-2xl">
             <img

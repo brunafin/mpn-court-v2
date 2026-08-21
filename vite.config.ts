@@ -35,7 +35,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['logo-mpn.png', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: [
+        'logo-mpn.png',
+        'og-image.png',
+        'robots.txt',
+        'apple-touch-icon.png',
+        'favicon-maskable-512x512.png',
+      ],
       workbox: {
         // SPA online: `serve -s` já devolve index.html.
         // NavigationRoute + precache vazio/desatualizado = ERR_FAILED no refresh (Chrome Android).
@@ -57,17 +63,19 @@ export default defineConfig({
               src: 'favicon-192x192.png',
               sizes: '192x192',
               type: 'image/png',
+              purpose: 'any',
             },
             {
               src: 'favicon-512x512.png',
               sizes: '512x512',
               type: 'image/png',
+              purpose: 'any',
             },
             {
-              src: 'favicon-512x512.png',
+              src: 'favicon-maskable-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable',
+              purpose: 'maskable',
             },
           ]
           : [
@@ -75,17 +83,19 @@ export default defineConfig({
               src: 'favicon-test-192x192.png',
               sizes: '192x192',
               type: 'image/png',
+              purpose: 'any',
             },
             {
               src: 'favicon-test-512x512.png',
               sizes: '512x512',
               type: 'image/png',
+              purpose: 'any',
             },
             {
-              src: 'favicon-test-512x512.png',
+              src: 'favicon-maskable-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable',
+              purpose: 'maskable',
             },
           ],
       },
