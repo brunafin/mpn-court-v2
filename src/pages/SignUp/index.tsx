@@ -262,7 +262,7 @@ function SignUp() {
 
       <div className="relative z-10 my-auto w-full max-w-md sm:max-w-xl">
         <div className="mb-3 flex flex-col items-center text-center sm:mb-4">
-          <div className="mb-2 flex w-24 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-3 sm:w-28 sm:rounded-2xl">
+          <div className="mb-2 flex w-24 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-3 sm:w-28 sm:rounded-xl">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -274,7 +274,7 @@ function SignUp() {
           </h1>
         </div>
 
-        <div className="rounded-2xl bg-master-light p-4 sm:p-6">
+        <div className="rounded-xl bg-master-light p-4 sm:p-6">
           {googleEnabled && !linkGoogleToken && (
             <>
               <GoogleSignInButton
@@ -282,7 +282,7 @@ function SignUp() {
                 disabled={loading || googleLoading}
                 text="signup_with"
               />
-              <div className="my-5 flex items-center gap-3 text-sm text-text-light/45">
+              <div className="my-5 flex items-center gap-3 text-base text-text-light/55">
                 <div className="h-px flex-1 bg-text-light/15" />
                 <span>ou</span>
                 <div className="h-px flex-1 bg-text-light/15" />
@@ -292,7 +292,7 @@ function SignUp() {
 
           {linkGoogleToken ? (
             <form onSubmit={handleLinkSubmit} noValidate>
-              <p className="mb-3 text-sm leading-5 text-text-light/80">
+              <p className="mb-3 text-base leading-5 text-text-light/70">
                 Já existe uma conta
                 {linkEmail ? (
                   <>
@@ -331,7 +331,7 @@ function SignUp() {
               <button
                 type="button"
                 disabled={googleLoading}
-                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
+                className="mt-3 w-full text-center text-base font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
                 onClick={() => {
                   setLinkGoogleToken(null);
                   setLinkPassword("");
@@ -446,7 +446,7 @@ function SignUp() {
                     error={fieldError("password") || passwordPolicyError}
                   />
                   {!passwordPolicyError && errorField !== "password" && (
-                    <p className="-mt-1 mb-1 text-sm leading-5 text-text-light/55">
+                    <p className="-mt-1 mb-1 text-base leading-5 text-text-light/55">
                       {PASSWORD_HINT}
                     </p>
                   )}
@@ -454,7 +454,7 @@ function SignUp() {
               </div>
 
               <label
-                className={`mt-4 flex items-start gap-3 text-base leading-6 text-text-light/80 ${
+                className={`mt-4 flex items-start gap-3 text-base leading-6 text-text-light/70 ${
                   loading || googleLoading
                     ? "cursor-not-allowed opacity-60"
                     : "cursor-pointer"
@@ -495,7 +495,7 @@ function SignUp() {
               </label>
               {errorField === "terms" && formError && (
                 <p
-                  className="mt-2 text-base font-medium text-danger-400"
+                  className="mt-2 text-base font-medium text-danger-soft"
                   role="alert"
                 >
                   {formError}
@@ -504,7 +504,7 @@ function SignUp() {
 
               {generalError && (
                 <p
-                  className="mt-2 text-base font-medium text-danger-400"
+                  className="mt-2 text-base font-medium text-danger-soft"
                   role="alert"
                 >
                   {generalError}
@@ -536,7 +536,7 @@ function SignUp() {
         </div>
 
         <nav
-          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-text-light/55"
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-base text-text-light/55"
           aria-label="Documentos legais"
         >
           <a

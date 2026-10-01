@@ -139,7 +139,7 @@ function CompleteProfile() {
 
       <div className="relative z-10 my-auto w-full max-w-md">
         <div className="mb-3 flex flex-col items-center text-center sm:mb-4">
-          <div className="mb-2 flex w-24 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-3 sm:w-28 sm:rounded-2xl">
+          <div className="mb-2 flex w-24 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-3 sm:w-28 sm:rounded-xl">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -149,14 +149,14 @@ function CompleteProfile() {
           <h1 className="text-xl font-bold tracking-tight text-text-light sm:text-2xl">
             Quase lá
           </h1>
-          <p className="mt-2 text-sm leading-5 text-text-light/70">
+          <p className="mt-2 text-base leading-5 text-text-light/70">
             Informe seu CPF e aceite os termos para começar.
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl bg-master-light p-4 sm:p-6"
+          className="rounded-xl bg-master-light p-4 sm:p-6"
           noValidate
           aria-busy={loading || undefined}
         >
@@ -206,7 +206,7 @@ function CompleteProfile() {
           />
 
           <label
-            className={`mt-4 flex items-start gap-3 text-base leading-6 text-text-light/80 ${
+            className={`mt-4 flex items-start gap-3 text-base leading-6 text-text-light/70 ${
               loading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
             }`}
           >
@@ -245,7 +245,7 @@ function CompleteProfile() {
           </label>
 
           {formError && (
-            <p className="mt-2 text-base font-medium text-danger-400" role="alert">
+            <p className="mt-2 text-base font-medium text-danger-soft" role="alert">
               {formError}
             </p>
           )}

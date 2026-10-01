@@ -694,7 +694,7 @@ function ReservationDetails() {
 
   return (
     <div className="mpn-page bg-master text-text-light">
-      <header className="mpn-chrome-top z-20 shrink-0 bg-master px-4 pb-3 lg:px-6">
+      <header className="mpn-chrome-top z-20 shrink-0 bg-master px-3 pb-2 lg:px-8">
         <div className="relative mx-auto flex w-full max-w-lg items-center justify-center lg:max-w-3xl">
           <button
             type="button"
@@ -711,29 +711,29 @@ function ReservationDetails() {
       </header>
 
       <section
-        className={`mpn-page-scroll mx-auto w-full max-w-lg px-4 pb-4 pt-5 transition-opacity lg:max-w-3xl lg:px-6 ${
+        className={`mpn-page-scroll mx-auto w-full max-w-6xl px-3 pb-4 pt-3 transition-opacity lg:px-8 ${
           loading && court ? "opacity-80" : ""
         }`}
         aria-busy={loading}
       >
         {isInitialLoading ? (
           <div className="animate-pulse space-y-4" aria-label="Carregando formulário">
-            <div className="h-24 rounded-2xl bg-master-light/70" />
-            <div className="h-28 rounded-2xl bg-master-light/70" />
-            <div className="h-40 rounded-2xl bg-master-light/70" />
-            <div className="h-52 rounded-2xl bg-master-light/70" />
+            <div className="h-24 rounded-xl bg-master-light/70" />
+            <div className="h-28 rounded-xl bg-master-light/70" />
+            <div className="h-40 rounded-xl bg-master-light/70" />
+            <div className="h-52 rounded-xl bg-master-light/70" />
           </div>
         ) : court ? (
           <>
             {isPastConsultation && (
-              <p className="mb-4 text-base font-medium text-text-light/65">
+              <p className="mb-4 text-base font-medium text-text-light/70">
                 {canMutate
                   ? "Horário passado — somente consulta (cancelar ainda disponível)"
                   : "Horário passado — somente consulta"}
               </p>
             )}
             {!canMutate && caps.ready && !isPastConsultation && (
-              <p className="mb-4 text-base font-medium text-text-light/65">
+              <p className="mb-4 text-base font-medium text-text-light/70">
                 Conta em somente leitura — não é possível reservar, cancelar
                 nem criar lembretes.
               </p>
@@ -786,12 +786,7 @@ function ReservationDetails() {
                   <button
                     type="button"
                     onClick={() => setShowNewReminderModal(true)}
-                    className={buttonClassName({
-                      variant: "ghost",
-                      size: "md",
-                      className:
-                        "border border-text-light/15 text-text-light/75 hover:bg-text-light/8 hover:text-text-light focus-visible:outline-accent-blue",
-                    })}
+                    className="mpn-tap inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-master-light px-4 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
                   >
                     <MdOutlinePostAdd
                       size={20}
@@ -807,7 +802,7 @@ function ReservationDetails() {
               court.status !== ReservationStatusEnum.AVAILABLE &&
               court.reservation?.publicId &&
               (consultationOnly ? (
-                <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
+                <div className="mb-5 rounded-xl bg-master-light p-4 sm:p-5">
                   <p className="mb-4 text-lg font-semibold text-text-light">
                     Informações adicionais
                   </p>
@@ -848,8 +843,8 @@ function ReservationDetails() {
                     <p
                       className={`mt-2 break-words text-base leading-6 whitespace-pre-wrap [overflow-wrap:anywhere] ${
                         observation?.trim()
-                          ? "text-text-light/85"
-                          : "text-text-light/45"
+                          ? "text-text-light"
+                          : "text-text-light/55"
                       }`}
                     >
                       {observation?.trim()
@@ -861,7 +856,7 @@ function ReservationDetails() {
               ) : (
                 <form
                   id="reservation-edit-form"
-                  className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5"
+                  className="mb-5 rounded-xl bg-master-light p-4 sm:p-5"
                   onSubmit={(e) => {
                     e.preventDefault();
                     void handleSaveObservation();
@@ -879,7 +874,7 @@ function ReservationDetails() {
                     </legend>
                     {court.reservation?.isNeedsNetting && (
                       <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master/50 px-3.5 py-2.5">
-                        <VoleyNetIcon className="size-5 shrink-0 text-text-light/75" />
+                        <VoleyNetIcon className="size-5 shrink-0 text-text-light/70" />
                         <p className="text-base font-medium text-text-light">
                           Precisa de rede
                         </p>
@@ -932,11 +927,11 @@ function ReservationDetails() {
 
             {court?.status === ReservationStatusEnum.AVAILABLE &&
               isPastSchedule && (
-                <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+                <div className="rounded-xl bg-master-light p-4 sm:p-5">
                   <p className="text-lg font-semibold text-text-light">
                     Horário encerrado
                   </p>
-                  <p className="mt-2 text-base leading-6 text-text-light/75">
+                  <p className="mt-2 text-base leading-6 text-text-light/70">
                     Este horário já passou e não pode ser reservado.
                   </p>
                 </div>
@@ -945,11 +940,11 @@ function ReservationDetails() {
             {court?.status === ReservationStatusEnum.AVAILABLE &&
               !isPastSchedule &&
               caps.loadError && (
-                <div className="mb-4 rounded-2xl bg-master-light p-4 sm:p-5">
+                <div className="mb-4 rounded-xl bg-master-light p-4 sm:p-5">
                   <p className="text-lg font-semibold text-text-light">
                     Não foi possível confirmar o acesso
                   </p>
-                  <p className="mt-2 text-base leading-6 text-text-light/75">
+                  <p className="mt-2 text-base leading-6 text-text-light/70">
                     Tente de novo para reservar ou cancelar.
                   </p>
                   <button
@@ -971,11 +966,11 @@ function ReservationDetails() {
               !isPastSchedule &&
               caps.ready &&
               !canMutate && (
-                <div className="rounded-2xl bg-master-light p-4 sm:p-5">
+                <div className="rounded-xl bg-master-light p-4 sm:p-5">
                   <p className="text-lg font-semibold text-text-light">
                     Reserva indisponível
                   </p>
-                  <p className="mt-2 text-base leading-6 text-text-light/75">
+                  <p className="mt-2 text-base leading-6 text-text-light/70">
                     Sua conta está em somente leitura. Regularize a pendência
                     para voltar a reservar horários.
                   </p>
@@ -995,7 +990,7 @@ function ReservationDetails() {
                 aria-label="Formulário de nova reserva"
                 aria-busy={isSubmitting || undefined}
               >
-                <div className="mb-5 rounded-2xl bg-master-light p-4 sm:p-5">
+                <div className="mb-5 rounded-xl bg-master-light p-4 sm:p-5">
                   <Input
                     name="name"
                     title="Nome"
@@ -1090,7 +1085,7 @@ function ReservationDetails() {
                   ) : null}
 
                   <fieldset
-                    className="mt-3 border-t border-text-light/10 pt-5"
+                    className="mt-3 pt-5"
                     disabled={isSubmitting}
                   >
                     <legend className="mb-3 text-base font-semibold text-text-light">
@@ -1099,7 +1094,7 @@ function ReservationDetails() {
                     <div className="mb-3 space-y-2">
                       {court.reservation?.isNeedsNetting && (
                         <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master/50 px-3.5 py-2.5">
-                          <VoleyNetIcon className="size-5 shrink-0 text-text-light/75" />
+                          <VoleyNetIcon className="size-5 shrink-0 text-text-light/70" />
                           <p className="text-base font-medium text-text-light">
                             Precisa de rede
                           </p>
@@ -1165,8 +1160,8 @@ function ReservationDetails() {
       </section>
 
       {showCreateSticky ? (
-        <div className="mpn-action-bar z-20 shrink-0 border-t border-text-light/10 bg-master/95 px-4 pt-3 backdrop-blur-sm">
-          <div className="mx-auto w-full max-w-lg lg:max-w-3xl">
+        <div className="mpn-action-bar z-20 shrink-0 bg-master px-3 pt-3">
+          <div className="mx-auto w-full max-w-6xl">
             <button
               type="submit"
               form="reservation-create-form"
@@ -1184,8 +1179,8 @@ function ReservationDetails() {
       ) : null}
 
       {showSaveSticky || showCancelSticky ? (
-        <div className="mpn-action-bar z-20 shrink-0 border-t border-text-light/10 bg-master/95 px-4 pt-3 backdrop-blur-sm">
-          <div className="mx-auto flex w-full max-w-lg flex-col gap-2 lg:max-w-3xl">
+        <div className="mpn-action-bar z-20 shrink-0 bg-master px-3 pt-3">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2">
             {showSaveSticky ? (
               <button
                 type="submit"
@@ -1221,7 +1216,7 @@ function ReservationDetails() {
           <button
             type="button"
             aria-label="Fechar"
-            className="absolute inset-0 bg-black/75"
+            className="absolute inset-0 bg-black/60"
             disabled={loading}
             onClick={() => {
               if (!loading) setShowInfoCustomer(false);
@@ -1232,7 +1227,7 @@ function ReservationDetails() {
             aria-modal="true"
             aria-labelledby={contactTitleId}
             aria-busy={loading || undefined}
-            className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 shadow-2xl sm:rounded-3xl sm:p-6"
+            className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-2xl bg-master-light p-5 sm:rounded-2xl sm:p-6"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
             <div className="mb-4 flex items-start justify-between gap-3">

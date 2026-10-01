@@ -9,7 +9,7 @@ function OnboardingFooter() {
         onClick={() => {
           void logoutAndRedirect({ keepOnboardingDraft: true });
         }}
-        className="text-base font-semibold text-text-light/55 underline-offset-2 hover:text-text-light/80 hover:underline"
+        className="text-base font-semibold text-text-light/55 underline-offset-2 hover:text-text-light/70 hover:underline"
       >
         Sair
       </button>

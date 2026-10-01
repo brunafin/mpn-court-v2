@@ -34,7 +34,7 @@ function Select({
   disabled = false,
   placeholder = "Selecione...",
 }: ISelectProps) {
-  const isDark = mode === "dark";
+  void mode;
   const hasValue = value !== undefined && value !== null && value !== "";
 
   return (
@@ -42,13 +42,11 @@ function Select({
       {title && (
         <label
           htmlFor={name}
-          className={`mb-2 text-base font-semibold leading-6 ${
-            isDark ? "text-text-light" : "text-neutral-800"
-          }`}
+          className="mb-2 text-base font-semibold leading-6 text-text-light"
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue" aria-hidden="true">
+            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -70,12 +68,8 @@ function Select({
           className={`w-full min-h-14 appearance-none rounded-xl px-4 py-3.5 pr-12 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out
             focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
             disabled:cursor-not-allowed disabled:opacity-60
-            ${
-              isDark
-                ? "mpn-field-dark border-0 bg-master text-text-light focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light"
-                : "border border-neutral-300 bg-neutral-100 text-neutral-800 hover:border-neutral-400 focus-visible:ring-neutral-400 focus-visible:ring-offset-neutral-100"
-            }
-            ${!hasValue ? (isDark ? "font-normal text-text-light/40" : "font-normal text-neutral-400") : ""}
+            mpn-field-dark border-0 bg-master text-text-light focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light
+            ${!hasValue ? "font-normal text-text-light/55" : ""}
           `}
         >
           <option value="" disabled={required}>
@@ -91,9 +85,7 @@ function Select({
         <MdKeyboardArrowDown
           size={28}
           aria-hidden
-          className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 ${
-            isDark ? "text-text-light" : "text-neutral-600"
-          } ${disabled ? "opacity-50" : ""}`}
+          className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-text-light ${disabled ? "opacity-50" : ""}`}
         />
       </div>
     </div>

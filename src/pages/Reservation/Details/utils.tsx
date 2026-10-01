@@ -88,7 +88,7 @@ export function CourtSummaryCard({
         {name}
       </p>
       {meta.length > 0 ? (
-        <p className="mt-0.5 text-sm leading-snug text-text-light/65">
+        <p className="mt-0.5 text-base leading-snug text-text-light/70">
           {meta.join(" · ")}
         </p>
       ) : null}
@@ -111,20 +111,20 @@ export function getStatusAccent(status?: ReservationStatusEnum | null) {
     case ReservationStatusEnum.FIXED:
       return {
         surface: "bg-accent-purple/20",
-        text: "text-accent-purple-bright",
-        iconBg: "bg-accent-purple text-white",
+        text: "text-accent-purple-soft",
+        iconBg: "bg-accent-purple text-text-light",
       };
     case ReservationStatusEnum.INACTIVE:
       return {
         surface: "bg-danger-400/20",
-        text: "text-danger-bright",
-        iconBg: "bg-danger-400 text-white",
+        text: "text-danger-soft",
+        iconBg: "bg-danger-600 text-text-light",
       };
     case ReservationStatusEnum.RESERVED:
       return {
         surface: "bg-accent-blue/20",
-        text: "text-accent-blue-bright",
-        iconBg: "bg-accent-blue text-white",
+        text: "text-accent-blue-soft",
+        iconBg: "bg-accent-blue text-text-light",
       };
     case ReservationStatusEnum.AVAILABLE:
       return {
@@ -209,8 +209,8 @@ function ContactCard({
     <div
       className={
         embedded
-          ? "flex min-h-14 items-center gap-3 border-t border-text-light/10 px-4 py-3.5"
-          : "flex min-h-14 items-center gap-3 rounded-2xl bg-master-light px-4 py-3.5"
+          ? "flex min-h-14 items-center gap-3 px-4 py-3.5"
+          : "flex min-h-14 items-center gap-3 rounded-xl bg-master-light px-4 py-3.5"
       }
     >
       <div className="min-w-0 flex-1">
@@ -232,7 +232,7 @@ function ContactCard({
             </a>
           </p>
         ) : (
-          <p className="mt-0.5 text-base font-medium leading-snug text-text-light/80">
+          <p className="mt-0.5 text-base font-medium leading-snug text-text-light/70">
             Sem telefone
           </p>
         )}
@@ -310,7 +310,7 @@ export function getMeanByStatus(
       <div
         role="group"
         aria-label={ariaSummary}
-        className={`mb-5 overflow-hidden rounded-2xl ${accent.surface}`}
+        className={`mb-5 overflow-hidden rounded-xl ${accent.surface}`}
       >
         <div className="flex min-h-16 items-center gap-3 px-4 py-4">
           <div
@@ -358,7 +358,7 @@ export function getMeanByStatus(
       <div
         role="group"
         aria-label={ariaSummary}
-        className={`rounded-2xl px-4 py-4 ${accent.surface}`}
+        className={`rounded-xl px-4 py-4 ${accent.surface}`}
       >
         <div className="flex items-start gap-3">
           <div
@@ -452,7 +452,7 @@ export function renderButtonByStatus(
                 size: "md",
                 fullWidth: false,
                 className:
-                  "border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
+                  "border-danger-soft/70 text-danger-soft hover:bg-danger-400/10 focus-visible:outline-danger-soft",
               })}
             >
               <MdNotInterested size={18} className="shrink-0" aria-hidden />
@@ -485,7 +485,7 @@ export function renderButtonByStatus(
             variant: "secondary",
             size: "md",
             className:
-              "border-accent-purple text-accent-purple hover:bg-accent-purple/10 focus-visible:outline-accent-purple",
+              "border-accent-purple-soft text-accent-purple-soft hover:bg-accent-purple/10 focus-visible:outline-accent-purple-soft",
           })}
         >
           <StatusIcons.fixed size={20} className="shrink-0" aria-hidden />
@@ -505,7 +505,7 @@ export function renderButtonByStatus(
               size: "md",
               fullWidth: false,
               className:
-                "border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
+                "border-danger-soft/70 text-danger-soft hover:bg-danger-400/10 focus-visible:outline-danger-soft",
             })}
           >
             <MdNotInterested size={18} className="shrink-0" aria-hidden />
@@ -522,7 +522,7 @@ export function renderButtonByStatus(
             size: "md",
             fullWidth: false,
             className:
-              "border-danger-400/70 text-danger-400 hover:bg-danger-400/10 focus-visible:outline-danger-400",
+              "border-danger-soft/70 text-danger-soft hover:bg-danger-400/10 focus-visible:outline-danger-soft",
           })}
         >
           <MdNotInterested size={18} className="shrink-0" aria-hidden />

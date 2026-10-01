@@ -58,7 +58,7 @@ function ForgotPassword() {
 
       <div className="relative z-10 my-auto w-full max-w-md">
         <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
-          <div className="mb-3 flex w-32 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-4 sm:w-40 sm:rounded-2xl sm:p-2">
+          <div className="mb-3 flex w-32 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-4 sm:w-40 sm:rounded-xl sm:p-2">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -76,7 +76,7 @@ function ForgotPassword() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl bg-master-light p-4 sm:p-6"
+          className="rounded-xl bg-master-light p-4 sm:p-6"
           noValidate
           aria-busy={loading || undefined}
         >

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { ReactNode, useEffect, useId, useRef } from "react";
 import { BsX } from "react-icons/bs";
 import { buttonClassName, ButtonVariant } from "../Button";
 
@@ -7,7 +7,7 @@ export type ConfirmTone = "danger" | "primary" | "neutral" | "success";
 type ConfirmSheetProps = {
   isOpen: boolean;
   title: string;
-  description: string;
+  description: ReactNode;
   confirmLabel: string;
   cancelLabel?: string;
   tone?: ConfirmTone;
@@ -41,7 +41,9 @@ function ConfirmSheet({
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
+  const calmDanger = tone === "danger" && !alertOnly;
 
   onCloseRef.current = onClose;
 
@@ -52,6 +54,10 @@ function ConfirmSheet({
     document.body.style.overflow = "hidden";
 
     const focusTimer = window.setTimeout(() => {
+      if (tone === "danger" && !alertOnly) {
+        cancelRef.current?.focus();
+        return;
+      }
       confirmRef.current?.focus();
     }, 50);
 
@@ -68,7 +74,7 @@ function ConfirmSheet({
       document.removeEventListener("keydown", onKeyDown);
       window.clearTimeout(focusTimer);
     };
-  }, [isOpen, loading]);
+  }, [isOpen, loading, tone, alertOnly]);
 
   if (!isOpen) return null;
 
@@ -80,7 +86,7 @@ function ConfirmSheet({
       <button
         type="button"
         aria-label="Fechar"
-        className="absolute inset-0 bg-black/75"
+        className="absolute inset-0 bg-black/60"
         onClick={() => {
           if (!loading) onClose();
         }}
@@ -94,52 +100,35 @@ function ConfirmSheet({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         aria-busy={loading}
-        className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 text-text-light shadow-2xl sm:rounded-3xl sm:p-6"
+        className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-2xl bg-master p-5 text-text-light shadow-[0_24px_64px_rgba(0,0,0,0.55)] sm:rounded-2xl sm:p-6"
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
 
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2
-              id={titleId}
-              className="text-xl font-semibold leading-7 text-text-light"
-            >
-              {title}
-            </h2>
-            <p
-              id={descriptionId}
-              className="mt-2 text-base leading-6 text-text-light/75"
-            >
-              {description}
-            </p>
-          </div>
+        <div className="mb-1.5 flex items-start justify-between gap-3">
+          <h2
+            id={titleId}
+            className="min-w-0 text-lg font-semibold leading-6 text-text-light"
+          >
+            {title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
             aria-label="Fechar"
-            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
           >
             <BsX size={24} aria-hidden />
           </button>
         </div>
+        <div
+          id={descriptionId}
+          className="mb-5 text-base leading-5 text-text-light/70"
+        >
+          {description}
+        </div>
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          {!alertOnly && (
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className={buttonClassName({
-                variant: "ghost",
-                size: "lg",
-                fullWidth: false,
-                className: "w-full bg-master sm:w-auto",
-              })}
-            >
-              {cancelLabel}
-            </button>
-          )}
+        <div className="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
           <button
             ref={confirmRef}
             type="button"
@@ -147,15 +136,30 @@ function ConfirmSheet({
             onClick={() => {
               void onConfirm();
             }}
-            className={buttonClassName({
-              variant: toneToVariant[tone],
-              size: "lg",
-              fullWidth: false,
-              className: "w-full sm:w-auto sm:min-w-44",
-            })}
+            className={
+              calmDanger
+                ? "mpn-tap inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-master-light px-4 text-base font-semibold text-danger-soft transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-44"
+                : buttonClassName({
+                    variant: toneToVariant[tone],
+                    size: "md",
+                    fullWidth: false,
+                    className: "w-full sm:w-auto sm:min-w-44",
+                  })
+            }
           >
             {loading ? "Aguarde…" : confirmLabel}
           </button>
+          {!alertOnly && (
+            <button
+              ref={cancelRef}
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="mpn-tap inline-flex min-h-11 w-full items-center justify-center rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {cancelLabel}
+            </button>
+          )}
         </div>
       </div>
     </div>

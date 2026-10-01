@@ -27,12 +27,12 @@ function CheckboxGroup({
   options,
   value,
   onChange,
-  mode = "light",
+  mode = "dark",
   required,
   error,
   className,
 }: ICheckboxGroupProps) {
-  const isDark = mode === "dark";
+  void mode;
   const errorId = error ? `${name}-error` : undefined;
 
   const toggle = (optionValue: string) => {
@@ -50,13 +50,11 @@ function CheckboxGroup({
     >
       {title && (
         <legend
-          className={`mb-2 text-base font-semibold leading-6 ${
-            isDark ? "text-text-light" : "text-neutral-800"
-          }`}
+          className="mb-2 text-base font-semibold leading-6 text-text-light"
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue" aria-hidden="true">
+            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -74,11 +72,9 @@ function CheckboxGroup({
                 ${
                   checked
                     ? "border-accent-blue bg-accent-blue/15"
-                    : isDark
-                      ? "border-white/12 bg-master hover:border-white/25"
-                      : "border-neutral-300 bg-neutral-100 hover:border-neutral-400"
+                    : "border-text-light/15 bg-master hover:border-text-light/30"
                 }
-                ${isDark ? "text-text-light" : "text-neutral-800"}`}
+                text-text-light`}
             >
               <input
                 type="checkbox"
@@ -93,10 +89,8 @@ function CheckboxGroup({
                 className={`flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors
                   ${
                     checked
-                      ? "border-accent-blue bg-accent-blue text-white"
-                      : isDark
-                        ? "border-white/30"
-                        : "border-neutral-400"
+                      ? "border-accent-blue bg-accent-blue text-text-light"
+                      : "border-text-light/45"
                   }`}
               >
                 {checked && <MdCheck size={18} />}
@@ -111,7 +105,7 @@ function CheckboxGroup({
         <p
           id={errorId}
           role="alert"
-          className="mt-1.5 text-base font-medium text-danger-400"
+          className="mt-1.5 text-base font-medium text-danger-soft"
         >
           {error}
         </p>

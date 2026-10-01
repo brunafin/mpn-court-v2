@@ -4,6 +4,7 @@ import {
   MdOutlineHome,
   MdOutlineInfo,
   MdOutlineLogout,
+  MdOutlineNotifications,
   MdOutlinePayments,
 } from "react-icons/md";
 import { GiSoccerField } from "react-icons/gi";
@@ -13,20 +14,20 @@ import {
   useCompanyBranding,
   useCompanyCapabilities,
 } from "../../contexts/CompanyBrandingContext";
+import ArenaHomeLink from "../ArenaHomeLink";
 import CompanyAvatar from "../CompanyAvatar";
 import {
   billingNavDescription,
   billingNavLabel,
   billingNavPath,
 } from "../../utils/billingNav";
+import ThemeModeSwitch from "../ThemeModeSwitch";
 
 type NavItem = {
   to: string;
   label: string;
   description: string;
   Icon: typeof MdOutlineHome;
-  iconClass: string;
-  iconBgClass: string;
   match: (path: string) => boolean;
 };
 
@@ -44,17 +45,20 @@ function buildNavItems(
       label: "Início",
       description: "Reservas do dia",
       Icon: MdOutlineHome,
-      iconClass: "text-accent-blue",
-      iconBgClass: "bg-accent-blue/15",
       match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+    },
+    {
+      to: "/notificacoes",
+      label: "Lembretes",
+      description: "Avisos do dia",
+      Icon: MdOutlineNotifications,
+      match: (path) => path.startsWith("/notificacoes"),
     },
     {
       to: "/quadras",
       label: "Quadras",
       description: "Ativar no site",
       Icon: GiSoccerField,
-      iconClass: "text-accent-blue",
-      iconBgClass: "bg-accent-blue/15",
       match: (path) => path.startsWith("/quadras"),
     },
     {
@@ -62,8 +66,6 @@ function buildNavItems(
       label: "Minhas informações",
       description: "Dados da conta",
       Icon: MdOutlineInfo,
-      iconClass: "text-accent-blue",
-      iconBgClass: "bg-accent-blue/15",
       match: (path) => path.startsWith("/minhas-infos"),
     },
     {
@@ -71,8 +73,6 @@ function buildNavItems(
       label: billingNavLabel(effective),
       description: billingNavDescription(effective),
       Icon: MdOutlinePayments,
-      iconClass: "text-accent-blue",
-      iconBgClass: "bg-accent-blue/15",
       match: (path) =>
         path.startsWith("/mensalidades") || path.startsWith("/planos"),
     },
@@ -114,20 +114,15 @@ function Header() {
   }, [menuOpen]);
 
   const getNavLinkClass = (isActive: boolean) =>
-    `flex min-h-16 items-center gap-3 rounded-xl px-3 py-3 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+    `flex min-h-14 items-center gap-3 rounded-xl px-3 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
       isActive
-        ? "bg-master ring-1 ring-inset ring-accent-blue/40"
-        : "bg-master/60 hover:bg-master active:bg-master"
+        ? "bg-text-light/90 text-master"
+        : "text-text-light hover:bg-text-light/10"
     }`;
 
   return (
-    <header className="mpn-header-safe sticky top-0 z-20 flex min-h-16 shrink-0 items-center gap-3 bg-master px-4 lg:hidden">
-      <Link
-        to="/reservas"
-        className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-      >
-        <CompanyAvatar sizeClass="size-12" roundedClass="rounded-md" />
-      </Link>
+    <header className="mpn-header-safe sticky top-0 z-20 flex min-h-16 shrink-0 items-center gap-3 bg-master px-3 lg:hidden">
+      <ArenaHomeLink sizeClass="size-12" roundedClass="rounded-xl" />
 
       <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-text-light sm:text-lg">
         <Link
@@ -159,7 +154,7 @@ function Header() {
           <button
             type="button"
             aria-label="Fechar menu"
-            className="absolute inset-0 bg-black/75"
+            className="absolute inset-0 bg-black/60"
             onClick={() => setMenuOpen(false)}
           />
 
@@ -169,89 +164,76 @@ function Header() {
             aria-labelledby={titleId}
             className="relative z-10 flex h-full w-[min(100%,20rem)] flex-col bg-master text-text-light shadow-2xl"
           >
-            <div className="mpn-chrome-top px-4 pb-4">
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <CompanyAvatar
-                    sizeClass="size-16"
-                    roundedClass="rounded-lg"
-                    decorative
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-light/65">
-                      Menu
-                    </p>
-                    <h2
-                      id={titleId}
-                      className="truncate text-lg font-semibold text-text-light"
-                    >
-                      {companyName || "Navegação"}
-                    </h2>
-                  </div>
-                </div>
-                <button
-                  ref={closeButtonRef}
-                  type="button"
-                  onClick={() => setMenuOpen(false)}
-                  aria-label="Fechar"
-                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-                >
-                  <BsX size={24} aria-hidden />
-                </button>
-              </div>
+            <div className="mpn-chrome-top flex items-center gap-3 px-3 pb-3">
+              <CompanyAvatar
+                sizeClass="size-12"
+                roundedClass="rounded-xl"
+                decorative
+              />
+              <h2
+                id={titleId}
+                className="min-w-0 flex-1 truncate text-base font-semibold text-text-light"
+              >
+                {companyName || "Navegação"}
+              </h2>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Fechar"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              >
+                <BsX size={24} aria-hidden />
+              </button>
             </div>
 
             <nav
               aria-label="Menu principal"
-              className="flex-1 overflow-y-auto px-4 py-4"
+              className="flex-1 overflow-y-auto px-3 py-2"
             >
-              <p className="mb-2 px-1 text-sm font-semibold uppercase tracking-wide text-text-light/55">
-                Navegação
-              </p>
-              <ul className="flex flex-col gap-2">
-                {navItems.map(
-                  ({
-                    to,
-                    label,
-                    description,
-                    Icon,
-                    iconClass,
-                    iconBgClass,
-                    match,
-                  }) => {
-                    const isActive = match(location.pathname);
-                    return (
-                      <li key={to}>
-                        <Link
-                          to={to}
-                          aria-current={isActive ? "page" : undefined}
-                          className={getNavLinkClass(isActive)}
-                        >
+              <ul className="flex flex-col gap-1.5">
+                {navItems.map(({ to, label, description, Icon, match }) => {
+                  const isActive = match(location.pathname);
+                  return (
+                    <li key={to}>
+                      <Link
+                        to={to}
+                        aria-current={isActive ? "page" : undefined}
+                        className={getNavLinkClass(isActive)}
+                      >
+                        <Icon
+                          size={20}
+                          className={`shrink-0 ${
+                            isActive ? "text-master" : "text-text-light/70"
+                          }`}
+                          aria-hidden
+                        />
+                        <span className="min-w-0">
+                          <span className="block truncate text-base font-semibold leading-5">
+                            {label}
+                          </span>
                           <span
-                            className={`flex size-11 shrink-0 items-center justify-center rounded-full ${iconBgClass} ${iconClass}`}
+                            className={`block truncate text-base ${
+                              isActive ? "text-master/70" : "text-text-light/70"
+                            }`}
                           >
-                            <Icon size={22} aria-hidden />
+                            {description}
                           </span>
-                          <span className="min-w-0">
-                            <span className="block text-lg font-semibold leading-6 text-text-light">
-                              {label}
-                            </span>
-                            <span className="block truncate text-sm text-text-light/65">
-                              {description}
-                            </span>
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  }
-                )}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
 
-            <div className="border-t border-text-light/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+              <div className="mb-2 px-1">
+                <ThemeModeSwitch />
+              </div>
               <button
                 type="button"
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-master-light px-4 text-base font-semibold text-text-light transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                className="mpn-tap flex min-h-14 w-full items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
                 onClick={() => {
                   void logoutAndRedirect();
                 }}

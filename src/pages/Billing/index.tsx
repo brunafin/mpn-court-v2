@@ -1,10 +1,11 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MdContentCopy, MdOutlinePayments } from "react-icons/md";
+import { MdContentCopy } from "react-icons/md";
 import AppLayout from "../../components/AppLayout";
 import { buttonClassName } from "../../components/Button";
+import EmptyState from "../../components/EmptyState";
 import ManualPixPay from "../../components/ManualPixPay";
-import { PageEyebrow, PageTitle } from "../../components/PageTitle";
+import { PageEyebrow } from "../../components/PageTitle";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useLoading } from "../../hooks/useLoading";
 import {
@@ -240,25 +241,21 @@ function BillingPage() {
 
   return (
     <AppLayout>
-      <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 lg:px-8">
+      <main className="mx-auto flex w-full max-w-2xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-4 lg:px-8">
         <div>
-          <PageEyebrow>Financeiro</PageEyebrow>
-          <PageTitle>Mensalidades</PageTitle>
-          <p className="mt-1 text-sm text-text-light/60">
-            Pagamento da mensalidade da plataforma.
-          </p>
+          <PageEyebrow>Mensalidades</PageEyebrow>
         </div>
 
         {loading && !summary ? (
-          <p className="text-text-light/60">Carregando…</p>
+          <p className="text-text-light/70">Carregando…</p>
         ) : null}
 
         {summary?.isTrial ? (
-          <section className="rounded-2xl bg-master-light px-4 py-5">
+          <section className="rounded-xl bg-master-light px-4 py-5">
             <p className="text-base font-semibold text-text-light">
               Teste grátis ativo
             </p>
-            <p className="mt-1 text-sm text-text-light/65">
+            <p className="mt-1 text-base text-text-light/70">
               Nenhuma cobrança enquanto o teste grátis estiver válido.
               {summary.dayDue
                 ? ` Depois do teste grátis, o vencimento fica no dia ${summary.dayDue}.`
@@ -268,21 +265,19 @@ function BillingPage() {
         ) : null}
 
         {openPayment ? (
-          <section className="rounded-2xl bg-master-light px-4 py-5">
+          <section className="rounded-xl bg-master-light px-4 py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-text-light/50">
-                  Atual a pagar
-                </p>
-                <p className="mt-1 text-lg font-semibold capitalize text-text-light">
+                <p className="text-base text-text-light/55">A pagar</p>
+                <p className="mt-1 text-base font-semibold text-text-light">
                   {formatMonthYear(openPayment.dueDate)}
                 </p>
-                <p className="mt-1 text-sm text-text-light/65">
+                <p className="mt-1 text-base text-text-light/70">
                   Vencimento {formatDue(openPayment.dueDate)} ·{" "}
                   {statusLabel(openPayment.status)}
                 </p>
               </div>
-              <p className="text-xl font-semibold text-accent-green">
+              <p className="text-base font-semibold text-text-light">
                 {formatCurrencyBRL(openPayment.value)}
               </p>
             </div>
@@ -311,12 +306,12 @@ function BillingPage() {
                   />
                 ) : null}
                 {canGeneratePix && !showAutoPix && !manualPix ? (
-                  <p className="mt-4 text-sm text-text-light/60">
+                  <p className="mt-4 text-base text-text-light/70">
                     PIX automático indisponível no momento. Contate o suporte.
                   </p>
                 ) : null}
                 {caps.ready && !canGeneratePix ? (
-                  <p className="mt-4 text-sm text-text-light/60">
+                  <p className="mt-4 text-base text-text-light/70">
                     Pagamento disponível apenas para planos ativos.
                   </p>
                 ) : null}
@@ -329,7 +324,7 @@ function BillingPage() {
                 className="mt-4 space-y-3"
                 aria-busy={generating || undefined}
               >
-                <p className="text-sm text-text-light/70">{payerHint}</p>
+                <p className="text-base text-text-light/70">{payerHint}</p>
                 {needEmail ? (
                   <input
                     type="email"
@@ -338,7 +333,7 @@ function BillingPage() {
                     value={email}
                     disabled={generating}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-11 w-full rounded-xl bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 ) : null}
                 {needCpf ? (
@@ -350,7 +345,7 @@ function BillingPage() {
                     value={cpf}
                     disabled={generating}
                     onChange={(e) => setCpf(formatCpfMask(e.target.value))}
-                    className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-11 w-full rounded-xl bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 ) : null}
                 <button
@@ -363,7 +358,7 @@ function BillingPage() {
                 <button
                   type="button"
                   disabled={generating}
-                  className="block text-sm font-semibold text-accent-blue-soft disabled:opacity-50"
+                  className="block text-base font-semibold text-accent-blue-soft disabled:opacity-50"
                   onClick={resetPayUi}
                 >
                   Cancelar
@@ -374,7 +369,7 @@ function BillingPage() {
             {paying && pix && !needPayerData ? (
               <div className="mt-4 space-y-4">
                 {pix.paid ? (
-                  <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-sm font-semibold text-accent-green">
+                  <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-base font-semibold text-accent-green">
                     Pagamento confirmado. Obrigado!
                   </p>
                 ) : (
@@ -386,14 +381,14 @@ function BillingPage() {
                         className="mx-auto size-48 rounded-xl bg-white p-2"
                       />
                     ) : null}
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-light/50">
+                    <label className="block text-base text-text-light/55">
                       PIX copia e cola
                     </label>
                     <textarea
                       readOnly
                       value={pix.pixCopyPaste ?? ""}
                       rows={3}
-                      className="w-full rounded-xl border border-text-light/15 bg-master px-3 py-2 text-sm text-text-light"
+                      className="w-full rounded-xl bg-master px-3 py-2 text-base text-text-light"
                     />
                     <button
                       type="button"
@@ -405,7 +400,7 @@ function BillingPage() {
                         {copied ? "Copiado!" : "Copiar código PIX"}
                       </span>
                     </button>
-                    <p className="text-center text-xs text-text-light/50">
+                    <p className="text-center text-base text-text-light/55">
                       Após pagar, a confirmação aparece
                       automaticamente em alguns segundos.
                     </p>
@@ -421,7 +416,7 @@ function BillingPage() {
                 )}
                 <button
                   type="button"
-                  className="text-sm font-semibold text-accent-blue-soft"
+                  className="text-base font-semibold text-accent-blue-soft"
                   onClick={resetPayUi}
                 >
                   Fechar
@@ -430,23 +425,10 @@ function BillingPage() {
             ) : null}
           </section>
         ) : !summary?.isTrial ? (
-          <section className="rounded-2xl bg-master-light px-4 py-5">
-            <div className="flex items-center gap-3">
-              <MdOutlinePayments
-                size={28}
-                className="text-accent-blue-soft"
-                aria-hidden
-              />
-              <div>
-                <p className="font-semibold text-text-light">
-                  Nenhuma mensalidade em aberto
-                </p>
-                <p className="text-sm text-text-light/60">
-                  Quando houver cobrança, ela aparece aqui.
-                </p>
-              </div>
-            </div>
-          </section>
+          <EmptyState
+            title="Nenhuma mensalidade em aberto"
+            description="Quando houver cobrança, ela aparece aqui."
+          />
         ) : null}
       </main>
     </AppLayout>

@@ -43,7 +43,7 @@ const toastMeta: Record<
 > = {
   error: {
     Icon: MdErrorOutline,
-    barClass: "bg-danger-400",
+    barClass: "bg-danger-soft",
     iconWrapClass: "bg-danger-400/20 text-danger-soft",
     label: "Erro",
   },
@@ -109,7 +109,7 @@ export const ErrorsProvider = ({ children }: { children: ReactNode }) => {
             <div
               key={e.id}
               role="status"
-              className="pointer-events-auto flex w-full max-w-md overflow-hidden rounded-2xl bg-master-light shadow-[0_8px_28px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-text-light/10"
+              className="pointer-events-auto flex w-full max-w-md overflow-hidden rounded-xl bg-master-light shadow-[0_8px_28px_rgba(0,0,0,0.45)]"
             >
               <span className={`w-1 shrink-0 ${meta.barClass}`} aria-hidden />
               <div className="flex min-w-0 flex-1 items-start gap-3 px-3.5 py-3.5">
@@ -120,7 +120,7 @@ export const ErrorsProvider = ({ children }: { children: ReactNode }) => {
                   <Icon size={22} />
                 </span>
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-sm font-semibold text-text-light/55">
+                  <p className="text-base font-semibold text-text-light/55">
                     {meta.label}
                   </p>
                   <p className="mt-0.5 text-base font-medium leading-6 text-text-light">

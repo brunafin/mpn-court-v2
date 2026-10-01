@@ -18,9 +18,9 @@ import { buttonClassName } from "../../components/Button";
 import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
-import { PageEyebrow } from "../../components/PageTitle";
 import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import ConfirmSheet from "../../components/ConfirmSheet";
 import EditCourtSheet from "./EditCourtSheet";
 import {
   resolveCompanyPortalStatus,
@@ -37,13 +37,58 @@ function formatFloorLabel(floor: string | null | undefined): string | null {
   return courtFloorLabel(floor as CourtFloor) || floor;
 }
 
+function CourtVisibilityDetails({ court }: { court: IInfoCourt }) {
+  const floor = formatFloorLabel(court.floor);
+  const sports = court.sports.length > 0 ? court.sports.join(", ") : null;
+  const structure = [
+    court.isCovered === false ? "Descoberta" : "Coberta",
+    court.isCanHaveNet ? "Pode ter rede" : "Sem rede",
+  ].join(" · ");
+  const price =
+    court.price != null && Number.isFinite(court.price)
+      ? `${formatCurrencyBRL(court.price)}/hora`
+      : null;
+  const rows = [
+    ["Piso", floor],
+    ["Esportes", sports],
+    ["Estrutura", structure],
+    ["Preço", price],
+    ["No site agora", court.show ? "Sim" : "Não"],
+  ].filter((row): row is [string, string] => Boolean(row[1]));
+
+  return (
+    <>
+      <p>
+        {court.show
+          ? `${court.name} deixa de aparecer no site. A agenda e as reservas continuam.`
+          : `${court.name} passa a aparecer no site. O cliente vê os horários livres.`}
+      </p>
+      <div className="-mx-5 mt-4 bg-master-light px-5 py-1 sm:-mx-6 sm:px-6">
+        <p className="pb-1 pt-2.5 text-base font-semibold text-text-light">
+          {court.name}
+        </p>
+        <dl>
+          {rows.map(([label, value]) => (
+            <div
+              key={label}
+              className="flex min-h-11 items-center justify-between gap-4"
+            >
+              <dt>{label}</dt>
+              <dd className="text-right font-semibold text-text-light">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </>
+  );
+}
+
 function CourtCard({
   name,
   floorLabel,
   sportsLabel,
   price,
   show,
-  portalLabel,
   portalOnSite,
   portalReason,
   coveredLabel,
@@ -57,7 +102,6 @@ function CourtCard({
   sportsLabel?: string | null;
   price?: number | null;
   show?: boolean;
-  portalLabel?: string;
   portalOnSite?: boolean;
   portalReason?: string | null;
   coveredLabel?: string | null;
@@ -66,87 +110,48 @@ function CourtCard({
   onToggleShow?: () => void;
   onEdit?: () => void;
 }) {
+  const meta = [
+    floorLabel,
+    sportsLabel,
+    coveredLabel,
+    price != null && Number.isFinite(price)
+      ? `${formatCurrencyBRL(price)}/hora`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <li className="rounded-xl bg-master-light px-4 py-3.5">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-lg font-semibold text-text-light">{name}</p>
-        {portalLabel != null && (
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-              portalOnSite
-                ? "bg-accent-green/20 text-accent-green"
-                : "bg-text-light/10 text-text-light/55"
-            }`}
-          >
-            {portalLabel}
-          </span>
-        )}
+    <li className="flex min-h-14 items-center gap-3 rounded-xl bg-master-light px-3 py-2.5">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-semibold text-text-light">{name}</p>
+        {meta ? (
+          <p className="truncate text-base text-text-light">{meta}</p>
+        ) : null}
+        {portalReason && !portalOnSite ? (
+          <p className="truncate text-base text-text-light">{portalReason}</p>
+        ) : null}
       </div>
-      {portalReason && !portalOnSite ? (
-        <p className="mt-1.5 text-sm leading-snug text-text-light/55">
-          {portalReason}
-        </p>
-      ) : null}
-      <dl className="mt-2 space-y-1.5 text-base text-text-light/70">
-        {floorLabel && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Piso</dt>
-            <dd className="text-text-light/80">{floorLabel}</dd>
-          </div>
-        )}
-        {sportsLabel && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Esportes</dt>
-            <dd className="text-text-light/80">{sportsLabel}</dd>
-          </div>
-        )}
-        {coveredLabel && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Estrutura</dt>
-            <dd className="text-text-light/80">{coveredLabel}</dd>
-          </div>
-        )}
-        {price != null && Number.isFinite(price) && (
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-medium text-text-light/55">Preço padrão</dt>
-            <dd className="font-semibold text-text-light">
-              {formatCurrencyBRL(price)}/hora
-            </dd>
-          </div>
-        )}
-      </dl>
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        {SHOW_EDIT_COURT_DATA && canMutate && onEdit && (
+      <div className="flex shrink-0 items-center gap-3">
+        {SHOW_EDIT_COURT_DATA && canMutate && onEdit ? (
           <button
             type="button"
             onClick={onEdit}
-            className={buttonClassName({
-              variant: "secondary",
-              size: "md",
-              className: "sm:flex-1",
-            })}
+            className="text-base text-text-light/55"
           >
-            Editar dados
+            Editar
           </button>
-        )}
-        {onToggleShow && (
+        ) : null}
+        {onToggleShow ? (
           <button
             type="button"
             disabled={toggling}
             onClick={onToggleShow}
-            className={buttonClassName({
-              variant: show ? "secondary" : "primary",
-              size: "md",
-              className: "sm:flex-1",
-            })}
+            className="mpn-tap inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-master px-3.5 text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {toggling
-              ? "Salvando…"
-              : show
-                ? "Ocultar do site"
-                : "Ativar no site"}
+            {toggling ? "…" : show ? "Ocultar" : "Ativar"}
           </button>
-        )}
+        ) : null}
       </div>
     </li>
   );
@@ -163,6 +168,9 @@ function CourtsPage() {
   const [editingCourt, setEditingCourt] = useState<IInfoCourt | null>(null);
   const [addingCourt, setAddingCourt] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [pendingVisibility, setPendingVisibility] = useState<IInfoCourt | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -220,6 +228,7 @@ function CourtsPage() {
           ? "Quadra ativada no site."
           : "Quadra oculta do site.",
       });
+      setPendingVisibility(null);
     } catch (error) {
       console.error(error);
     } finally {
@@ -241,11 +250,15 @@ function CourtsPage() {
 
   return (
     <AppLayout>
-      <main className="mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto bg-master px-4 pb-10 pt-5 text-text-light lg:max-w-5xl lg:px-8 lg:pt-6">
+      <main className="mx-auto min-h-0 w-full max-w-6xl flex-1 overflow-y-auto bg-master px-3 pb-10 pt-4 text-text-light lg:px-8 lg:pt-6">
         <div>
-          <PageEyebrow className="mb-2">Minhas quadras</PageEyebrow>
-          <p className="text-base leading-6 text-text-light/70">
-            Ative no site as quadras que quer divulgar.
+          <h1 className="text-xl font-semibold tracking-tight text-text-light">
+            Quadras
+          </h1>
+          <p className="mt-1 text-base leading-5 text-text-light">
+            {offSiteNeedsCourts
+              ? "Marque na agenda o que já está ocupado e ative a quadra."
+              : "Ative no site as que quer divulgar."}
           </p>
           {SHOW_ADD_COURT && caps.canMutate && publicId ? (
             <button
@@ -266,21 +279,14 @@ function CourtsPage() {
 
         {isInitialLoading ? (
           <div
-            className="mt-5 animate-pulse space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0"
+            className="mt-4 animate-pulse space-y-1.5"
             aria-label="Carregando quadras"
           >
-            <div className="h-36 rounded-2xl bg-master-light/70" />
-            <div className="h-36 rounded-2xl bg-master-light/70" />
+            <div className="h-14 rounded-xl bg-master-light/70" />
+            <div className="h-14 rounded-xl bg-master-light/70" />
           </div>
         ) : (
-          <section className="mt-5">
-            {offSiteNeedsCourts && (
-              <p className="mb-3 rounded-lg bg-master-light px-3 py-2 text-sm leading-5 text-text-light/70">
-                Marque na agenda o que já está ocupado e ative a quadra no site.
-                Depois compartilhe o link com clientes no WhatsApp, Instagram ou
-                grupos — eles veem só os horários livres.
-              </p>
-            )}
+          <section className="mt-4">
             {loadError && !info ? (
               <EmptyState
                 title="Não foi possível carregar as quadras."
@@ -296,11 +302,9 @@ function CourtsPage() {
                 }
               />
             ) : courts.length === 0 ? (
-              <p className="rounded-2xl bg-master-light px-4 py-5 text-base text-text-light/65">
-                Nenhuma quadra cadastrada.
-              </p>
+              <EmptyState title="Nenhuma quadra cadastrada." />
             ) : (
-              <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+              <ul className="space-y-1.5">
                 {courts.map((court) => {
                   const structureBits = [
                     court.isCovered === false ? "Descoberta" : "Coberta",
@@ -325,7 +329,6 @@ function CourtsPage() {
                       coveredLabel={structureBits.join(" · ")}
                       price={court.price}
                       show={court.show}
-                      portalLabel={courtPortal.label}
                       portalOnSite={courtPortal.onSite}
                       portalReason={
                         courtPortal.onSite ? null : courtPortal.reason
@@ -339,11 +342,7 @@ function CourtsPage() {
                       }
                       onToggleShow={
                         caps.canMutate
-                          ? () =>
-                              handleToggleCourtVisibility(
-                                court.publicId,
-                                !court.show,
-                              )
+                          ? () => setPendingVisibility(court)
                           : undefined
                       }
                     />
@@ -354,6 +353,40 @@ function CourtsPage() {
           </section>
         )}
       </main>
+
+      <ConfirmSheet
+        isOpen={pendingVisibility != null}
+        title={
+          pendingVisibility?.show
+            ? "Ocultar do site?"
+            : "Ativar no site?"
+        }
+        description={
+          pendingVisibility ? (
+            <CourtVisibilityDetails court={pendingVisibility} />
+          ) : (
+            ""
+          )
+        }
+        confirmLabel={
+          pendingVisibility?.show ? "Ocultar quadra" : "Ativar quadra"
+        }
+        tone={pendingVisibility?.show ? "danger" : "primary"}
+        loading={
+          pendingVisibility != null &&
+          togglingCourtId === pendingVisibility.publicId
+        }
+        onClose={() => {
+          if (!togglingCourtId) setPendingVisibility(null);
+        }}
+        onConfirm={() => {
+          if (!pendingVisibility) return;
+          return handleToggleCourtVisibility(
+            pendingVisibility.publicId,
+            !pendingVisibility.show,
+          );
+        }}
+      />
 
       <EditCourtSheet
         open={Boolean(editingCourt) || addingCourt}

@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
-import {
-  MdClose,
-  MdContentCopy,
-  MdOutlineInfo,
-  MdOutlinePhotoCamera,
-} from "react-icons/md";
+import { MdClose, MdOutlinePhotoCamera } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import {
   deleteCompanyPhoto,
@@ -37,9 +32,8 @@ import {
   isAllowedImageFile,
 } from "../../utils/imageUpload";
 import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
-import { buttonClassName } from "../../components/Button";
 import EditCompanySection from "./EditCompanySection";
-import PortalStatusBanner from "../../components/PortalStatusBanner";
+import { emptyStateActionClassName } from "../../components/EmptyState";
 import { resolveCompanyPortalStatus } from "../../utils/portalVisibility";
 import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
 
@@ -306,236 +300,199 @@ function RealInfo() {
     }
   };
 
+  const entitlement = caps.ready
+    ? caps.entitlement
+    : info?.capabilities?.entitlement;
+
   return (
     <AppLayout>
       <section
-        className={`mx-auto min-h-0 w-full max-w-lg flex-1 overflow-y-auto bg-master px-4 pb-10 pt-5 text-text-light transition-opacity lg:max-w-5xl lg:px-8 lg:pt-6 ${
+        className={`mx-auto min-h-0 w-full max-w-2xl flex-1 overflow-y-auto bg-master px-3 pb-10 pt-4 text-text-light transition-opacity lg:px-8 lg:pt-6 ${
           loading && info ? "opacity-80" : ""
         }`}
         aria-busy={loading}
       >
-        <PageEyebrow className="mb-5">Minhas informações</PageEyebrow>
+        <PageEyebrow>Minhas informações</PageEyebrow>
 
         {isInitialLoading ? (
-          <div
-            className="animate-pulse space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0"
-            aria-label="Carregando informações"
-          >
-            <div className="h-28 rounded-2xl bg-master-light/70 lg:col-span-2" />
-            <div className="h-48 rounded-2xl bg-master-light/70 lg:col-span-2" />
-            <div className="h-36 rounded-2xl bg-master-light/70" />
-            <div className="h-32 rounded-2xl bg-master-light/70" />
+          <div className="mt-6 animate-pulse space-y-6" aria-label="Carregando informações">
+            <div className="h-6 w-48 rounded bg-master-light/70" />
+            <div className="h-4 w-64 rounded bg-master-light/70" />
+            <div className="grid grid-cols-3 gap-2">
+              <div className="aspect-[4/3] rounded-xl bg-master-light/70" />
+              <div className="aspect-[4/3] rounded-xl bg-master-light/70" />
+              <div className="aspect-[4/3] rounded-xl bg-master-light/70" />
+            </div>
           </div>
         ) : (
-          <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-            <div className="rounded-2xl bg-master-light px-4 py-5 lg:col-span-2 lg:px-6">
-              <p className="text-base font-medium text-text-light/70">
-                Estabelecimento
+          <div className="mt-6 space-y-8">
+            <div>
+              <p className="text-xl font-semibold leading-7 text-text-light">
+                {companyName || info?.companyName || "—"}
               </p>
-              <div className="mt-3 min-w-0">
-                <p className="text-2xl font-bold leading-snug text-text-light">
-                  {companyName || info?.companyName || "—"}
+              {info?.companyPhone ? (
+                <p className="mt-1 text-base text-text-light/70">
+                  {formatPhoneMask(info.companyPhone)}
                 </p>
-                {info?.companyPhone && (
-                  <p className="mt-2 text-base text-text-light/70">
-                    {formatPhoneMask(info.companyPhone)}
+              ) : null}
+              {caps.ready || info ? (
+                <p className="mt-2 text-base leading-5 text-text-light/70">
+                  <span
+                    className={
+                      portalStatus.onSite
+                        ? "font-semibold text-accent-green"
+                        : "font-semibold text-text-light"
+                    }
+                  >
+                    {portalStatus.label}
+                  </span>
+                  {portalStatus.reason ? ` · ${portalStatus.reason}` : ""}
+                </p>
+              ) : null}
+              {offSiteNeedsCourts || offSiteNeedsPlan ? (
+                <div className="-ml-3 mt-1 flex flex-wrap">
+                  {offSiteNeedsCourts ? (
+                    <Link to="/quadras" className={emptyStateActionClassName()}>
+                      Ativar no site
+                    </Link>
+                  ) : null}
+                  {offSiteNeedsPlan ? (
+                    <Link
+                      to={billingNavPath(entitlement)}
+                      className={emptyStateActionClassName()}
+                    >
+                      Ver {billingNavLabel(entitlement).toLowerCase()}
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {publicArenaUrl ? (
+              <div>
+                <h3 className="text-base text-text-light/55">Link da quadra</h3>
+                <a
+                  href={publicArenaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block break-all text-base text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                >
+                  {publicArenaUrl}
+                </a>
+                {arenaPublished ? (
+                  <p className="mt-1 text-base leading-5 text-text-light/70">
+                    Envie no WhatsApp ou Instagram. O cliente vê os horários
+                    livres.
                   </p>
-                )}
-
-                {caps.ready || info ? (
-                  <PortalStatusBanner
-                    className="mt-4"
-                    status={portalStatus}
-                    showActivateCourtsCta={offSiteNeedsCourts}
-                    showBillingCta={offSiteNeedsPlan}
-                    entitlement={caps.ready ? caps.entitlement : info?.capabilities?.entitlement}
-                  />
                 ) : null}
-
-                {publicArenaUrl && (
-                  <div className="mt-5 rounded-xl bg-master/50 p-3.5 sm:p-4">
-                    <div className="min-w-0">
-                        <p className="text-base font-semibold text-text-light">
-                          Link da sua quadra
-                        </p>
-                        <p className="mt-1 text-sm leading-relaxed text-text-light/60">
-                          {arenaPublished
-                            ? "Envie no WhatsApp, Instagram ou grupos: o cliente vê os horários livres e fala com você para reservar."
-                            : portalStatus.reason}
-                        </p>
-                        <a
-                          href={publicArenaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 block break-all text-sm font-medium text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-                        >
-                          {publicArenaUrl}
-                        </a>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void copyArenaLink()}
-                            className={buttonClassName({
-                              variant: "secondary",
-                              size: "md",
-                              fullWidth: false,
-                              className: "inline-flex items-center gap-1.5 !min-h-11 px-3.5 text-sm",
-                            })}
-                          >
-                            <MdContentCopy size={18} aria-hidden />
-                            {linkCopied ? "Copiado!" : "Copiar link"}
-                          </button>
-                          {offSiteNeedsPlan ? (
-                            <Link
-                              to={billingNavPath(
-                                caps.ready
-                                  ? caps.entitlement
-                                  : info?.capabilities?.entitlement,
-                              )}
-                              className={buttonClassName({
-                                variant: "primary",
-                                size: "md",
-                                fullWidth: false,
-                                className: "inline-flex !min-h-11 px-3.5 text-sm",
-                              })}
-                            >
-                              Ver{" "}
-                              {billingNavLabel(
-                                caps.ready
-                                  ? caps.entitlement
-                                  : info?.capabilities?.entitlement,
-                              ).toLowerCase()}
-                            </Link>
-                          ) : null}
-                        </div>
-                    </div>
-                  </div>
-                )}
-
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept={IMAGE_UPLOAD_ACCEPT}
-                  className="sr-only"
-                  onChange={handleLogoChange}
-                />
                 <button
                   type="button"
-                  disabled={uploadingLogo || !publicId}
-                  onClick={() => logoInputRef.current?.click()}
-                  aria-label={
-                    logoUrl
-                      ? "Alterar logo do estabelecimento"
-                      : "Enviar logo do estabelecimento"
-                  }
-                  className="group relative mt-4 flex min-h-40 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed border-text-light/20 bg-master/40 px-4 py-6 transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
+                  onClick={() => void copyArenaLink()}
+                  className={emptyStateActionClassName("-ml-3 mt-1")}
                 >
-                  {logoUrl ? (
-                    <img
-                      key={logoUrl}
-                      src={logoUrl}
-                      alt={`Logo de ${companyName || info?.companyName || "estabelecimento"}`}
-                      className="max-h-28 max-w-[min(100%,12rem)] object-contain"
-                    />
-                  ) : (
-                    <MdOutlinePhotoCamera
-                      size={40}
-                      className="text-text-light/40"
-                      aria-hidden
-                    />
-                  )}
-                  <span className="text-center text-sm leading-5 text-text-light/60">
-                    {uploadingLogo
-                      ? "Enviando…"
-                      : logoUrl
-                        ? "Clique para alterar o logo"
-                        : "Clique para enviar o logo"}
-                    {!uploadingLogo && (
-                      <>
-                        <br />
-                        {imageUploadHint()} · 1 foto
-                      </>
-                    )}
-                  </span>
+                  {linkCopied ? "Copiado" : "Copiar link"}
                 </button>
-
-                <div className="mt-6 border-t border-text-light/10 pt-5">
-                  <p className="text-base font-semibold text-text-light">
-                    Fotos do espaço
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-text-light/60">
-                    Até {COMPANY_PHOTO_MAX_COUNT} fotos do espaço
-                    {canAddPhoto
-                      ? photoSlotsLeft > 1
-                        ? ` — selecione até ${photoSlotsLeft} de uma vez`
-                        : " — selecione 1 foto"
-                      : ""}
-                    . Aparecem na página da sua arena no site.
-                  </p>
-
-                  <input
-                    key={`photo-input-${photoSlotsLeft}`}
-                    ref={photoInputRef}
-                    type="file"
-                    accept={IMAGE_UPLOAD_ACCEPT}
-                    multiple={photoSlotsLeft > 1}
-                    className="sr-only"
-                    onChange={handlePhotoChange}
-                  />
-
-                  <ul className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-                    {photos.map((photo) => (
-                      <li
-                        key={photo.id}
-                        className="relative aspect-[4/3] overflow-hidden rounded-xl bg-master"
-                      >
-                        <img
-                          src={photo.url}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          disabled={removingPhotoId === photo.id}
-                          onClick={() => handleRemovePhoto(photo.id)}
-                          aria-label="Remover foto"
-                          className="absolute right-1.5 top-1.5 flex size-8 items-center justify-center rounded-full bg-master/85 text-text-light shadow-sm transition hover:bg-master disabled:opacity-60"
-                        >
-                          <MdClose size={18} aria-hidden />
-                        </button>
-                      </li>
-                    ))}
-                    {canAddPhoto ? (
-                      <li>
-                        <button
-                          type="button"
-                          disabled={uploadingPhoto || !publicId}
-                          onClick={() => photoInputRef.current?.click()}
-                          aria-label={`Adicionar fotos do espaço (até ${photoSlotsLeft})`}
-                          className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-text-light/20 bg-master/40 px-2 text-center transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
-                        >
-                          <MdOutlinePhotoCamera
-                            size={28}
-                            className="text-text-light/40"
-                            aria-hidden
-                          />
-                          <span className="text-xs leading-4 text-text-light/55">
-                            {uploadingPhoto
-                              ? "Enviando…"
-                              : photoSlotsLeft === 1
-                                ? "Adicionar"
-                                : `Até ${photoSlotsLeft}`}
-                          </span>
-                        </button>
-                      </li>
-                    ) : null}
-                  </ul>
-                  <p className="mt-2 text-xs text-text-light/45">
-                    {imageUploadHint()} cada · {photos.length}/
-                    {COMPANY_PHOTO_MAX_COUNT}
-                  </p>
-                </div>
               </div>
+            ) : null}
+
+            <div>
+              <h3 className="text-base text-text-light/55">Imagens</h3>
+              <p className="mt-1 text-base leading-5 text-text-light/70">
+                Logo e fotos da página da arena. Até {COMPANY_PHOTO_MAX_COUNT}{" "}
+                fotos.
+              </p>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept={IMAGE_UPLOAD_ACCEPT}
+                className="sr-only"
+                onChange={handleLogoChange}
+              />
+              <input
+                key={`photo-input-${photoSlotsLeft}`}
+                ref={photoInputRef}
+                type="file"
+                accept={IMAGE_UPLOAD_ACCEPT}
+                multiple={photoSlotsLeft > 1}
+                className="sr-only"
+                onChange={handlePhotoChange}
+              />
+              <ul className="mt-3 grid grid-cols-3 gap-2">
+                <li>
+                  <button
+                    type="button"
+                    disabled={uploadingLogo || !publicId}
+                    onClick={() => logoInputRef.current?.click()}
+                    aria-label={
+                      logoUrl
+                        ? "Alterar logo do estabelecimento"
+                        : "Enviar logo do estabelecimento"
+                    }
+                    className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl bg-master-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
+                  >
+                    {logoUrl ? (
+                      <img
+                        key={logoUrl}
+                        src={logoUrl}
+                        alt=""
+                        className="h-full w-full object-contain p-2"
+                      />
+                    ) : (
+                      <span className="flex flex-col items-center gap-1 text-text-light/55">
+                        <MdOutlinePhotoCamera size={22} aria-hidden />
+                        <span className="text-base">
+                          {uploadingLogo ? "Enviando…" : "Logo"}
+                        </span>
+                      </span>
+                    )}
+                  </button>
+                </li>
+                {photos.map((photo) => (
+                  <li
+                    key={photo.id}
+                    className="relative aspect-[4/3] overflow-hidden rounded-xl bg-master-light"
+                  >
+                    <img
+                      src={photo.url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      disabled={removingPhotoId === photo.id}
+                      onClick={() => handleRemovePhoto(photo.id)}
+                      aria-label="Remover foto"
+                      className="absolute right-1.5 top-1.5 flex size-8 items-center justify-center rounded-full bg-master/85 text-text-light transition hover:bg-master disabled:opacity-60"
+                    >
+                      <MdClose size={18} aria-hidden />
+                    </button>
+                  </li>
+                ))}
+                {canAddPhoto ? (
+                  <li>
+                    <button
+                      type="button"
+                      disabled={uploadingPhoto || !publicId}
+                      onClick={() => photoInputRef.current?.click()}
+                      aria-label={`Adicionar fotos do espaço (até ${photoSlotsLeft})`}
+                      className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl bg-master-light text-text-light/55 transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-60"
+                    >
+                      <MdOutlinePhotoCamera size={22} aria-hidden />
+                      <span className="text-base">
+                        {uploadingPhoto
+                          ? "Enviando…"
+                          : photoSlotsLeft === 1
+                            ? "Foto"
+                            : `Até ${photoSlotsLeft}`}
+                      </span>
+                    </button>
+                  </li>
+                ) : null}
+              </ul>
+              <p className="mt-2 text-base text-text-light/55">
+                {imageUploadHint()} · {photos.length}/{COMPANY_PHOTO_MAX_COUNT}{" "}
+                fotos
+              </p>
             </div>
 
             {info ? (
@@ -552,24 +509,16 @@ function RealInfo() {
               />
             ) : null}
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
-              <p className="mb-3 text-lg font-semibold text-text-light">
-                Preferências
-              </p>
+            <div>
+              <h3 className="text-base text-text-light/55">Preferências</h3>
               <label
                 htmlFor="is-hidden-inactive-hours"
                 aria-disabled={loading || undefined}
-                className={`flex min-h-16 items-center justify-between gap-3 rounded-xl px-4 py-3.5 transition focus-within:ring-2 focus-within:ring-accent-blue/80 ${
-                  loading
-                    ? "cursor-not-allowed opacity-60"
-                    : "cursor-pointer"
-                } ${
-                  isHiddenInactiveHours
-                    ? "bg-accent-blue/15 ring-2 ring-accent-blue/70"
-                    : "bg-master"
+                className={`mt-2 flex min-h-12 items-center justify-between gap-3 rounded-xl px-1 ${
+                  loading ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                 }`}
               >
-                <span className="text-lg font-medium text-text-light">
+                <span className="text-base text-text-light">
                   Ocultar horários inativos
                 </span>
                 <input
@@ -582,104 +531,80 @@ function RealInfo() {
                     setIsHiddenInactiveHours(next);
                     await updatePreferences(next);
                   }}
-                  className="size-7 shrink-0 rounded accent-accent-blue disabled:cursor-not-allowed"
+                  className="size-5 shrink-0 accent-accent-blue disabled:cursor-not-allowed"
                 />
               </label>
-              <div className="mt-3 flex items-start gap-2 px-1">
-                <MdOutlineInfo
-                  size={20}
-                  className="mt-0.5 shrink-0 text-text-light/55"
-                  aria-hidden
-                />
-                <p className="text-base leading-6 text-text-light/65">
-                  Na agenda, mostram só horários disponíveis, reservados e
-                  fixos.
-                </p>
-              </div>
+              <p className="px-1 text-base leading-5 text-text-light/70">
+                A agenda mostra só disponíveis, reservados e fixos.
+              </p>
             </div>
 
-            {(info?.owner?.name ||
-              info?.owner?.email ||
-              info?.owner?.phone) && (
-              <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
-                <p className="mb-3 text-lg font-semibold text-text-light">
-                  Meu contato
-                </p>
-                <dl className="space-y-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0">
-                  {info.owner?.name && (
+            {info?.owner?.name || info?.owner?.email || info?.owner?.phone ? (
+              <div>
+                <h3 className="text-base text-text-light/55">Meu contato</h3>
+                <dl className="mt-2 space-y-3">
+                  {info.owner?.name ? (
                     <div>
-                      <dt className="text-base font-medium text-text-light/55">
-                        Nome
-                      </dt>
-                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                      <dt className="text-base text-text-light/55">Nome</dt>
+                      <dd className="text-base text-text-light">
                         {info.owner.name}
                       </dd>
                     </div>
-                  )}
-                  {info.owner?.email && (
+                  ) : null}
+                  {info.owner?.email ? (
                     <div>
-                      <dt className="text-base font-medium text-text-light/55">
-                        E-mail
-                      </dt>
-                      <dd className="mt-0.5 break-all text-lg font-semibold text-text-light">
+                      <dt className="text-base text-text-light/55">E-mail</dt>
+                      <dd className="break-all text-base text-text-light">
                         {info.owner.email}
                       </dd>
                     </div>
-                  )}
-                  {info.owner?.phone && (
+                  ) : null}
+                  {info.owner?.phone ? (
                     <div>
-                      <dt className="text-base font-medium text-text-light/55">
-                        Telefone
-                      </dt>
-                      <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                      <dt className="text-base text-text-light/55">Telefone</dt>
+                      <dd className="text-base text-text-light">
                         {formatPhoneMask(info.owner.phone)}
                       </dd>
                     </div>
-                  )}
+                  ) : null}
                 </dl>
               </div>
-            )}
+            ) : null}
 
-            <div className="rounded-2xl bg-master-light p-4 sm:p-5 lg:col-span-2 lg:p-6">
-              <p className="mb-3 text-lg font-semibold text-text-light">
-                Plano
-              </p>
-              <p className="text-xl font-bold text-text-light">
+            <div>
+              <h3 className="text-base text-text-light/55">Plano</h3>
+              <p className="mt-2 text-base font-semibold text-text-light">
                 {info?.plan?.name || "—"}
               </p>
-              <dl className="mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+              <dl className="mt-3 space-y-3">
                 {info?.plan?.trialEndsAt ? (
                   <div>
-                    <dt className="text-base font-medium text-text-light/70">
+                    <dt className="text-base text-text-light/55">
                       {info.plan.isTrial
-                        ? "Período de teste até"
-                        : "Período de teste encerrou em"}
+                        ? "Teste até"
+                        : "Teste encerrou em"}
                     </dt>
-                    <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                    <dd className="text-base text-text-light">
                       {formatDateToDDMMYYYY(info.plan.trialEndsAt)}
                     </dd>
                   </div>
                 ) : null}
                 <div>
-                  <dt className="text-base font-medium text-text-light/70">
-                    Valor mensal
-                  </dt>
-                  <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                  <dt className="text-base text-text-light/55">Valor mensal</dt>
+                  <dd className="text-base text-text-light">
                     {info?.plan?.price != null
                       ? `${formatCurrencyBRL(Number(info.plan.price))}/mês`
                       : "—"}
                   </dd>
                 </div>
-                {info?.plan?.day_due != null && (
+                {info?.plan?.day_due != null ? (
                   <div>
-                    <dt className="text-base font-medium text-text-light/70">
-                      Vencimento
-                    </dt>
-                    <dd className="mt-0.5 text-lg font-semibold text-text-light">
+                    <dt className="text-base text-text-light/55">Vencimento</dt>
+                    <dd className="text-base text-text-light">
                       Dia {info.plan.day_due} de cada mês
                     </dd>
                   </div>
-                )}
+                ) : null}
               </dl>
             </div>
           </div>

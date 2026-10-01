@@ -254,7 +254,7 @@ function PlansPage() {
 
   return (
     <AppLayout>
-      <main className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 lg:px-8">
+      <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 py-4 lg:px-8">
         <div>
           <PageEyebrow>Planos</PageEyebrow>
           <p className="mt-2 max-w-xl text-base leading-7 text-text-light/70">
@@ -263,27 +263,25 @@ function PlansPage() {
         </div>
 
         {loading && !summary ? (
-          <p className="text-text-light/60">Carregando…</p>
+          <p className="text-text-light/70">Carregando…</p>
         ) : (
           <>
-            <section className="rounded-3xl bg-master-light p-5 sm:p-6">
+            <section className="rounded-xl bg-master-light px-4 py-5">
               {expired ? (
-                <p className="mb-3 inline-flex rounded-full bg-danger-400/15 px-3 py-1 text-sm font-semibold text-danger-soft">
+                <p className="mb-3 text-base text-danger-soft">
                   Teste grátis encerrado
                   {trialEndsLabel ? ` · ${trialEndsLabel}` : ""}
                 </p>
               ) : summary?.isTrial ? (
-                <p className="mb-3 inline-flex rounded-full bg-accent-blue/15 px-3 py-1 text-sm font-semibold text-accent-blue-soft">
+                <p className="mb-3 text-base text-accent-blue-soft">
                   Teste grátis ativo
                 </p>
               ) : null}
 
-              <p className="text-sm font-semibold uppercase tracking-wider text-text-light/50">
-                Plano Promocional
-              </p>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-text-light">
+              <p className="text-base text-text-light/55">Plano promocional</p>
+              <p className="mt-1 text-xl font-semibold text-text-light">
                 {fee != null ? formatCurrencyBRL(fee) : "—"}
-                <span className="ml-1 text-lg font-semibold text-text-light/55">
+                <span className="ml-1 text-base font-medium text-text-light/55">
                   /mês
                 </span>
               </p>
@@ -299,7 +297,7 @@ function PlansPage() {
                 ].map((item) => (
                   <li
                     key={item}
-                    className="flex items-start gap-2.5 text-base leading-6 text-text-light/85"
+                    className="flex items-start gap-2.5 text-base leading-6 text-text-light"
                   >
                     <MdCheckCircleOutline
                       size={22}
@@ -328,7 +326,7 @@ function PlansPage() {
                         : "Gerar PIX"}
                     </button>
                   ) : null}
-                  <p className="mt-3 text-center text-sm text-text-light/55">
+                  <p className="mt-3 text-center text-base text-text-light/55">
                     {showAutoPix
                       ? "Pague com PIX e o acesso libera na hora — ou use a chave abaixo e envie o comprovante."
                       : manualPix
@@ -358,7 +356,7 @@ function PlansPage() {
                     <button
                       type="button"
                       onClick={openWhatsAppContract}
-                      className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                      className="mt-3 w-full text-center text-base font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
                     >
                       Prefere só WhatsApp?
                     </button>
@@ -372,7 +370,7 @@ function PlansPage() {
                   className="mt-6 space-y-3"
                   aria-busy={generating || undefined}
                 >
-                  <p className="text-sm text-text-light/70">{payerHint}</p>
+                  <p className="text-base text-text-light/70">{payerHint}</p>
                   {needEmail ? (
                     <input
                       type="email"
@@ -409,7 +407,7 @@ function PlansPage() {
                   <button
                     type="button"
                     disabled={generating}
-                    className="block text-sm font-semibold text-accent-blue-soft disabled:opacity-50"
+                    className="block text-base font-semibold text-accent-blue-soft disabled:opacity-50"
                     onClick={resetPayUi}
                   >
                     Cancelar
@@ -420,7 +418,7 @@ function PlansPage() {
               {paying && pix && !needPayerData ? (
                 <div className="mt-6 space-y-4">
                   {pix.paid ? (
-                    <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-sm font-semibold text-accent-green">
+                    <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-base font-semibold text-accent-green">
                       Pagamento confirmado. Liberando seu plano…
                     </p>
                   ) : (
@@ -435,14 +433,14 @@ function PlansPage() {
                           className="mx-auto size-48 rounded-xl bg-white p-2"
                         />
                       ) : null}
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-text-light/50">
+                      <label className="block text-base text-text-light/55">
                         PIX copia e cola
                       </label>
                       <textarea
                         readOnly
                         value={pix.pixCopyPaste ?? ""}
                         rows={3}
-                        className="w-full rounded-xl border border-text-light/15 bg-master px-3 py-2 text-sm text-text-light"
+                        className="w-full rounded-xl border border-text-light/15 bg-master px-3 py-2 text-base text-text-light"
                       />
                       <button
                         type="button"
@@ -457,7 +455,7 @@ function PlansPage() {
                           {copied ? "Copiado!" : "Copiar código PIX"}
                         </span>
                       </button>
-                      <p className="text-center text-xs text-text-light/50">
+                      <p className="text-center text-base text-text-light/55">
                         Após pagar, a confirmação aparece em
                         alguns segundos.
                       </p>
@@ -472,7 +470,7 @@ function PlansPage() {
                   )}
                   <button
                     type="button"
-                    className="text-sm font-semibold text-accent-blue-soft"
+                    className="text-base font-semibold text-accent-blue-soft"
                     onClick={resetPayUi}
                   >
                     Fechar
@@ -482,22 +480,20 @@ function PlansPage() {
             </section>
 
             <section className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-wider text-text-light/50">
-                O que você desbloqueia
-              </p>
+              <p className="text-base text-text-light/55">O que você desbloqueia</p>
               <ul className="grid gap-3 sm:grid-cols-2">
                 {BENEFITS.map(({ Icon, title, description }) => (
                   <li
                     key={title}
-                    className="rounded-2xl bg-master-light px-4 py-4"
+                    className="rounded-xl bg-master-light px-4 py-4"
                   >
-                    <span className="flex size-11 items-center justify-center rounded-full bg-accent-blue/15 text-accent-blue">
+                    <span className="flex size-11 items-center justify-center rounded-full bg-accent-blue/15 text-accent-blue-soft">
                       <Icon size={22} aria-hidden />
                     </span>
                     <p className="mt-3 text-base font-semibold text-text-light">
                       {title}
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-text-light/65">
+                    <p className="mt-1 text-base leading-6 text-text-light/70">
                       {description}
                     </p>
                   </li>
@@ -506,7 +502,7 @@ function PlansPage() {
             </section>
 
             {!expired && summary?.isTrial ? (
-              <p className="text-center text-sm text-text-light/55">
+              <p className="text-center text-base text-text-light/55">
                 Enquanto o teste grátis estiver válido, a agenda segue liberada.{" "}
                 <Link
                   to="/reservas"

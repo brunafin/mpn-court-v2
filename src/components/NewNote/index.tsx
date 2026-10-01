@@ -99,7 +99,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
       <button
         type="button"
         aria-label="Fechar modal"
-        className="absolute inset-0 bg-black/75"
+        className="absolute inset-0 bg-black/60"
         onClick={() => {
           if (!isSubmitting) onClose();
         }}
@@ -112,7 +112,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 flex w-full max-h-[92dvh] flex-col rounded-t-3xl bg-master-light text-text-light shadow-2xl sm:max-w-md sm:rounded-3xl"
+        className="relative z-10 flex w-full max-h-[92dvh] flex-col rounded-t-2xl bg-master-light text-text-light sm:max-w-md sm:rounded-2xl"
       >
         <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
 
@@ -126,7 +126,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
             </h2>
             <p
               id={descriptionId}
-              className="mt-1 text-base leading-6 text-text-light/75"
+              className="mt-1 text-base leading-6 text-text-light/70"
             >
               Novo lembrete para o dia{" "}
               <span className="font-semibold text-text-light">{date}</span>

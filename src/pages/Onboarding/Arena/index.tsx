@@ -201,7 +201,7 @@ function OnboardingArena() {
           <Link
             to="/comecar"
             aria-label="Voltar"
-            className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
+            className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/70"
           >
             <MdChevronLeft size={28} aria-hidden />
           </Link>
@@ -212,7 +212,7 @@ function OnboardingArena() {
 
         <form
           onSubmit={handleSubmit}
-          className="mt-6 space-y-5 rounded-2xl bg-master-light p-5"
+          className="mt-6 space-y-5 rounded-xl bg-master-light p-5"
           noValidate
         >
           <Input
@@ -232,7 +232,7 @@ function OnboardingArena() {
             showCount
           />
 
-          <div className="border-t border-text-light/10 pt-4">
+          <div className="pt-4">
             <p className="mb-3 text-base font-medium text-text-light/70">
               Endereço
             </p>
@@ -253,8 +253,8 @@ function OnboardingArena() {
             />
             {(cepLoading || cepHint) && (
               <p
-                className={`-mt-1 mb-2 text-sm ${
-                  cepHint ? "text-danger-400" : "text-text-light/55"
+                className={`-mt-1 mb-2 text-base ${
+                  cepHint ? "text-danger-soft" : "text-text-light/55"
                 }`}
               >
                 {cepLoading ? "Buscando endereço…" : cepHint}
@@ -343,7 +343,7 @@ function OnboardingArena() {
             </div>
           </div>
 
-          <div className="border-t border-text-light/10 pt-4 space-y-4">
+          <div className="pt-4 space-y-4">
             <div>
               <Input
                 name="companyPhone"
@@ -360,7 +360,7 @@ function OnboardingArena() {
                 autoComplete="tel"
                 inputMode="tel"
               />
-              <p className="-mt-1 text-sm text-text-light/55">
+              <p className="-mt-1 text-base text-text-light/55">
                 Telefone do estabelecimento (WhatsApp)
               </p>
             </div>
@@ -379,13 +379,13 @@ function OnboardingArena() {
                 autoComplete="off"
                 maxLength={200}
               />
-              <p className="-mt-1 text-sm text-text-light/55">
+              <p className="-mt-1 text-base text-text-light/55">
                 Opcional — aparece no perfil da arena
               </p>
             </div>
           </div>
 
-          <div className="border-t border-text-light/10 pt-4">
+          <div className="pt-4">
             <Input
               name="courtCount"
               title="Número de quadras"
@@ -400,17 +400,17 @@ function OnboardingArena() {
               }}
               required
             />
-            <p className="-mt-1 text-sm text-text-light/55">
+            <p className="-mt-1 text-base text-text-light/55">
               Quantidade de espaços físicos (futsal, vôlei, society)
             </p>
           </div>
 
-          <div className="border-t border-text-light/10 pt-4">
+          <div className="pt-4">
             <p className="mb-1 text-base font-medium text-text-light/70">
               Logo{" "}
-              <span className="font-normal text-text-light/45">(opcional)</span>
+              <span className="font-normal text-text-light/55">(opcional)</span>
             </p>
-            <p className="mb-3 text-sm text-text-light/55">
+            <p className="mb-3 text-base text-text-light/55">
               O envio acontece ao concluir a configuração
             </p>
             <input
@@ -428,7 +428,7 @@ function OnboardingArena() {
                   ? "Alterar logo do estabelecimento"
                   : "Enviar logo do estabelecimento"
               }
-              className="group relative flex min-h-36 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed border-text-light/20 bg-master/40 px-4 py-6 transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              className="group relative flex min-h-36 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed border-text-light/20 bg-master/40 px-4 py-6 transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
             >
               {logoPreview ? (
                 <img
@@ -439,11 +439,11 @@ function OnboardingArena() {
               ) : (
                 <MdOutlinePhotoCamera
                   size={36}
-                  className="text-text-light/40"
+                  className="text-text-light/55"
                   aria-hidden
                 />
               )}
-              <span className="text-center text-sm leading-5 text-text-light/60">
+              <span className="text-center text-base leading-5 text-text-light/70">
                 {logoPreview
                   ? "Clique para alterar o logo"
                   : "Clique para enviar o logo"}
@@ -455,20 +455,20 @@ function OnboardingArena() {
               <button
                 type="button"
                 onClick={handleClearLogo}
-                className="mt-2 text-sm font-medium text-text-light/60 underline-offset-2 hover:text-text-light hover:underline"
+                className="mt-2 text-base font-medium text-text-light/70 underline-offset-2 hover:text-text-light hover:underline"
               >
                 Remover logo
               </button>
             )}
             {logoError && (
-              <p className="mt-2 text-sm text-danger-400" role="alert">
+              <p className="mt-2 text-base text-danger-soft" role="alert">
                 {logoError}
               </p>
             )}
           </div>
 
           {formError && (
-            <p className="text-sm text-danger-400" role="alert">
+            <p className="text-base text-danger-soft" role="alert">
               {formError}
             </p>
           )}

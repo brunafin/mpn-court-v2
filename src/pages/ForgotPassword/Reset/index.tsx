@@ -176,7 +176,7 @@ function ForgotPasswordReset() {
 
       <div className="relative z-10 my-auto w-full max-w-md">
         <div className="mb-4 flex flex-col items-center text-center sm:mb-6">
-          <div className="mb-3 flex w-32 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-4 sm:w-40 sm:rounded-2xl sm:p-2">
+          <div className="mb-3 flex w-32 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:mb-4 sm:w-40 sm:rounded-xl sm:p-2">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -193,7 +193,7 @@ function ForgotPasswordReset() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl bg-master-light p-4 sm:p-6"
+          className="rounded-xl bg-master-light p-4 sm:p-6"
           noValidate
           aria-busy={loading || undefined}
         >
@@ -245,7 +245,7 @@ function ForgotPasswordReset() {
             error={passwordPolicyError}
           />
           {!passwordPolicyError && (
-            <p className="-mt-1 mb-1 text-sm leading-5 text-text-light/55">
+            <p className="-mt-1 mb-1 text-base leading-5 text-text-light/55">
               {PASSWORD_HINT}
             </p>
           )}
@@ -271,7 +271,7 @@ function ForgotPasswordReset() {
           />
 
           {error && (
-            <p className="mt-3 text-base font-medium text-danger-400" role="alert">
+            <p className="mt-3 text-base font-medium text-danger-soft" role="alert">
               {error}
             </p>
           )}
@@ -291,7 +291,7 @@ function ForgotPasswordReset() {
             type="button"
             onClick={handleResend}
             disabled={loading || resendCooldown > 0}
-            className="mt-4 w-full text-center text-base font-semibold text-accent-blue-soft disabled:text-text-light/40"
+            className="mt-4 w-full text-center text-base font-semibold text-accent-blue-soft disabled:text-text-light/55"
           >
             {resendCooldown > 0
               ? `Reenviar em ${resendCooldown}s`

@@ -15,7 +15,9 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState<Date>(selectedDate);
   const titleId = useId();
-  const monthLabel = format(selectedDate, "MMMM 'de' yyyy", { locale: ptBR });
+  const monthRaw = format(selectedDate, "MMMM 'de' yyyy", { locale: ptBR });
+  const monthLabel =
+    monthRaw.charAt(0).toLocaleUpperCase("pt-BR") + monthRaw.slice(1);
 
   useEffect(() => {
     if (open) {
@@ -54,7 +56,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
         aria-label={`Selecionar data. Mês atual: ${monthLabel}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="mpn-tap flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl px-1 text-left text-base font-semibold capitalize text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-2xl lg:border lg:border-text-light/10 lg:bg-master lg:px-3.5 lg:py-2 lg:hover:bg-master/80"
+        className="mpn-tap -mx-1 inline-flex min-h-11 min-w-0 max-w-full items-center gap-0.5 rounded-xl px-1 text-left text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
       >
         <span className="truncate">{monthLabel}</span>
         <MdExpandMore
@@ -69,7 +71,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
           <button
             type="button"
             aria-label="Fechar calendário"
-            className="absolute inset-0 bg-black/75"
+            className="absolute inset-0 bg-black/60"
             onClick={() => setOpen(false)}
           />
 
@@ -77,14 +79,14 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="relative z-10 flex w-full max-h-[90dvh] flex-col rounded-t-3xl border border-text-light/10 bg-master-light shadow-2xl sm:mx-4 sm:max-w-sm sm:rounded-3xl"
+            className="relative z-10 flex w-full max-h-[90dvh] flex-col rounded-t-2xl bg-master sm:mx-4 sm:max-w-sm sm:rounded-2xl"
           >
             <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
 
             <div className="flex items-start justify-between gap-3 px-5 pb-2 pt-4">
               <h2
                 id={titleId}
-                className="text-xl font-semibold leading-7 text-text-light"
+                className="text-lg font-semibold leading-6 text-text-light"
               >
                 Selecionar data
               </h2>
@@ -92,7 +94,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Fechar"
-                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light/80"
+                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light"
               >
                 <BsX size={24} />
               </button>
@@ -118,27 +120,26 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
                   month_caption:
                     "col-start-2 row-start-1 !mx-0 flex items-center justify-center",
                   caption_label:
-                    "text-xl font-semibold capitalize text-text-light",
+                    "text-base font-semibold text-text-light",
                   button_previous:
-                    "!static col-start-1 row-start-1 z-10 flex !size-12 items-center justify-center rounded-full text-text-light transition active:bg-master",
+                    "!static col-start-1 row-start-1 z-10 flex !size-12 items-center justify-center rounded-full text-text-light transition active:bg-text-light/10",
                   button_next:
-                    "!static col-start-3 row-start-1 z-10 flex !size-12 items-center justify-center rounded-full text-text-light transition active:bg-master",
+                    "!static col-start-3 row-start-1 z-10 flex !size-12 items-center justify-center rounded-full text-text-light transition active:bg-text-light/10",
                   chevron: "fill-text-light !size-5 pointer-events-none",
                   month_grid: "col-span-3 row-start-2 w-full",
                   weekdays: "mb-2 grid grid-cols-7",
                   weekday:
-                    "text-center text-sm font-semibold uppercase tracking-wide text-text-light/70",
+                    "text-center text-base font-semibold uppercase tracking-wide text-text-light/70",
                   weeks: "",
                   week: "mt-1.5 grid grid-cols-7",
                   day: "flex aspect-square items-center justify-center",
                   day_button:
-                    "flex size-12 max-w-full items-center justify-center rounded-full text-lg font-semibold text-text-light transition active:bg-master",
-                  today: "[&_button]:font-bold [&_button]:text-accent-blue",
+                    "flex size-12 max-w-full items-center justify-center rounded-full text-lg font-semibold text-text-light transition active:bg-text-light/10",
+                  today: "[&_button]:font-bold [&_button]:text-accent-blue-soft",
                   selected:
-                    "[&_button]:bg-accent-blue [&_button]:font-semibold [&_button]:text-white",
-                  outside: "[&_button]:text-text-light/25",
-                  disabled:
-                    "[&_button]:text-text-light/20 [&_button]:opacity-40",
+                    "[&_button]:bg-text-light/90 [&_button]:font-semibold [&_button]:text-master",
+                  outside: "[&_button]:text-text-light/45",
+                  disabled: "[&_button]:text-text-light/45",
                   focused:
                     "[&_button]:outline [&_button]:outline-2 [&_button]:outline-accent-blue/50",
                 }}

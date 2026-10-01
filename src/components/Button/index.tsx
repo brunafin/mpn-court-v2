@@ -24,15 +24,15 @@ const sizeClass: Record<ButtonSize, string> = {
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent-blue text-white hover:brightness-90 focus-visible:outline-white enabled:active:brightness-85",
+    "bg-accent-blue text-text-light hover:brightness-90 focus-visible:outline-text-light enabled:active:brightness-85",
   secondary:
-    "border border-accent-blue-soft bg-master text-accent-blue-soft hover:bg-accent-blue/10 focus-visible:outline-accent-blue enabled:active:bg-accent-blue/20",
+    "bg-text-light/10 text-text-light hover:bg-text-light/15 focus-visible:outline-accent-blue enabled:active:bg-text-light/20",
   danger:
-    "bg-danger-400 text-white hover:brightness-110 focus-visible:outline-danger-400 enabled:active:brightness-90",
+    "bg-danger-600 text-text-light hover:brightness-90 focus-visible:outline-danger-soft enabled:active:brightness-85",
   success:
-    "bg-accent-green text-master hover:brightness-110 focus-visible:outline-accent-green enabled:active:brightness-90",
+    "bg-accent-green text-master hover:brightness-95 focus-visible:outline-accent-green enabled:active:brightness-90",
   purple:
-    "bg-accent-purple text-white hover:brightness-110 focus-visible:outline-accent-purple enabled:active:brightness-90",
+    "bg-accent-purple text-text-light hover:brightness-90 focus-visible:outline-accent-purple-soft enabled:active:brightness-85",
   ghost:
     "bg-transparent text-text-light hover:bg-text-light/10 focus-visible:outline-accent-blue enabled:active:bg-text-light/12",
 };

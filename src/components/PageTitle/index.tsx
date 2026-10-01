@@ -10,7 +10,7 @@ export function PageEyebrow({
 }) {
   return (
     <h2
-      className={`min-w-0 truncate px-0.5 text-sm font-semibold uppercase tracking-wide text-text-light/55 ${className}`}
+      className={`min-w-0 truncate text-base text-text-light/55 ${className}`}
     >
       {children}
     </h2>

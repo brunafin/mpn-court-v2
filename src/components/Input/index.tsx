@@ -72,7 +72,7 @@ function Input({
   showCount = false,
   onBeforeInput,
 }: IInputProps) {
-  const isDark = mode === "dark";
+  void mode;
   const isPassword = type === "password";
   const maskClarity =
     isPassword ||
@@ -91,12 +91,8 @@ function Input({
     focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
     disabled:cursor-not-allowed disabled:opacity-60
     ${isPassword ? "pr-14" : ""}
-    ${
-      isDark
-        ? `mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/40 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light ${
-            error ? "ring-2 ring-danger-400" : ""
-          }`
-        : "border border-neutral-300 bg-neutral-100 text-neutral-800 transition-colors duration-150 ease-in-out hover:border-neutral-400 focus-visible:ring-neutral-400 focus-visible:ring-offset-neutral-100 placeholder:font-normal placeholder-neutral-400"
+    mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/55 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light ${
+      error ? "ring-2 ring-danger-soft" : ""
     }`;
 
   return (
@@ -104,13 +100,11 @@ function Input({
       {title && (
         <label
           htmlFor={name}
-          className={`mb-2 text-base font-semibold leading-6 ${
-            isDark ? "text-text-light" : "text-neutral-800"
-          }`}
+          className="mb-2 text-base font-semibold leading-6 text-text-light"
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue" aria-hidden="true">
+            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -153,11 +147,7 @@ function Input({
             aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             aria-pressed={showPassword}
             disabled={disabled}
-            className={`absolute right-1.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-              isDark
-                ? "text-text-light/80 hover:bg-master-light focus-visible:outline-accent-blue"
-                : "text-neutral-600 hover:bg-neutral-200 focus-visible:outline-neutral-500"
-            }`}
+            className="absolute right-1.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-text-light/70 transition hover:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-60"
           >
             {showPassword ? (
               <MdVisibilityOff size={22} aria-hidden />
@@ -171,7 +161,7 @@ function Input({
         <p
           id={errorId}
           role="alert"
-          className="mt-1.5 text-base font-medium text-danger-400"
+          className="mt-1.5 text-base font-medium text-danger-soft"
         >
           {error}
         </p>
@@ -179,9 +169,7 @@ function Input({
       {maxLength && showCount && (
         <p
           id={countId}
-          className={`mt-1.5 text-right text-sm font-medium ${
-            isDark ? "text-text-light/70" : "text-neutral-600"
-          }`}
+          className="mt-1.5 text-right text-base font-medium text-text-light/70"
         >
           {currentLength}/{maxLength}
         </p>

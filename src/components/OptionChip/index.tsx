@@ -8,10 +8,10 @@ type OptionChipProps = {
 };
 
 const chipClass =
-  "inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded-md bg-text-light/12 px-1.5 leading-none text-text-light";
+  "inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 rounded-md bg-text-light/12 px-2 text-base font-medium leading-none text-text-light";
 
 const iconWrapClass =
-  "inline-flex size-3.5 shrink-0 items-center justify-center overflow-hidden [&>svg]:block [&>svg]:size-3.5";
+  "inline-flex size-4 shrink-0 items-center justify-center overflow-hidden [&>svg]:block [&>svg]:size-4";
 
 /**
  * Chip visual único para opções da reserva (rede, evento, churrasqueira, etc.).
@@ -20,7 +20,7 @@ function OptionChip({ label, icon, iconOnly = false }: OptionChipProps) {
   if (iconOnly) {
     return (
       <span
-        className={`${chipClass} size-6 justify-center px-0`}
+        className={`${chipClass} size-8 justify-center px-0`}
         aria-label={label}
       >
         <span className={iconWrapClass} aria-hidden>
@@ -31,7 +31,7 @@ function OptionChip({ label, icon, iconOnly = false }: OptionChipProps) {
   }
 
   return (
-    <span className={`${chipClass} text-xs font-medium`} aria-label={label}>
+    <span className={chipClass} aria-label={label}>
       <span className={iconWrapClass} aria-hidden>
         {icon}
       </span>

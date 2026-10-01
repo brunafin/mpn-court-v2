@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -24,6 +24,11 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
 import { setAxiosErrorNotifier } from "./api/axios";
 import ProductInactiveModal from "./components/ProductInactiveModal";
+
+/** Catálogo visual: só entra no bundle do `vite` (localhost). */
+const DesignSystemPage = import.meta.env.DEV
+  ? lazy(() => import("./pages/DesignSystem"))
+  : null;
 
 /** Telas altas (auth + onboarding) — não podem herdar overflow-hidden do shell. */
 function isScrollableShellPath(pathname: string): boolean {
@@ -79,7 +84,7 @@ function App() {
   return (
     <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-master">
       {showTestEnvBanner() && (
-        <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-sm font-semibold text-master">
+        <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-base font-semibold text-master">
           Ambiente de teste — dados podem ser fictícios
         </p>
       )}
@@ -95,6 +100,16 @@ function App() {
           <ProductInactiveModal />
           <NotificationProvider>
             <Routes>
+              {DesignSystemPage ? (
+                <Route
+                  path="/design-system"
+                  element={
+                    <Suspense fallback={null}>
+                      <DesignSystemPage />
+                    </Suspense>
+                  }
+                />
+              ) : null}
               <Route index element={<Login />} />
               <Route path="/cadastro" element={<SignUp />} />
               <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />

@@ -111,7 +111,7 @@ export default function ChangePassword() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-6 flex w-48 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 sm:w-56 sm:p-2.5">
+          <div className="mb-6 flex w-48 items-center justify-center overflow-hidden rounded-xl bg-white p-2 sm:w-56 sm:p-2.5">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -128,7 +128,7 @@ export default function ChangePassword() {
 
         <form
           onSubmit={handleChangePassword}
-          className={`rounded-2xl bg-master-light p-5 sm:p-6 transition-opacity ${
+          className={`rounded-xl bg-master-light p-5 sm:p-6 transition-opacity ${
             loading ? "opacity-80" : ""
           }`}
           noValidate

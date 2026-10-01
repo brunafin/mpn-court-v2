@@ -45,9 +45,9 @@ function ManualPixPay({
 
   return (
     <div
-      className={`rounded-2xl border border-text-light/10 bg-master px-4 py-4 ${className}`}
+      className={`rounded-xl bg-master px-4 py-4 ${className}`}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-text-light/50">
+      <p className="text-base text-text-light/55">
         {primary ? "Pagar com chave PIX" : "Ou pague com nossa chave PIX"}
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">

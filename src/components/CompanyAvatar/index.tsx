@@ -26,7 +26,7 @@ function CompanyAvatar({
   if (logoUrl) {
     return (
       <span
-        className={`flex shrink-0 items-center justify-center overflow-hidden bg-neutral-100 ${sizeClass} ${roundedClass} ${className}`}
+        className={`flex shrink-0 items-center justify-center overflow-hidden bg-master-light ${sizeClass} ${roundedClass} ${className}`}
       >
         <img
           key={logoUrl}

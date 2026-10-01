@@ -142,7 +142,7 @@ function OnboardingSchedule() {
             <Link
               to="/comecar"
               aria-label="Voltar"
-              className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
+              className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/70"
             >
               <MdChevronLeft size={28} aria-hidden />
             </Link>
@@ -150,24 +150,24 @@ function OnboardingSchedule() {
               Horário de funcionamento
             </h1>
           </div>
-          <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+          <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-base font-medium text-text-light/70">
             Marque os horários em que a arena funciona.
           </p>
         </div>
       </div>
 
-      <div className="shrink-0 border-b border-text-light/10 bg-master px-4 py-3">
+      <div className="shrink-0 bg-master px-4 py-3">
         <div className="mx-auto w-full max-w-lg">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-text-light/55">
+              <p className="text-base font-semibold uppercase tracking-wide text-text-light/55">
                 Passo {stepIndex + 1} de {WEEK_DAYS.length}
               </p>
               <h2 className="text-xl font-bold uppercase tracking-tight text-text-light">
                 {dayMeta.label}
               </h2>
             </div>
-            <p className="text-sm font-medium text-text-light/65">
+            <p className="text-base font-medium text-text-light/70">
               {enabledCount} horário{enabledCount === 1 ? "" : "s"}
             </p>
           </div>
@@ -176,14 +176,14 @@ function OnboardingSchedule() {
             <button
               type="button"
               onClick={() => handleSelectAll(true)}
-              className="mpn-tap flex min-h-11 flex-1 items-center justify-center rounded-xl bg-master-light px-3 text-sm font-semibold text-text-light"
+              className="mpn-tap flex min-h-11 flex-1 items-center justify-center rounded-xl bg-master-light px-3 text-base font-semibold text-text-light"
             >
               Marcar todos
             </button>
             <button
               type="button"
               onClick={() => handleSelectAll(false)}
-              className="mpn-tap flex min-h-11 flex-1 items-center justify-center rounded-xl bg-master-light px-3 text-sm font-semibold text-text-light"
+              className="mpn-tap flex min-h-11 flex-1 items-center justify-center rounded-xl bg-master-light px-3 text-base font-semibold text-text-light"
             >
               Desmarcar todos
             </button>
@@ -209,14 +209,14 @@ function OnboardingSchedule() {
               }
             >
               <label
-                className={`mpn-tap flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-3 py-2 ${
+                className={`mpn-tap flex min-h-14 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 ${
                   slot.enabled ? "bg-master-light" : "bg-master-light/50"
                 }`}
               >
                 <span
                   className={`flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${
                     slot.enabled
-                      ? "border-accent-blue bg-accent-blue text-white"
+                      ? "border-accent-blue bg-accent-blue text-text-light"
                       : "border-text-light/35 bg-master"
                   }`}
                   aria-hidden
@@ -231,7 +231,7 @@ function OnboardingSchedule() {
                 />
                 <span
                   className={`text-lg font-bold tabular-nums ${
-                    slot.enabled ? "text-text-light" : "text-text-light/45"
+                    slot.enabled ? "text-text-light" : "text-text-light/55"
                   }`}
                 >
                   {slot.hour}
@@ -242,10 +242,10 @@ function OnboardingSchedule() {
         </ul>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-text-light/10 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-master/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-sm">
         <div className="mx-auto w-full max-w-lg">
           {formError ? (
-            <p className="mb-2 text-center text-sm text-danger-400" role="alert">
+            <p className="mb-2 text-center text-base text-danger-soft" role="alert">
               {formError}
             </p>
           ) : null}

@@ -16,7 +16,9 @@ function DateStrip({
   daysBefore = 7,
   daysAfter = 21,
 }: Props) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLButtonElement>(null);
+  const hasAlignedRef = useRef(false);
   const today = useMemo(() => startOfDay(new Date()), []);
 
   const days = useMemo(() => {
@@ -34,16 +36,30 @@ function DateStrip({
   }, [today, selectedDate, daysBefore, daysAfter]);
 
   useEffect(() => {
-    selectedRef.current?.scrollIntoView({
-      behavior: "smooth",
-      inline: "nearest",
-      block: "nearest",
+    const scroller = scrollerRef.current;
+    const selected = selectedRef.current;
+    if (!scroller || !selected) return;
+
+    const padding = Number.parseFloat(getComputedStyle(scroller).paddingLeft) || 0;
+    const left =
+      scroller.scrollLeft +
+      selected.getBoundingClientRect().left -
+      scroller.getBoundingClientRect().left -
+      padding;
+
+    scroller.scrollTo({
+      left,
+      behavior: hasAlignedRef.current ? "smooth" : "auto",
     });
-  }, [selectedDate]);
+    hasAlignedRef.current = true;
+  }, [selectedDate, days]);
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-master lg:rounded-2xl lg:bg-master-light">
-      <div className="flex gap-3 overflow-x-auto scroll-px-3 px-3 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-2.5 lg:scroll-px-2 lg:px-2 lg:py-1.5">
+    <div className="bg-master-light">
+      <div
+        ref={scrollerRef}
+        className="flex gap-3 overflow-x-auto scroll-px-3 px-3 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-2.5 lg:scroll-px-2 lg:px-2 lg:py-1.5"
+      >
         {days.map((day) => {
           const selected = isSameDay(day, selectedDate);
           const isPast = day < today;
@@ -56,7 +72,7 @@ function DateStrip({
               onClick={() => setSelectedDate(day)}
               aria-label={`${WEEKDAYS[day.getDay()]} ${format(day, "d")}`}
               aria-pressed={selected}
-              className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:min-h-[4.25rem] lg:min-w-[3.75rem] lg:rounded-2xl ${
+              className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:min-h-[4.25rem] lg:min-w-[3.75rem] ${
                 selected
                   ? "bg-text-light/90 text-master active:brightness-95"
                   : isPast
@@ -64,7 +80,7 @@ function DateStrip({
                     : "mpn-tap text-text-light hover:bg-text-light/10"
               }`}
             >
-              <span className="text-xs font-semibold tracking-wide uppercase">
+              <span className="text-sm font-semibold leading-tight tracking-wide uppercase">
                 {WEEKDAYS[day.getDay()]}
               </span>
               <span className="text-lg font-bold leading-tight lg:text-xl">

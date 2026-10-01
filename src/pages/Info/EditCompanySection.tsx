@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Input from "../../components/Input";
 import CheckboxGroup from "../../components/CheckboxGroup";
 import { buttonClassName } from "../../components/Button";
+import { emptyStateActionClassName } from "../../components/EmptyState";
 import { lookupCep } from "../../api/viaCep";
 import { IInfo, patchCompany } from "../../api/companies";
 import {
@@ -161,47 +162,53 @@ export default function EditCompanySection({
     }
   };
 
+  const hasProfile =
+    Boolean(info.instagramUrl) ||
+    Boolean(addressLine) ||
+    (info.characteristics?.length ?? 0) > 0;
+
+  const profileFacts = hasProfile ? (
+    <dl className="mt-2 space-y-3 text-base text-text-light">
+      {info.instagramUrl ? (
+        <div>
+          <dt className="text-base text-text-light/55">Instagram</dt>
+          <dd className="break-all">{info.instagramUrl}</dd>
+        </div>
+      ) : null}
+      {addressLine ? (
+        <div>
+          <dt className="text-base text-text-light/55">Endereço</dt>
+          <dd>{addressLine}</dd>
+        </div>
+      ) : null}
+      {(info.characteristics?.length ?? 0) > 0 ? (
+        <div>
+          <dt className="text-base text-text-light/55">Comodidades</dt>
+          <dd className="text-text-light/70">
+            {info.characteristics!.join(" · ")}
+          </dd>
+        </div>
+      ) : null}
+    </dl>
+  ) : (
+    <p className="mt-2 text-base text-text-light/55">
+      Sem endereço, Instagram ou comodidades.
+    </p>
+  );
+
   if (!canMutate && !editing) {
     return (
-      <div className="rounded-2xl bg-master-light px-4 py-5 lg:px-6">
-        <p className="text-base font-medium text-text-light/70">
-          Dados cadastrais
-        </p>
-        <dl className="mt-3 space-y-2 text-base text-text-light/80">
-          {info.instagramUrl ? (
-            <div>
-              <dt className="text-sm text-text-light/55">Instagram</dt>
-              <dd className="break-all">{info.instagramUrl}</dd>
-            </div>
-          ) : null}
-          {addressLine ? (
-            <div>
-              <dt className="text-sm text-text-light/55">Endereço</dt>
-              <dd>{addressLine}</dd>
-            </div>
-          ) : null}
-          {(info.characteristics?.length ?? 0) > 0 ? (
-            <div>
-              <dt className="text-sm text-text-light/55">Comodidades</dt>
-              <dd>{info.characteristics!.join(" · ")}</dd>
-            </div>
-          ) : null}
-          {!info.instagramUrl &&
-          !addressLine &&
-          !(info.characteristics?.length ?? 0) ? (
-            <p className="text-text-light/55">Sem endereço, Instagram ou comodidades.</p>
-          ) : null}
-        </dl>
+      <div>
+        <h3 className="text-base text-text-light/55">Dados</h3>
+        {profileFacts}
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl bg-master-light px-4 py-5 lg:px-6">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-base font-medium text-text-light/70">
-          Dados cadastrais
-        </p>
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base text-text-light/55">Dados</h3>
         {canMutate && !editing ? (
           <button
             type="button"
@@ -209,12 +216,7 @@ export default function EditCompanySection({
               syncFromInfo();
               setEditing(true);
             }}
-            className={buttonClassName({
-              variant: "ghost",
-              size: "md",
-              fullWidth: false,
-              className: "!min-h-10 px-3 text-sm",
-            })}
+            className={emptyStateActionClassName("-mr-3")}
           >
             Editar
           </button>
@@ -222,35 +224,10 @@ export default function EditCompanySection({
       </div>
 
       {!editing ? (
-        <dl className="mt-3 space-y-2 text-base text-text-light/80">
-          {info.instagramUrl ? (
-            <div>
-              <dt className="text-sm text-text-light/55">Instagram</dt>
-              <dd className="break-all">{info.instagramUrl}</dd>
-            </div>
-          ) : (
-            <p className="text-text-light/55">Instagram não informado.</p>
-          )}
-          {addressLine ? (
-            <div>
-              <dt className="text-sm text-text-light/55">Endereço</dt>
-              <dd>{addressLine}</dd>
-            </div>
-          ) : (
-            <p className="text-text-light/55">Endereço não informado.</p>
-          )}
-          {(info.characteristics?.length ?? 0) > 0 ? (
-            <div>
-              <dt className="text-sm text-text-light/55">Comodidades</dt>
-              <dd>{info.characteristics!.join(" · ")}</dd>
-            </div>
-          ) : (
-            <p className="text-text-light/55">Nenhuma comodidade marcada.</p>
-          )}
-        </dl>
+        profileFacts
       ) : (
         <form
-          className="mt-4 space-y-1"
+          className="mt-3 space-y-1 rounded-xl bg-master-light px-3 py-4"
           onSubmit={(e) => {
             e.preventDefault();
             void handleSave();
@@ -295,10 +272,10 @@ export default function EditCompanySection({
             inputMode="numeric"
           />
           {cepLoading ? (
-            <p className="mb-2 text-sm text-text-light/55">Buscando CEP…</p>
+            <p className="mb-2 text-base text-text-light/55">Buscando CEP…</p>
           ) : null}
           {cepHint ? (
-            <p className="mb-2 text-sm text-danger-400">{cepHint}</p>
+            <p className="mb-2 text-base text-danger-soft">{cepHint}</p>
           ) : null}
           <Input
             name="street"
@@ -350,18 +327,15 @@ export default function EditCompanySection({
             onChange={setCharacteristics}
           />
           {formError ? (
-            <p className="text-sm text-danger-400" role="alert">
+            <p className="text-base text-danger-soft" role="alert">
               {formError}
             </p>
           ) : null}
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <div className="mt-3 flex flex-col gap-1">
             <button
               type="submit"
               disabled={saving}
-              className={buttonClassName({
-                variant: "primary",
-                className: "sm:flex-1",
-              })}
+              className={buttonClassName({ variant: "primary" })}
             >
               {saving ? "Salvando…" : "Salvar"}
             </button>
@@ -372,10 +346,7 @@ export default function EditCompanySection({
                 syncFromInfo();
                 setEditing(false);
               }}
-              className={buttonClassName({
-                variant: "secondary",
-                className: "sm:flex-1",
-              })}
+              className={emptyStateActionClassName()}
             >
               Cancelar
             </button>

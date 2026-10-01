@@ -193,7 +193,7 @@ function Login() {
 
       <div className="relative z-10 my-auto w-full max-w-md">
         <div className="mb-5 flex flex-col items-center text-center">
-          <div className="mb-3 flex w-28 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:w-32 sm:rounded-2xl sm:p-2">
+          <div className="mb-3 flex w-28 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:w-32 sm:rounded-xl sm:p-2">
             <img
               src={MPN_LOGO_URL}
               alt="Marca Pra Nós"
@@ -207,17 +207,17 @@ function Login() {
             Acesse com Google ou com e-mail e senha.
           </p>
           {signupOk && (
-            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-sm font-medium text-accent-green">
+            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-base font-medium text-accent-green">
               Conta criada. Entre para configurar o estabelecimento.
             </p>
           )}
           {passwordResetOk && (
-            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-sm font-medium text-accent-green">
+            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-base font-medium text-accent-green">
               Senha redefinida. Entre com a nova senha.
             </p>
           )}
           {unverifiedEmail && (
-            <div className="mt-3 rounded-lg bg-accent-blue/15 px-3 py-2 text-sm text-text-light">
+            <div className="mt-3 rounded-lg bg-accent-blue/15 px-3 py-2 text-base text-text-light">
               <p className="font-medium">
                 Confirme seu e-mail antes de entrar.
               </p>
@@ -236,7 +236,7 @@ function Login() {
           )}
         </div>
 
-        <div className="rounded-2xl bg-master-light p-5 sm:p-6">
+        <div className="rounded-xl bg-master-light p-5 sm:p-6">
           {googleEnabled && !linkGoogleToken && (
             <>
               <GoogleSignInButton
@@ -244,7 +244,7 @@ function Login() {
                 disabled={loading || googleLoading}
                 text="continue_with"
               />
-              <div className="my-5 flex items-center gap-3 text-sm text-text-light/45">
+              <div className="my-5 flex items-center gap-3 text-base text-text-light/55">
                 <div className="h-px flex-1 bg-text-light/15" />
                 <span>ou</span>
                 <div className="h-px flex-1 bg-text-light/15" />
@@ -254,7 +254,7 @@ function Login() {
 
           {linkGoogleToken ? (
             <form onSubmit={handleLinkSubmit} noValidate>
-              <p className="mb-3 text-sm leading-5 text-text-light/80">
+              <p className="mb-3 text-base leading-5 text-text-light/70">
                 Já existe uma conta
                 {linkEmail ? (
                   <>
@@ -293,7 +293,7 @@ function Login() {
               <button
                 type="button"
                 disabled={googleLoading}
-                className="mt-3 w-full text-center text-sm font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
+                className="mt-3 w-full text-center text-base font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
                 onClick={() => {
                   setLinkGoogleToken(null);
                   setLinkPassword('');
@@ -374,7 +374,7 @@ function Login() {
         </div>
 
         <nav
-          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-text-light/55"
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-base text-text-light/55"
           aria-label="Documentos legais"
         >
           <a

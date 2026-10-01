@@ -4,12 +4,13 @@ import {
   MdOutlineCalendarMonth,
   MdOutlineInfo,
   MdOutlineLogout,
+  MdOutlineNotifications,
   MdOutlinePayments,
 } from "react-icons/md";
 import { GiSoccerField } from "react-icons/gi";
 import { logoutAndRedirect } from "../../utils/authCookie";
 import Header from "../Header";
-import CompanyAvatar from "../CompanyAvatar";
+import ArenaHomeLink from "../ArenaHomeLink";
 import {
   useCompanyBranding,
   useCompanyCapabilities,
@@ -17,6 +18,7 @@ import {
 import PendingBillingModal from "../PendingBillingModal";
 import { buttonClassName } from "../Button";
 import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
+import ThemeModeSwitch from "../ThemeModeSwitch";
 
 type NavItem = {
   to: string;
@@ -39,6 +41,12 @@ function buildNavItems(
       label: "Início",
       Icon: MdOutlineCalendarMonth,
       match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
+    },
+    {
+      to: "/notificacoes",
+      label: "Lembretes",
+      Icon: MdOutlineNotifications,
+      match: (path) => path.startsWith("/notificacoes"),
     },
     {
       to: "/quadras",
@@ -80,10 +88,10 @@ function AccessBanners() {
         role="status"
         className="shrink-0 border-b border-warning-500/35 bg-warning-500/15 px-4 py-3"
       >
-        <p className="text-sm font-semibold text-text-light">
+        <p className="text-base font-semibold text-text-light">
           Conta em modo somente leitura
         </p>
-        <p className="mt-1 text-sm text-text-light/80">
+        <p className="mt-1 text-base text-text-light/70">
           Você pode visualizar a agenda, mas não criar, alterar ou excluir.
           Suas quadras ficam ocultas no site até a regularização (sem alterar
           quais estavam publicadas).
@@ -115,26 +123,16 @@ function AppLayoutShell({ children }: AppLayoutProps) {
   const navItems = buildNavItems(caps.entitlement, caps.ready);
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-text-light/10 bg-master-light lg:flex">
-        <div className="flex items-center gap-3 px-4 py-5">
-          <Link
-            to="/reservas"
-            className="shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-          >
-            <CompanyAvatar sizeClass="size-11" roundedClass="rounded-xl" />
-          </Link>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-text-light/50">
-              Gestão
-            </p>
-            <p className="truncate text-sm font-semibold text-text-light">
-              {companyName || "Painel"}
-            </p>
-          </div>
+      <aside className="hidden w-56 shrink-0 flex-col bg-master lg:flex">
+        <div className="flex items-center gap-3 px-3 py-4">
+          <ArenaHomeLink sizeClass="size-11" roundedClass="rounded-xl" />
+          <p className="min-w-0 truncate text-base font-semibold text-text-light">
+            {companyName || "Painel"}
+          </p>
         </div>
 
         <nav aria-label="Navegação principal" className="flex-1 px-3 py-2">
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-1.5">
             {navItems.map(({ to, label, Icon, match }) => {
               const isActive = match(location.pathname);
               return (
@@ -142,9 +140,9 @@ function AppLayoutShell({ children }: AppLayoutProps) {
                   <Link
                     to={to}
                     aria-current={isActive ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+                    className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
                       isActive
-                        ? "bg-accent-blue text-white shadow-[0_0_0_1px_rgba(37,84,160,0.45)]"
+                        ? "bg-text-light/90 text-master"
                         : "text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
                     }`}
                   >
@@ -157,10 +155,13 @@ function AppLayoutShell({ children }: AppLayoutProps) {
           </ul>
         </nav>
 
-        <div className="border-t border-text-light/10 p-3">
+        <div className="px-3 pb-3 pt-2">
+          <div className="mb-2 px-1">
+            <ThemeModeSwitch />
+          </div>
           <button
             type="button"
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
             onClick={() => {
               void logoutAndRedirect();
             }}

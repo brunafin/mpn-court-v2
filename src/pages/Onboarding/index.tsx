@@ -164,14 +164,14 @@ function OnboardingChecklist() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.14),_transparent_50%)]" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col lg:min-h-full">
-        <p className="mb-4 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+        <p className="mb-4 rounded-lg bg-master-light px-3 py-2 text-base font-medium text-text-light/70">
           Complete os passos abaixo para começar a usar a agenda
         </p>
 
         {!ready ? (
           <>
             <div className="mb-5">
-              <div className="mb-2 flex items-center justify-between text-sm text-text-light/60">
+              <div className="mb-2 flex items-center justify-between text-base text-text-light/70">
                 <span>Progresso</span>
                 <span>
                   {progress.done}/{progress.total}
@@ -191,7 +191,7 @@ function OnboardingChecklist() {
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className={`rounded-2xl bg-master-light p-4 ${
+                  className={`rounded-xl bg-master-light p-4 ${
                     item.locked ? "opacity-50" : ""
                   }`}
                   aria-disabled={item.locked || undefined}
@@ -207,7 +207,7 @@ function OnboardingChecklist() {
                       ) : (
                         <MdOutlineCircle
                           size={26}
-                          className="text-text-light/35"
+                          className="text-text-light/55"
                           aria-label={item.locked ? "Bloqueado" : "Pendente"}
                         />
                       )}
@@ -216,7 +216,7 @@ function OnboardingChecklist() {
                       <h2 className="text-lg font-semibold text-text-light">
                         {item.title}
                       </h2>
-                      <p className="mt-0.5 text-base leading-6 text-text-light/65">
+                      <p className="mt-0.5 text-base leading-6 text-text-light/70">
                         {item.description}
                       </p>
                       {!item.locked && item.to && (
@@ -239,15 +239,15 @@ function OnboardingChecklist() {
           </>
         ) : (
           <div className="flex flex-1 flex-col">
-            <div className="rounded-2xl bg-master-light p-5">
+            <div className="rounded-xl bg-master-light p-5">
               <div className="text-center">
                 <p className="text-lg font-medium text-text-light">Tudo pronto</p>
-                <p className="mt-2 text-base leading-6 text-text-light/65">
+                <p className="mt-2 text-base leading-6 text-text-light/70">
                   Você já pode usar a agenda
                 </p>
                 {submitting && (
                   <p
-                    className="mt-3 text-center text-sm leading-5 text-text-light/60"
+                    className="mt-3 text-center text-base leading-5 text-text-light/70"
                     role="status"
                     aria-live="polite"
                   >
@@ -257,14 +257,14 @@ function OnboardingChecklist() {
                 )}
                 {submitError && (
                   <p
-                    className="mt-2 text-center text-sm text-danger-400"
+                    className="mt-2 text-center text-base text-danger-soft"
                     role="alert"
                   >
                     {submitError}
                   </p>
                 )}
               </div>
-              <ul className="mt-4 flex flex-col gap-2 border-t border-text-light/10 pt-4">
+              <ul className="mt-4 flex flex-col gap-2 pt-4">
                 {items.map((item) => (
                   <li key={item.id}>
                     <Link
@@ -277,7 +277,7 @@ function OnboardingChecklist() {
                         aria-label="Concluído"
                       />
                       <span className="min-w-0 flex-1">{item.title}</span>
-                      <span className="shrink-0 text-sm font-medium text-accent-blue-soft">
+                      <span className="shrink-0 text-base font-medium text-accent-blue-soft">
                         Editar
                       </span>
                     </Link>

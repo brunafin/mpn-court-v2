@@ -12,7 +12,6 @@ import {
   getAccessToken,
   getAccessTokenPayload,
 } from "../../utils/authCookie";
-import { buttonClassName } from "../../components/Button";
 import { useErrors } from "../../contexts/ErrorsContext";
 import EmptyState, {
   emptyStateActionClassName,
@@ -141,19 +140,13 @@ function DayReminders() {
     }
   };
 
-  const createBtnClass = buttonClassName({
-    variant: "primary",
-    size: "md",
-    className: "justify-center",
-  });
-
   const dateKey = format(date, "yyyy-MM-dd");
   const showListLoading = loadedDateKey !== dateKey && !loadError;
 
   return (
     <div className="mpn-page bg-master text-text-light">
-      <header className="mpn-chrome-top z-10 shrink-0 bg-master px-4 pb-3 lg:px-6">
-        <div className="mx-auto flex w-full max-w-lg items-center gap-3 lg:max-w-5xl">
+      <header className="mpn-chrome-top z-10 shrink-0 bg-master px-3 pb-2 lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-2">
           <button
             type="button"
             onClick={() =>
@@ -171,44 +164,42 @@ function DayReminders() {
       </header>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 bg-master-light px-3 pb-3 pt-2 lg:px-6">
-          <div className="mx-auto w-full lg:max-w-5xl">
-            <div className="lg:mb-0 lg:flex lg:items-center lg:gap-4">
-              <div className="mb-2 lg:mb-0 lg:shrink-0">
-                <CalendarButton selectedDate={date} setSelectedDate={setDate} />
-              </div>
-              <div className="mb-3 min-w-0 flex-1 lg:mb-0">
-                <DateStrip selectedDate={date} setSelectedDate={setDate} />
-              </div>
-              {canMutate ? (
-                <button
-                  type="button"
-                  onClick={() => setShowNewReminderModal(true)}
-                  className={`${createBtnClass} lg:w-auto lg:min-w-[12rem] lg:shrink-0`}
-                >
-                  <MdOutlinePostAdd size={22} className="shrink-0" aria-hidden />
-                  Criar lembrete
-                </button>
-              ) : null}
-            </div>
-            {!canMutate && caps.ready ? (
-              <p className="mt-2 text-sm text-text-light/65">
-                Conta em somente leitura — não é possível criar ou marcar
-                lembretes.
-              </p>
+        <div className="sticky top-0 z-10 shrink-0 bg-master-light">
+          <div className="mx-auto w-full lg:max-w-6xl lg:px-8">
+            <DateStrip selectedDate={date} setSelectedDate={setDate} />
+          </div>
+        </div>
+        <div className="shrink-0 bg-master px-3 pt-2 lg:px-8">
+          <div className="mx-auto flex w-full items-center justify-between gap-2 lg:max-w-6xl">
+            <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+            {canMutate ? (
+              <button
+                type="button"
+                onClick={() => setShowNewReminderModal(true)}
+                aria-label="Criar lembrete"
+                className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              >
+                <MdOutlinePostAdd size={22} aria-hidden />
+              </button>
             ) : null}
           </div>
+          {!canMutate && caps.ready ? (
+            <p className="mx-auto mt-2 w-full text-base text-text-light/70 lg:max-w-6xl">
+              Conta em somente leitura. Não é possível criar ou marcar
+              lembretes.
+            </p>
+          ) : null}
         </div>
 
         {showListLoading ? (
           <ul
-            className="mpn-page-scroll mpn-scroll-end mx-auto flex w-full max-w-lg flex-col gap-3 px-4 pt-5 lg:max-w-5xl lg:px-6"
+            className="mpn-page-scroll mpn-scroll-end mx-auto flex w-full max-w-6xl flex-col gap-1.5 px-3 pt-3 lg:px-8"
             aria-label="Carregando lembretes"
           >
             {Array.from({ length: 3 }).map((_, index) => (
               <li
                 key={index}
-                className="rounded-2xl bg-master-light/70 px-4 py-5"
+                className="rounded-xl bg-master-light/70 px-4 py-5"
               >
                 <span className="mb-3 block h-4 w-24 rounded bg-text-light/10" />
                 <span className="block h-5 w-full rounded bg-text-light/10" />
@@ -231,40 +222,37 @@ function DayReminders() {
             className="pb-16"
           />
         ) : notifications.length > 0 ? (
-          <ul className="mpn-page-scroll mpn-scroll-end mx-auto flex w-full max-w-lg flex-col gap-3 px-4 pt-5 lg:max-w-5xl lg:grid lg:grid-cols-2 lg:content-start lg:px-6">
+          <ul className="mpn-page-scroll mpn-scroll-end mx-auto flex w-full max-w-6xl flex-col gap-1.5 px-3 pt-3 lg:px-8">
             {notifications.map((notification) => (
               <li
                 key={notification.id}
-                className={`rounded-2xl bg-master-light p-4 transition-opacity ${
+                className={`flex min-h-14 items-center gap-3 rounded-xl bg-master-light px-3 py-2.5 transition-opacity ${
                   markingId === notification.id.toString() ? "opacity-60" : ""
                 }`}
               >
-                {notification.from && (
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-text-light/55">
-                    {notification.from}
-                  </p>
-                )}
-                <div className="flex items-start justify-between gap-3">
-                  <p className="min-w-0 flex-1 text-lg leading-7 text-text-light">
+                <div className="min-w-0 flex-1">
+                  <p className="text-base leading-6 text-text-light">
                     {notification.message}
                   </p>
-                  <button
-                    type="button"
-                    aria-label="Marcar lembrete como lido"
-                    disabled={
-                      !canMutate || markingId === notification.id.toString()
-                    }
-                    onClick={() =>
-                      handleCheckIsRead(notification.id.toString())
-                    }
-                    className="flex min-h-12 shrink-0 items-center gap-1.5 rounded-xl bg-master px-3 text-base font-semibold text-accent-green transition hover:bg-accent-green/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <MdOutlineCheck size={22} aria-hidden />
-                    {markingId === notification.id.toString()
-                      ? "…"
-                      : "Lido"}
-                  </button>
+                  {notification.from ? (
+                    <p className="text-base text-text-light/55">
+                      {notification.from}
+                    </p>
+                  ) : null}
                 </div>
+                <button
+                  type="button"
+                  aria-label="Marcar lembrete como lido"
+                  disabled={
+                    !canMutate || markingId === notification.id.toString()
+                  }
+                  onClick={() =>
+                    handleCheckIsRead(notification.id.toString())
+                  }
+                  className="mpn-tap flex size-10 shrink-0 items-center justify-center rounded-xl text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <MdOutlineCheck size={20} aria-hidden />
+                </button>
               </li>
             ))}
           </ul>
@@ -273,7 +261,7 @@ function DayReminders() {
             title="Nenhum lembrete neste dia"
             description={
               canMutate
-                ? "Use Criar lembrete acima ou escolha outra data."
+                ? "Toque em criar, ao lado do mês, ou escolha outra data."
                 : "Escolha outra data ou regularize a conta para criar lembretes."
             }
             className="pb-16"

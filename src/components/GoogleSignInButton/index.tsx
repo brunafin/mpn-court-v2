@@ -241,7 +241,7 @@ export default function GoogleSignInButton({
         />
       </div>
       {!ready && (
-        <p className="mt-2 text-center text-sm text-text-light/55">
+        <p className="mt-2 text-center text-base text-text-light/55">
           Carregando Google…
         </p>
       )}

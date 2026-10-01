@@ -13,6 +13,9 @@ interface NotificationContextProps {
   unreadCount: number;
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
   refreshUnreadCount: () => Promise<void>;
+  /** Dia em foco na agenda, para o aviso da foto abrir os lembretes desse dia. */
+  reminderDate: Date | null;
+  setReminderDate: React.Dispatch<React.SetStateAction<Date | null>>;
 }
 
 const NotificationContext = createContext<NotificationContextProps | undefined>(
@@ -48,6 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [reminderDate, setReminderDate] = useState<Date | null>(null);
 
   const refreshUnreadCount = useCallback(async () => {
     const companyPublicId = getCompanyPublicIdFromCookie();
@@ -75,7 +79,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <NotificationContext.Provider
-      value={{ unreadCount, setUnreadCount, refreshUnreadCount }}
+      value={{
+        unreadCount,
+        setUnreadCount,
+        refreshUnreadCount,
+        reminderDate,
+        setReminderDate,
+      }}
     >
       <NotificationCounterSync refreshUnreadCount={refreshUnreadCount} />
       {children}

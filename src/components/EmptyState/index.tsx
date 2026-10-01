@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { buttonClassName } from "../Button";
 
 type EmptyStateProps = {
   title: string;
@@ -16,27 +15,27 @@ function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-1 flex-col items-center justify-center px-6 py-16 ${className}`}
+      className={`mx-auto flex w-full max-w-sm flex-col items-center px-6 py-10 text-center ${className}`}
     >
-      <p className="text-center text-lg font-medium text-text-light">{title}</p>
-      {description && (
-        <p className="mt-2 max-w-xs text-center text-base leading-6 text-text-light/65">
-          {description}
-        </p>
-      )}
-      {action && <div className="mt-5 flex w-full max-w-xs justify-center">{action}</div>}
+      <h2 className="text-base font-semibold text-text-light">{title}</h2>
+      {description ? (
+        <p className="mt-1.5 text-base leading-5 text-text-light/70">{description}</p>
+      ) : null}
+      {action ? <div className="mt-3 flex justify-center">{action}</div> : null}
     </div>
   );
 }
 
-/** CTA padrão secondary para empty states. */
+/** Ação do vazio, só texto. */
 export function emptyStateActionClassName(extra = "") {
-  return buttonClassName({
-    variant: "secondary",
-    size: "md",
-    fullWidth: false,
-    className: `px-5 ${extra}`.trim(),
-  });
+  return [
+    "inline-flex min-h-11 items-center justify-center rounded-xl px-3 text-base font-semibold text-accent-blue-soft transition",
+    "hover:bg-text-light/10",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue",
+    extra,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export default EmptyState;

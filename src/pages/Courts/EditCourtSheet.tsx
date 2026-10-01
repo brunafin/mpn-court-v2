@@ -219,7 +219,7 @@ export default function EditCourtSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <button
         type="button"
-        className="absolute inset-0 bg-black/55"
+        className="absolute inset-0 bg-black/60"
         aria-label="Fechar"
         onClick={onClose}
       />
@@ -230,14 +230,14 @@ export default function EditCourtSheet({
         aria-labelledby={titleId}
         className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl bg-master-light text-text-light sm:rounded-2xl"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-text-light/10 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <h2 id={titleId} className="text-lg font-semibold">
             {isCreate ? "Adicionar quadra" : "Editar quadra"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="mpn-tap flex size-10 items-center justify-center rounded-xl text-text-light/70 hover:bg-text-light/10"
+            className="mpn-tap flex size-11 items-center justify-center rounded-full bg-master text-text-light"
             aria-label="Fechar"
           >
             <BsX size={28} aria-hidden />
@@ -307,13 +307,13 @@ export default function EditCourtSheet({
             </label>
           </div>
           {formError ? (
-            <p className="text-sm text-danger-400" role="alert">
+            <p className="text-base text-danger-soft" role="alert">
               {formError}
             </p>
           ) : null}
         </div>
 
-        <div className="border-t border-text-light/10 px-4 py-3">
+        <div className="px-4 py-3">
           <button
             type="button"
             disabled={!canSubmit}

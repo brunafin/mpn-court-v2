@@ -58,7 +58,7 @@ function ProductInactiveModal() {
       <button
         type="button"
         aria-label="Fechar"
-        className="absolute inset-0 bg-black/80"
+        className="absolute inset-0 bg-black/60"
         onClick={() => setOpen(false)}
       />
 
@@ -67,7 +67,7 @@ function ProductInactiveModal() {
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 flex max-h-[min(92dvh,36rem)] w-full max-w-md flex-col overflow-y-auto rounded-3xl bg-master-light p-5 text-text-light shadow-2xl sm:p-6"
+        className="relative z-10 flex max-h-[min(92dvh,36rem)] w-full max-w-md flex-col overflow-y-auto rounded-2xl bg-master p-5 text-text-light sm:p-6"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -79,7 +79,7 @@ function ProductInactiveModal() {
             </h2>
             <p
               id={descriptionId}
-              className="mt-2 text-base leading-6 text-text-light/75"
+              className="mt-2 text-base leading-6 text-text-light/70"
             >
               {detail}
             </p>
@@ -88,7 +88,7 @@ function ProductInactiveModal() {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Fechar"
-            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
             <BsX size={24} aria-hidden />
           </button>

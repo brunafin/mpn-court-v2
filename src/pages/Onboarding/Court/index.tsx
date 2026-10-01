@@ -268,7 +268,7 @@ function OnboardingCourt() {
             <Link
               to="/comecar"
               aria-label="Voltar"
-              className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/80"
+              className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light/70"
             >
               <MdChevronLeft size={28} aria-hidden />
             </Link>
@@ -276,13 +276,13 @@ function OnboardingCourt() {
               Quadras
             </h1>
           </div>
-          <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-sm font-medium text-text-light/70">
+          <p className="mt-3 rounded-lg bg-master-light px-3 py-2 text-base font-medium text-text-light/70">
             Informe o preço padrão; se quiser, personalize por horário
           </p>
 
           {!blocked ? (
             <div className="mt-6">
-              <div className="mb-2 flex items-center justify-between text-sm text-text-light/60">
+              <div className="mb-2 flex items-center justify-between text-base text-text-light/70">
                 <span>
                   Quadra{" "}
                   {Math.min((editingIndex ?? doneCount) + 1, state.courtCount)}{" "}
@@ -342,8 +342,8 @@ function OnboardingCourt() {
       >
         <div className="relative z-10 mx-auto w-full max-w-lg">
           {blocked ? (
-            <div className="mt-6 rounded-2xl bg-master-light p-5">
-              <p className="text-base text-text-light/80">
+            <div className="mt-6 rounded-xl bg-master-light p-5">
+              <p className="text-base text-text-light/70">
                 Configure o horário antes de criar as quadras.
               </p>
               <Link
@@ -361,10 +361,10 @@ function OnboardingCourt() {
               {editingIndex !== null && (
               <form
                 onSubmit={handleSave}
-                className="mt-4 rounded-2xl bg-master-light p-5"
+                className="mt-4 rounded-xl bg-master-light p-5"
                 noValidate
               >
-                <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-text-light/45">
+                <p className="mb-3 text-base font-semibold uppercase tracking-wider text-text-light/55">
                   Quadra {editingIndex + 1} de {state.courtCount}
                 </p>
                 <Input
@@ -423,15 +423,15 @@ function OnboardingCourt() {
                     <span className="block text-base font-medium text-text-light">
                       Preços personalizados
                     </span>
-                    <span className="mt-0.5 block text-base text-text-light/60">
+                    <span className="mt-0.5 block text-base text-text-light/70">
                       Defina valores diferentes por dia e horário
                     </span>
                   </span>
                 </label>
 
                 {customPricing && (
-                  <div className="mt-3 space-y-3 rounded-2xl border border-accent-blue/25 bg-master px-3 py-4">
-                    <p className="px-1 text-sm font-semibold uppercase tracking-wider text-accent-blue-soft">
+                  <div className="mt-3 space-y-3 rounded-xl border border-accent-blue/25 bg-master px-3 py-4">
+                    <p className="px-1 text-base font-semibold uppercase tracking-wider text-accent-blue-soft">
                       Preços por dia
                     </p>
                     {enabledDays.length === 0 ? (
@@ -447,7 +447,7 @@ function OnboardingCourt() {
                         >
                           <h3
                             id={`price-day-${day.dayKey}`}
-                            className="border-b border-text-light/10 bg-master-light px-3 py-2.5 text-base font-bold tracking-tight text-text-light"
+                            className="bg-master-light px-3 py-2.5 text-base font-bold tracking-tight text-text-light"
                           >
                             {day.dayLabel}
                           </h3>
@@ -493,7 +493,7 @@ function OnboardingCourt() {
                                         e.target.value,
                                       )
                                     }
-                                    className="mpn-field-dark min-h-14 min-w-0 flex-1 rounded-xl border-0 bg-master px-4 py-3.5 text-lg font-medium leading-7 text-text-light placeholder:font-normal placeholder:text-text-light/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-2 focus-visible:ring-offset-master-light"
+                                    className="mpn-field-dark min-h-14 min-w-0 flex-1 rounded-xl border-0 bg-master px-4 py-3.5 text-lg font-medium leading-7 text-text-light placeholder:font-normal placeholder:text-text-light/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-2 focus-visible:ring-offset-master-light"
                                   />
                                 </li>
                               );
@@ -542,7 +542,7 @@ function OnboardingCourt() {
                 />
 
                 <div className="mt-4 space-y-3 rounded-xl bg-master px-3 py-3">
-                  <label className="flex cursor-pointer items-center gap-3 text-sm text-text-light">
+                  <label className="flex cursor-pointer items-center gap-3 text-base text-text-light">
                     <input
                       type="checkbox"
                       className="size-4 accent-primary"
@@ -551,7 +551,7 @@ function OnboardingCourt() {
                     />
                     Quadra coberta
                   </label>
-                  <label className="flex cursor-pointer items-center gap-3 text-sm text-text-light">
+                  <label className="flex cursor-pointer items-center gap-3 text-base text-text-light">
                     <input
                       type="checkbox"
                       className="size-4 accent-primary"
@@ -565,7 +565,7 @@ function OnboardingCourt() {
                 {formError &&
                   !/preço padrão|esporte/.test(formError) && (
                   <p
-                    className="mb-2 text-base font-medium text-danger-400"
+                    className="mb-2 text-base font-medium text-danger-soft"
                     role="alert"
                   >
                     {formError}

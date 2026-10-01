@@ -68,7 +68,7 @@ function ActivateCourtGuideModal({
       <button
         type="button"
         aria-label="Fechar"
-        className="absolute inset-0 bg-black/75"
+        className="absolute inset-0 bg-black/60"
         onClick={onClose}
       />
 
@@ -77,7 +77,7 @@ function ActivateCourtGuideModal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 w-full max-w-md rounded-t-3xl bg-master-light p-5 text-text-light shadow-2xl sm:rounded-3xl sm:p-6"
+        className="relative z-10 w-full max-w-md rounded-t-2xl bg-master p-5 text-text-light sm:rounded-2xl sm:p-6"
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
 
@@ -91,7 +91,7 @@ function ActivateCourtGuideModal({
             </h2>
             <div
               id={descriptionId}
-              className="mt-2 space-y-2 text-base leading-6 text-text-light/75"
+              className="mt-2 space-y-2 text-base leading-6 text-text-light/70"
             >
               <p>
                 Com um link da sua arena, você divulga a agenda no WhatsApp, no
@@ -109,7 +109,7 @@ function ActivateCourtGuideModal({
                 , ative a quadra no site. Depois é só compartilhar o link.
               </p>
               {publicUrl ? (
-                <p className="break-all rounded-xl bg-master px-3 py-2 text-sm">
+                <p className="break-all rounded-xl bg-master px-3 py-2 text-base">
                   {publicUrl}
                 </p>
               ) : null}
@@ -119,7 +119,7 @@ function ActivateCourtGuideModal({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
           >
             <BsX size={24} aria-hidden />
           </button>

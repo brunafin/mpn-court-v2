@@ -17,19 +17,11 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLoading } from "../../hooks/useLoading";
 import ActivateCourtGuideModal from "../../components/ActivateCourtGuideModal";
 import { useNotification } from "../../contexts/NotificationContext";
-import { notesByDate } from "../../api/notes";
-import ReminderBadge from "../../components/ReminderBadge";
 import DateStrip from "./DateStrip";
 import CalendarButton from "./CalendarButton";
 import { addDays, format, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  MdChevronRight,
-  MdOutlineEventNote,
-  MdOutlineFilterList,
-  MdOutlineNotifications,
-  MdOutlinePublic,
-} from "react-icons/md";
+import { MdOutlineEventNote, MdOutlineFilterList } from "react-icons/md";
 import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
@@ -50,6 +42,7 @@ import { useErrors } from "../../contexts/ErrorsContext";
 import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
 import AgendaFiltersSheet, {
   agendaPeriodLabel,
+  agendaStatusLabel,
   AgendaPeriodFilter,
   hourInAgendaPeriod,
 } from "./AgendaFiltersSheet";
@@ -82,7 +75,7 @@ function AgendaConfiguringPanel({
         <p className="text-lg font-semibold tracking-tight">
           Configurando os horários…
         </p>
-        <p className="mt-2 text-base leading-6 text-text-light/65">{detail}</p>
+        <p className="mt-2 text-base leading-6 text-text-light/70">{detail}</p>
       </div>
     </div>
   );
@@ -102,12 +95,11 @@ function toDateKey(value: Date) {
 
 function Reservation() {
   const { loading, withLoading } = useLoading();
-  const { refreshUnreadCount } = useNotification();
+  const { refreshUnreadCount, setReminderDate } = useNotification();
   const { notifyError } = useErrors();
   const caps = useCompanyCapabilities();
 
   const [showActivateGuide, setShowActivateGuide] = useState(false);
-  const [dayUnreadCount, setDayUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = (location.state as ReservationLocationState | null) ?? null;
@@ -144,7 +136,6 @@ function Reservation() {
   const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
   const [dayLoadError, setDayLoadError] = useState(false);
   const [companyPublicId, setCompanyPublicId] = useState<string>("");
-  const [portalActive, setPortalActive] = useState<boolean | null>(null);
   const [publicArenaUrl, setPublicArenaUrl] = useState<string | null>(null);
   const [agendaBootstrapping, setAgendaBootstrapping] = useState(
     () => Boolean(locationState?.agendaBootstrapping),
@@ -223,7 +214,6 @@ function Reservation() {
           typeof info.isActive === "boolean"
             ? info.isActive
             : (info.courts ?? []).some((court) => court.show);
-        setPortalActive(active);
         setPublicArenaUrl(arenaPublicUrl(info));
         if (active) {
           setShowActivateGuide(false);
@@ -237,7 +227,6 @@ function Reservation() {
         }
       } catch {
         if (!cancelled) {
-          setPortalActive(null);
           setCourtSportsByName({});
         }
       }
@@ -437,26 +426,9 @@ function Reservation() {
   }, [refreshUnreadCount]);
 
   useEffect(() => {
-    if (!companyPublicId || !date) return;
-
-    let cancelled = false;
-    const fetchDayReminders = async () => {
-      try {
-        const notes = await notesByDate(companyPublicId, toDateKey(date));
-        if (!cancelled) {
-          setDayUnreadCount(Array.isArray(notes) ? notes.length : 0);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar lembretes do dia:", error);
-        if (!cancelled) setDayUnreadCount(0);
-      }
-    };
-
-    fetchDayReminders();
-    return () => {
-      cancelled = true;
-    };
-  }, [companyPublicId, date]);
+    setReminderDate(date);
+    return () => setReminderDate(null);
+  }, [date, setReminderDate]);
 
   const sportOptions = useMemo(() => {
     const unique = new Map<string, string>();
@@ -533,8 +505,9 @@ function Reservation() {
 
   // Skeleton enquanto o dia selecionado ainda não foi aplicado (evita empty state piscando)
   const showListLoading = loadedDateKey !== toDateKey(date);
-  const showUnreadBadge = dayUnreadCount > 0;
-  const sheetFiltersActive = Boolean(sportSelected || periodSelected);
+  const sheetFiltersActive = Boolean(
+    statusSelected || sportSelected || periodSelected,
+  );
   const hasActiveFilters = Boolean(
     statusSelected || customerQuery.trim() || sheetFiltersActive,
   );
@@ -547,7 +520,7 @@ function Reservation() {
   const daySwipe = useDaySwipe(shiftDay);
 
   const listShellClass =
-    "mx-auto w-full space-y-1.5 px-3 pt-2 sm:px-4 lg:max-w-6xl lg:space-y-2 lg:px-8";
+    "mx-auto w-full space-y-1.5 px-3 pt-2 lg:max-w-6xl lg:space-y-2 lg:px-8";
 
   const clearDayFilters = () => {
     setStatusSelected(null);
@@ -557,6 +530,7 @@ function Reservation() {
   };
 
   const filterSummaryParts = [
+    agendaStatusLabel(statusSelected),
     sportSelected || null,
     periodSelected ? agendaPeriodLabel(periodSelected) : null,
   ].filter(Boolean) as string[];
@@ -609,17 +583,17 @@ function Reservation() {
     <EmptyState
       title={
         customerQuery.trim()
-          ? "Nenhum horário com este cliente."
+          ? "Nenhum horário com este cliente"
           : sheetFiltersActive || statusSelected
-            ? "Nenhum horário para o filtro selecionado."
-            : "Nenhum horário encontrado."
+            ? "Nenhum horário para este filtro"
+            : "Nenhum horário neste dia"
       }
       description={
         customerQuery.trim()
           ? "Tente outro nome ou limpe a busca."
           : sheetFiltersActive || statusSelected
             ? "Limpe os filtros para ver todos os horários do dia."
-            : undefined
+            : "A grade deste dia aparece aqui quando há horários."
       }
       action={
         hasActiveFilters ? (
@@ -695,86 +669,55 @@ function Reservation() {
           className="mpn-page-scroll mpn-scroll-end"
           {...daySwipe}
         >
-          <div className="bg-master-light px-3 pb-3 pt-2 lg:bg-transparent lg:px-8 lg:pb-4 lg:pt-5">
-            <div className="mx-auto w-full lg:max-w-6xl">
-              <div className="mb-2 flex items-center justify-between gap-2 lg:mb-4">
-                <CalendarButton selectedDate={date} setSelectedDate={setDate} />
-                <div className="flex shrink-0 items-center gap-1">
-                  <Link
-                    to="/configuracoes-horarios"
-                    state={{ date }}
-                    aria-label="Detalhes do dia"
-                    className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-full lg:bg-master"
-                  >
-                    <MdOutlineEventNote size={22} aria-hidden />
-                  </Link>
-                  <Link
-                    to="/notificacoes"
-                    state={{ date }}
-                    aria-label={
-                      showUnreadBadge
-                        ? `Lembretes do dia, ${dayUnreadCount} não lidos`
-                        : "Lembretes do dia"
-                    }
-                    className={`mpn-tap relative flex size-11 items-center justify-center rounded-xl text-text-light/85 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:rounded-full lg:bg-master ${
-                      showUnreadBadge
-                        ? "ring-1 ring-inset ring-accent-blue/40"
-                        : ""
-                    }`}
-                  >
-                    <MdOutlineNotifications size={22} aria-hidden />
-                    {showUnreadBadge && (
-                      <ReminderBadge
-                        count={dayUnreadCount}
-                        className="absolute -right-0.5 -top-0.5 min-h-5 min-w-5 px-1 text-[11px]"
-                      />
-                    )}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div
             data-agenda-day-sticky
-            className="sticky top-0 z-10 border-b border-text-light/8 bg-master-light px-3 pb-2.5 pt-1.5 lg:bg-master lg:px-8 lg:pb-3 lg:pt-2"
+            className="sticky top-0 z-10 bg-master-light"
           >
-            <div className="mx-auto w-full lg:max-w-6xl">
+            <div className="mx-auto w-full lg:max-w-6xl lg:px-8">
               <div data-no-day-swipe>
                 <DateStrip selectedDate={date} setSelectedDate={setDate} />
               </div>
-              <p
-                className="mt-2 truncate px-1 text-sm font-semibold capitalize text-text-light/70 lg:text-base"
-                aria-live="polite"
-              >
+              <p className="sr-only" aria-live="polite">
                 {dayTitle}
               </p>
             </div>
           </div>
 
-          <div className="bg-master-light px-3 pb-4 pt-3 lg:bg-transparent lg:px-8 lg:pb-5 lg:pt-4">
+          <div className="bg-master px-3 pt-2 lg:px-8">
+            <div className="mx-auto flex w-full items-center justify-between gap-2 lg:max-w-6xl">
+              <CalendarButton selectedDate={date} setSelectedDate={setDate} />
+              <Link
+                to="/configuracoes-horarios"
+                state={{ date }}
+                aria-label="Detalhes do dia"
+                className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              >
+                <MdOutlineEventNote size={22} aria-hidden />
+              </Link>
+            </div>
+          </div>
+
+          <div className="bg-master px-3 pb-4 pt-2 lg:px-8 lg:pb-5">
             <div className="mx-auto w-full lg:max-w-6xl">
               <div data-no-day-swipe>
                 <LegendAndFilters
-                  statusSelected={statusSelected}
-                  setStatusSelected={setStatusSelected}
                   courtsNameList={courtsNameList}
                   courtSelected={courtSelected}
                   setCourtSelected={setCourtSelected}
                 />
               </div>
 
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2">
                 <label className="min-w-0 flex-1">
                   <span className="sr-only">Buscar cliente no dia</span>
                   <input
                     type="search"
                     value={customerQuery}
                     onChange={(e) => setCustomerQuery(e.target.value)}
-                    placeholder="Buscar cliente no dia"
+                    placeholder="Buscar cliente"
                     autoComplete="off"
                     enterKeyHint="search"
-                    className="mpn-tap h-11 w-full rounded-xl border border-text-light/10 bg-master px-3.5 text-base text-text-light placeholder:text-text-light/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:bg-master-light"
+                    className="mpn-tap h-10 w-full rounded-xl bg-master-light px-3.5 text-base text-text-light placeholder:text-text-light/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
                   />
                 </label>
                 <button
@@ -786,14 +729,13 @@ function Reservation() {
                       : "Filtros"
                   }
                   aria-pressed={sheetFiltersActive}
-                  className={`mpn-tap relative flex h-11 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+                  className={`mpn-tap relative flex size-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
                     sheetFiltersActive
-                      ? "border-accent-blue/50 bg-accent-blue/20 text-accent-blue-soft"
-                      : "border-text-light/10 bg-master text-text-light/80 hover:bg-master/80 lg:bg-master-light"
+                      ? "bg-accent-blue/20 text-accent-blue-soft"
+                      : "bg-master-light text-text-light/70 hover:bg-text-light/10"
                   }`}
                 >
                   <MdOutlineFilterList size={20} aria-hidden />
-                  <span className="hidden sm:inline">Filtros</span>
                   {sheetFiltersActive ? (
                     <span
                       className="absolute -right-1 -top-1 size-2.5 rounded-full bg-accent-blue"
@@ -804,30 +746,12 @@ function Reservation() {
               </div>
 
               {filterSummaryParts.length > 0 ? (
-                <p className="mt-2 truncate px-1 text-sm text-text-light/60">
+                <p className="mt-2 truncate px-1 text-base text-text-light/70">
                   {filterSummaryParts.join(" · ")}
                 </p>
               ) : null}
 
-              {portalActive === false && (
-                <Link
-                  to="/quadras"
-                  className="mpn-tap mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-accent-blue px-4 py-3 text-left text-base font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <MdOutlinePublic size={22} className="shrink-0" aria-hidden />
-                    <span className="min-w-0 truncate">Ativar a minha quadra</span>
-                  </span>
-                  <MdChevronRight size={22} className="shrink-0 opacity-90" aria-hidden />
-                </Link>
-              )}
             </div>
-          </div>
-
-          <div className="mx-auto hidden w-full max-w-6xl px-8 pb-2 pt-1 lg:block">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-text-light/50">
-              Agenda do dia
-            </h2>
           </div>
 
           {hoursList}
@@ -846,9 +770,11 @@ function Reservation() {
           open={filtersSheetOpen}
           sports={sportOptions}
           showSportSection={showSportFilter}
+          selectedStatus={statusSelected}
           selectedSport={sportSelected}
           selectedPeriod={periodSelected}
           onClose={() => setFiltersSheetOpen(false)}
+          onSelectStatus={setStatusSelected}
           onSelectSport={setSportSelected}
           onSelectPeriod={setPeriodSelected}
         />

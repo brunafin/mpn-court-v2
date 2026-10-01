@@ -47,7 +47,7 @@ function Textarea({
   describedBy,
   showCount = true,
 }: ITextareaProps) {
-  const isDark = mode === "dark";
+  void mode;
   const countId = maxLength && showCount ? `${name}-count` : undefined;
   const describedByIds =
     [describedBy, countId].filter(Boolean).join(" ") || undefined;
@@ -58,13 +58,11 @@ function Textarea({
       {title && (
         <label
           htmlFor={name}
-          className={`mb-2 text-base font-semibold leading-6 ${
-            isDark ? "text-text-light" : "text-neutral-800"
-          }`}
+          className="mb-2 text-base font-semibold leading-6 text-text-light"
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue" aria-hidden="true">
+            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -82,11 +80,7 @@ function Textarea({
         className={`w-full min-h-[6rem] resize-none rounded-xl px-4 py-3 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out clarity-mask
           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
           disabled:cursor-not-allowed disabled:opacity-60
-          ${
-            isDark
-              ? "mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/40 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light"
-              : "border border-neutral-300 bg-neutral-100 text-neutral-800 hover:border-neutral-400 focus-visible:ring-neutral-400 focus-visible:ring-offset-neutral-100 placeholder:font-normal placeholder-neutral-400"
-          }
+          mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/55 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light
         `}
         data-clarity-mask="true"
         onChange={onChange}
@@ -105,9 +99,7 @@ function Textarea({
       {maxLength && showCount && (
         <p
           id={countId}
-          className={`mt-1.5 text-right text-sm font-medium ${
-            isDark ? "text-text-light/70" : "text-neutral-600"
-          }`}
+          className="mt-1.5 text-right text-base font-medium text-text-light/70"
         >
           {currentLength}/{maxLength}
         </p>
