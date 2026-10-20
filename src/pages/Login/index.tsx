@@ -194,7 +194,7 @@ function Login() {
           <img
             src={MPN_LOGO_URL}
             alt="Marca Pra Nós"
-            className="mb-3 h-auto w-28 object-contain sm:w-32"
+            className="mb-3 h-auto w-48 object-contain sm:w-56"
           />
           <h1 className="text-2xl font-bold tracking-tight text-text-light">
             Entrar
