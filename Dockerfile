@@ -37,8 +37,9 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# Instala o 'serve' globalmente
-RUN npm install -g serve
+# serve 14.2.6 ainda puxa compression 1.8.1, que vaza memória se a resposta fecha cedo.
+RUN npm install -g serve@14.2.6 \
+  && npm install compression@1.8.2 --prefix "$(npm root -g)/serve"
 
 # Copia os arquivos construídos
 COPY --from=build /app/dist ./dist
