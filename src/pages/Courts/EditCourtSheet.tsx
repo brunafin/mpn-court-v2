@@ -18,7 +18,7 @@ import {
   CourtSport,
   courtSportLabel,
   sportPayloadFromKey,
-} from "../../onboarding/mockStore";
+} from "../../domain/courtCatalog";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { MAX_COURT_PRICE_REAIS } from "../../utils/courtPrice";

@@ -16,7 +16,7 @@ import { buttonClassName } from "../../components/Button";
 import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
-import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
+import { CourtFloor, courtFloorLabel } from "../../domain/courtCatalog";
 import {
   useCompanyBranding,
   useCompanyCapabilities,

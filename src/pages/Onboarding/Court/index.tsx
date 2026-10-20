@@ -8,12 +8,14 @@ import { ChoiceCheck, choiceRowClass } from "../../../components/ChoiceCheck";
 import Select from "../../../components/Select";
 import OnboardingFooter from "../../../components/OnboardingFooter";
 import {
-  areAllCourtsCreated,
   COURT_FLOORS,
   COURT_SPORTS,
   COURT_SPORTS_PREVIEW_COUNT,
   CourtFloor,
   CourtSport,
+} from "../../../domain/courtCatalog";
+import {
+  areAllCourtsCreated,
   getEnabledScheduleSlots,
   isCourtComplete,
   getOrCreateOnboardingDraft,

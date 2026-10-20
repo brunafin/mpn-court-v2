@@ -10,7 +10,7 @@ import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 import {
   CourtFloor,
   courtFloorLabel,
-} from "../../../onboarding/mockStore";
+} from "../../../domain/courtCatalog";
 
 /** Ex.: 16/07/2026 (qui) — 10:00 */
 export function formatSchedulePageTitle(

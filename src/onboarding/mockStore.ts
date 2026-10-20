@@ -1,4 +1,11 @@
 import { getAccessTokenPayload } from "../utils/authCookie";
+import {
+  type CourtFloor,
+  type CourtSport,
+  isCourtFloorKey,
+  resolveCourtSportKey,
+  sportPayloadFromKey,
+} from "../domain/courtCatalog";
 import { clearPendingLogo } from "./pendingLogo";
 
 const STORAGE_KEY = "mpn_onboarding_mock";
@@ -7,105 +14,6 @@ function ownerDraftKey(): string | null {
   const sub = getAccessTokenPayload<{ sub?: string }>()?.sub;
   if (typeof sub !== "string" || !sub.trim()) return null;
   return `${STORAGE_KEY}:${sub.trim()}`;
-}
-
-/** Esportes disponíveis para novas quadras. */
-export type CourtSport =
-  | "futsal"
-  | "fut5"
-  | "fut6"
-  | "fut7"
-  | "fut11"
-  | "volei_quadra"
-  | "volei_areia"
-  | "basquete"
-  | "futevolei"
-  | "beach_tennis"
-  | "tenis"
-  | "padel"
-  | "pickleball";
-
-export const COURT_SPORTS: { key: CourtSport; label: string }[] = [
-  { key: "futsal", label: "Futsal" },
-  { key: "fut5", label: "Fut5" },
-  { key: "fut6", label: "Fut6" },
-  { key: "fut7", label: "Fut7" },
-  { key: "volei_quadra", label: "Vôlei de quadra" },
-  { key: "volei_areia", label: "Vôlei de areia" },
-  { key: "fut11", label: "Futebol de campo 11" },
-  { key: "beach_tennis", label: "Beach Tennis" },
-  { key: "futevolei", label: "Futevôlei" },
-  { key: "basquete", label: "Basquete" },
-  { key: "padel", label: "Padel" },
-  { key: "pickleball", label: "Pickleball" },
-  { key: "tenis", label: "Tênis" },
-];
-
-/** Os seis primeiros ficam à vista; o restante abre em "Ver mais". */
-export const COURT_SPORTS_PREVIEW_COUNT = 6;
-
-const LEGACY_SPORT_KEYS: Record<string, CourtSport> = {
-  society: "fut7",
-  voleibol: "volei_quadra",
-  volei_praia: "volei_areia",
-};
-
-/** Nomes do catálogo UI → se usa rede (alinhado ao seed da API). */
-const SPORT_NEEDS_NET: Record<CourtSport, boolean> = {
-  futsal: false,
-  fut5: false,
-  fut6: false,
-  fut7: false,
-  fut11: false,
-  volei_quadra: true,
-  volei_areia: true,
-  basquete: false,
-  futevolei: true,
-  beach_tennis: true,
-  tenis: true,
-  padel: true,
-  pickleball: true,
-};
-
-export function sportPayloadFromKey(key: CourtSport): {
-  name: string;
-  needsNet?: boolean;
-} {
-  const name = courtSportLabel(key);
-  return { name, needsNet: SPORT_NEEDS_NET[key] };
-}
-
-/** Tipos de piso mais comuns em quadras/arenas no Brasil. */
-export type CourtFloor =
-  | "madeira"
-  | "emborrachado"
-  | "poliesportivo"
-  | "cimento"
-  | "grama_sintetica"
-  | "gramado_natural"
-  | "areia"
-  | "saibro";
-
-export const COURT_FLOORS: { key: CourtFloor; label: string }[] = [
-  { key: "madeira", label: "Madeira" },
-  { key: "emborrachado", label: "Emborrachado (vinílico)" },
-  { key: "poliesportivo", label: "Poliesportivo (pintado)" },
-  { key: "cimento", label: "Cimento / piso queimado" },
-  { key: "grama_sintetica", label: "Grama sintética" },
-  { key: "gramado_natural", label: "Gramado natural" },
-  { key: "areia", label: "Areia" },
-  { key: "saibro", label: "Saibro" },
-];
-
-const COURT_SPORT_KEYS = COURT_SPORTS.map((s) => s.key);
-const COURT_FLOOR_KEYS = COURT_FLOORS.map((f) => f.key);
-
-export function courtSportLabel(key: CourtSport): string {
-  return COURT_SPORTS.find((s) => s.key === key)?.label ?? key;
-}
-
-export function courtFloorLabel(key: CourtFloor): string {
-  return COURT_FLOORS.find((f) => f.key === key)?.label ?? key;
 }
 
 export type MockCourt = {
@@ -329,13 +237,11 @@ function normalizePriceOverrides(
 function normalizeMockCourt(court: MockCourt): MockCourt {
   const sports = Array.isArray(court.sports)
     ? court.sports
-        .map((key) => LEGACY_SPORT_KEYS[key] ?? key)
-        .filter((key): key is CourtSport => COURT_SPORT_KEYS.includes(key))
+        .map((key) => resolveCourtSportKey(String(key)))
+        .filter((key): key is CourtSport => key != null)
     : [];
   const floor =
-    court.floor && COURT_FLOOR_KEYS.includes(court.floor)
-      ? court.floor
-      : undefined;
+    court.floor && isCourtFloorKey(court.floor) ? court.floor : undefined;
   const customPricingEnabled = Boolean(court.customPricingEnabled);
   const priceOverrides = customPricingEnabled
     ? normalizePriceOverrides(court.priceOverrides)
