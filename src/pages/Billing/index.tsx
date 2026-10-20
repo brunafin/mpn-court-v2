@@ -10,12 +10,9 @@ import { useErrors } from "../../contexts/ErrorsContext";
 import { useLoading } from "../../hooks/useLoading";
 import {
   BillingPaymentItem,
-  BillingPixPayload,
   BillingSummary,
   generateBillingPix,
-  getBillingPayment,
   getBillingSummary,
-  getPayerDataNeeded,
 } from "../../api/billing";
 import { getAccessToken } from "../../utils/authCookie";
 import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
@@ -25,7 +22,7 @@ import {
   useCompanyCapabilities,
 } from "../../contexts/CompanyBrandingContext";
 import { isPaidEntitlement } from "../../utils/billingNav";
-import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
+import { useBillingPix, type PixPayer } from "../../hooks/useBillingPix";
 import { isManualPixConfigured, isMercadoPagoPixUiEnabled } from "../../utils/manualPix";
 
 function todayIso(): string {
@@ -79,14 +76,6 @@ function BillingPage() {
   const manualPix = isManualPixConfigured();
   const companyPublicId = useCompanyPublicId();
   const [summary, setSummary] = useState<BillingSummary | null>(null);
-  const [paying, setPaying] = useState(false);
-  const [pix, setPix] = useState<BillingPixPayload | null>(null);
-  const [cpf, setCpf] = useState("");
-  const [email, setEmail] = useState("");
-  const [needCpf, setNeedCpf] = useState(false);
-  const [needEmail, setNeedEmail] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -123,38 +112,32 @@ function BillingPage() {
     void load();
   }, [load]);
 
+  const {
+    pix,
+    paying,
+    needEmail,
+    needCpf,
+    needPayerData,
+    cpf,
+    email,
+    setEmail,
+    onCpfChange,
+    generating,
+    copied,
+    payerHint,
+    charge,
+    submitPayer,
+    copyPix,
+    resetPayUi,
+    sendReceipt,
+  } = useBillingPix({ companyPublicId, onPaid: load });
+
   const latest = summary && !summary.isTrial ? latestPayment(summary) : null;
   const latestOverdue = latest ? isOverdue(latest) : false;
   const latestPayable =
     latest != null && !latest.paid && latest.status !== "paid";
 
-  useEffect(() => {
-    if (!paying || !pix || !companyPublicId || pix.paid) return;
-    const timer = window.setInterval(() => {
-      void (async () => {
-        try {
-          const status = await getBillingPayment(
-            companyPublicId,
-            pix.paymentId,
-          );
-          if (status.paid) {
-            setPix((prev) => (prev ? { ...prev, paid: true, status: "paid" } : prev));
-            await load();
-          }
-        } catch {
-          // polling silencioso
-        }
-      })();
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, [paying, pix, companyPublicId, load]);
-
-  const needPayerData = needEmail || needCpf;
-
-  const startPay = async (
-    payment: BillingPaymentItem,
-    payer?: { cpf?: string; email?: string },
-  ) => {
+  const startPay = async (payment: BillingPaymentItem, payer?: PixPayer) => {
     if (!companyPublicId) return;
     if (!summary?.pixEnabled) {
       notifyError({
@@ -163,87 +146,21 @@ function BillingPage() {
       });
       return;
     }
-    setGenerating(true);
     try {
-      const payload = await generateBillingPix(
-        companyPublicId,
-        payment.id,
-        payer,
+      await charge(() =>
+        generateBillingPix(companyPublicId, payment.id, payer),
       );
-      setPix(payload);
-      setPaying(true);
-      setNeedCpf(false);
-      setNeedEmail(false);
-    } catch (error) {
-      const needed = getPayerDataNeeded(error);
-      if (needed) {
-        setNeedEmail(needed.email);
-        setNeedCpf(needed.cpf);
-        setPaying(true);
-        return;
-      }
+    } catch {
       notifyError({
         message: "Não foi possível gerar o PIX. Tente novamente.",
       });
-    } finally {
-      setGenerating(false);
     }
   };
 
-  const onSubmitPayerData = async (event: FormEvent) => {
-    event.preventDefault();
+  const onSubmitPayerData = (event: FormEvent) => {
     if (!latest || !latestPayable) return;
-    const digits = cpf.replace(/\D/g, "");
-    const trimmedEmail = email.trim();
-    if (needEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      notifyError({ message: "Informe um e-mail válido." });
-      return;
-    }
-    if (needCpf && !isValidCpf(digits)) {
-      notifyError({
-        message:
-          digits.length === 11
-            ? "Informe um CPF válido."
-            : "Informe um CPF válido com 11 dígitos.",
-      });
-      return;
-    }
-    await startPay(latest, {
-      ...(needEmail || trimmedEmail
-        ? { email: trimmedEmail }
-        : {}),
-      ...(needCpf || isValidCpf(digits) ? { cpf: digits } : {}),
-    });
+    return submitPayer(event, (payer) => startPay(latest, payer));
   };
-
-  const copyPix = async () => {
-    if (!pix?.pixCopyPaste) return;
-    try {
-      await navigator.clipboard.writeText(pix.pixCopyPaste);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      notifyError({
-        message: "Não foi possível copiar. Selecione o código manualmente.",
-      });
-    }
-  };
-
-  const resetPayUi = () => {
-    setPaying(false);
-    setPix(null);
-    setNeedCpf(false);
-    setNeedEmail(false);
-  };
-
-  const payerHint = [
-    "Para o PIX automático (Mercado Pago), falta:",
-    needEmail && needCpf
-      ? "e-mail e CPF."
-      : needEmail
-        ? "e-mail."
-        : "CPF.",
-  ].join(" ");
 
   const showAutoPix =
     isMercadoPagoPixUiEnabled() && Boolean(summary?.pixEnabled);
@@ -319,6 +236,7 @@ function BillingPage() {
                     amount={latest.value}
                     companyName={companyName || null}
                     dueLabel={formatMonthYear(latest.dueDate)}
+                    onReceipt={sendReceipt}
                   />
                 ) : null}
                 {canGeneratePix && !showAutoPix && !manualPix ? (
@@ -360,7 +278,7 @@ function BillingPage() {
                     placeholder="000.000.000-00"
                     value={cpf}
                     disabled={generating}
-                    onChange={(e) => setCpf(formatCpfMask(e.target.value))}
+                    onChange={(e) => onCpfChange(e.target.value)}
                     className="min-h-11 w-full rounded-xl bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 ) : null}
@@ -426,6 +344,7 @@ function BillingPage() {
                         amount={pix.value}
                         companyName={companyName || null}
                         dueLabel={formatMonthYear(latest.dueDate)}
+                        onReceipt={sendReceipt}
                       />
                     ) : null}
                   </>

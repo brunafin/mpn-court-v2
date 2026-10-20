@@ -8,6 +8,12 @@ import {
   openReceiptWhatsApp,
 } from "../../utils/manualPix";
 
+type ReceiptDetails = {
+  amount?: number | null;
+  companyName?: string | null;
+  dueLabel?: string | null;
+};
+
 type ManualPixPayProps = {
   amount?: number | null;
   companyName?: string | null;
@@ -15,6 +21,7 @@ type ManualPixPayProps = {
   /** Destaque maior quando é o caminho principal (sem Mercado Pago). */
   primary?: boolean;
   className?: string;
+  onReceipt?: (details: ReceiptDetails) => void;
 };
 
 function ManualPixPay({
@@ -23,6 +30,7 @@ function ManualPixPay({
   dueLabel,
   primary = false,
   className = "",
+  onReceipt,
 }: ManualPixPayProps) {
   const { notifyError } = useErrors();
   const [copied, setCopied] = useState(false);
@@ -67,7 +75,11 @@ function ManualPixPay({
         <button
           type="button"
           onClick={() =>
-            openReceiptWhatsApp({ amount, companyName, dueLabel })
+            (onReceipt ?? openReceiptWhatsApp)({
+              amount,
+              companyName,
+              dueLabel,
+            })
           }
           className={`${buttonClassName({
             variant: primary ? "secondary" : "primary",

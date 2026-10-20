@@ -17,11 +17,8 @@ import {
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useLoading } from "../../hooks/useLoading";
 import {
-  BillingPixPayload,
   BillingSummary,
-  getBillingPayment,
   getBillingSummary,
-  getPayerDataNeeded,
   isNoOpenPaymentError,
   isPixUnavailableError,
   startBillingContract,
@@ -31,7 +28,7 @@ import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { isPaidEntitlement } from "../../utils/billingNav";
-import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
+import { useBillingPix, type PixPayer } from "../../hooks/useBillingPix";
 import { isManualPixConfigured, isMercadoPagoPixUiEnabled } from "../../utils/manualPix";
 
 const WHATSAPP_CONTRACT =
@@ -66,14 +63,6 @@ function PlansPage() {
   const manualPix = isManualPixConfigured();
   const companyPublicId = useCompanyPublicId();
   const [summary, setSummary] = useState<BillingSummary | null>(null);
-  const [pix, setPix] = useState<BillingPixPayload | null>(null);
-  const [paying, setPaying] = useState(false);
-  const [needCpf, setNeedCpf] = useState(false);
-  const [needEmail, setNeedEmail] = useState(false);
-  const [cpf, setCpf] = useState("");
-  const [email, setEmail] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -108,29 +97,31 @@ function PlansPage() {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (!paying || !pix || !companyPublicId || pix.paid) return;
-    const timer = window.setInterval(() => {
-      void (async () => {
-        try {
-          const status = await getBillingPayment(
-            companyPublicId,
-            pix.paymentId,
-          );
-          if (status.paid) {
-            setPix((prev) =>
-              prev ? { ...prev, paid: true, status: "paid" } : prev,
-            );
-            await refreshCapabilities();
-            await load();
-          }
-        } catch {
-          // polling silencioso
-        }
-      })();
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, [paying, pix, companyPublicId, load, refreshCapabilities]);
+  const {
+    pix,
+    paying,
+    needEmail,
+    needCpf,
+    needPayerData,
+    cpf,
+    email,
+    setEmail,
+    onCpfChange,
+    generating,
+    copied,
+    payerHint,
+    charge,
+    submitPayer,
+    copyPix,
+    resetPayUi,
+    sendReceipt,
+  } = useBillingPix({
+    companyPublicId,
+    onPaid: async () => {
+      await refreshCapabilities();
+      await load();
+    },
+  });
 
   useEffect(() => {
     if (pix?.paid && caps.ready && isPaidEntitlement(caps.entitlement)) {
@@ -138,21 +129,14 @@ function PlansPage() {
     }
   }, [pix?.paid, caps.ready, caps.entitlement, navigate]);
 
-  const needPayerData = needEmail || needCpf;
-
-  const startContract = async (payer?: { cpf?: string; email?: string }) => {
+  const startContract = async (payer?: PixPayer) => {
     if (!companyPublicId) return;
     if (!summary?.pixEnabled) {
       openWhatsAppContract();
       return;
     }
-    setGenerating(true);
     try {
-      const payload = await startBillingContract(companyPublicId, payer);
-      setPix(payload);
-      setPaying(true);
-      setNeedCpf(false);
-      setNeedEmail(false);
+      await charge(() => startBillingContract(companyPublicId, payer));
     } catch (error) {
       if (isPixUnavailableError(error)) {
         openWhatsAppContract();
@@ -163,63 +147,14 @@ function PlansPage() {
         navigate("/mensalidades", { replace: true });
         return;
       }
-      const needed = getPayerDataNeeded(error);
-      if (needed) {
-        setNeedEmail(needed.email);
-        setNeedCpf(needed.cpf);
-        setPaying(true);
-        return;
-      }
       notifyError({
         message: "Não foi possível iniciar a contratação. Tente novamente.",
       });
-    } finally {
-      setGenerating(false);
     }
   };
 
-  const onSubmitPayerData = async (event: FormEvent) => {
-    event.preventDefault();
-    const digits = cpf.replace(/\D/g, "");
-    const trimmedEmail = email.trim();
-    if (needEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      notifyError({ message: "Informe um e-mail válido." });
-      return;
-    }
-    if (needCpf && !isValidCpf(digits)) {
-      notifyError({
-        message:
-          digits.length === 11
-            ? "Informe um CPF válido."
-            : "Informe um CPF válido com 11 dígitos.",
-      });
-      return;
-    }
-    await startContract({
-      ...(needEmail || trimmedEmail ? { email: trimmedEmail } : {}),
-      ...(needCpf || isValidCpf(digits) ? { cpf: digits } : {}),
-    });
-  };
-
-  const copyPix = async () => {
-    if (!pix?.pixCopyPaste) return;
-    try {
-      await navigator.clipboard.writeText(pix.pixCopyPaste);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      notifyError({
-        message: "Não foi possível copiar. Selecione o código manualmente.",
-      });
-    }
-  };
-
-  const resetPayUi = () => {
-    setPaying(false);
-    setPix(null);
-    setNeedCpf(false);
-    setNeedEmail(false);
-  };
+  const onSubmitPayerData = (event: FormEvent) =>
+    submitPayer(event, (payer) => startContract(payer));
 
   const expired = caps.ready && caps.entitlement === "none";
   const fee = summary?.monthlyFee ?? null;
@@ -234,15 +169,6 @@ function PlansPage() {
     : trialEndsLabel
       ? `Aproveite o teste grátis até ${trialEndsLabel} e, quando quiser, contrate o plano mensal para manter a operação da arena no ritmo.`
       : "Aproveite o teste grátis e, quando quiser, contrate o plano mensal para manter a operação da arena no ritmo.";
-
-  const payerHint = [
-    "Para o PIX automático (Mercado Pago), falta:",
-    needEmail && needCpf
-      ? "e-mail e CPF."
-      : needEmail
-        ? "e-mail."
-        : "CPF.",
-  ].join(" ");
 
   const showAutoPix =
     isMercadoPagoPixUiEnabled() && Boolean(summary?.pixEnabled);
@@ -334,6 +260,7 @@ function PlansPage() {
                       primary={!showAutoPix}
                       amount={fee}
                       companyName={companyName || null}
+                      onReceipt={sendReceipt}
                     />
                   ) : null}
                   {!showAutoPix && !manualPix ? (
@@ -385,7 +312,7 @@ function PlansPage() {
                       placeholder="000.000.000-00"
                       value={cpf}
                       disabled={generating}
-                      onChange={(e) => setCpf(formatCpfMask(e.target.value))}
+                      onChange={(e) => onCpfChange(e.target.value)}
                       className="min-h-11 w-full rounded-xl border border-text-light/15 bg-master px-3 text-text-light disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   ) : null}
@@ -459,6 +386,7 @@ function PlansPage() {
                           className="mt-2"
                           amount={pix.value}
                           companyName={companyName || null}
+                          onReceipt={sendReceipt}
                         />
                       ) : null}
                     </>
