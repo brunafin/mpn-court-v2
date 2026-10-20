@@ -5,3 +5,4 @@ export const MPN_PUBLIC_SITE_URL = (
 
 export const MPN_PRIVACY_URL = `${MPN_PUBLIC_SITE_URL}/privacidade`;
 export const MPN_TERMS_URL = `${MPN_PUBLIC_SITE_URL}/termos`;
+export const MPN_SPLIT_TEAMS_URL = `${MPN_PUBLIC_SITE_URL}/separar-times`;

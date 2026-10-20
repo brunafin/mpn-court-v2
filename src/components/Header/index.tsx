@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { BsList, BsX } from "react-icons/bs";
 import {
+  MdOutlineGroups,
   MdOutlineLogout,
   MdOutlineNotifications,
   MdOutlineTune,
@@ -22,12 +23,14 @@ import {
   billingNavLabel,
   billingNavPath,
 } from "../../utils/billingNav";
+import { MPN_SPLIT_TEAMS_URL } from "../../constants/legal";
 type NavItem = {
   to: string;
   label: string;
   description: string;
   Icon: IconType;
   match: (path: string) => boolean;
+  external?: boolean;
 };
 
 function buildNavItems(
@@ -59,6 +62,14 @@ function buildNavItems(
       description: "Arena e quadras",
       Icon: GiSoccerField,
       match: (path) => path.startsWith("/quadras"),
+    },
+    {
+      to: MPN_SPLIT_TEAMS_URL,
+      label: "Separar times",
+      description: "Montar os times do jogo",
+      Icon: MdOutlineGroups,
+      match: () => false,
+      external: true,
     },
     {
       to: billingPath,
@@ -191,15 +202,12 @@ function Header() {
               className="flex-1 overflow-y-auto px-3 py-2"
             >
               <ul className="flex flex-col gap-1.5">
-                {navItems.map(({ to, label, description, Icon, match }) => {
-                  const isActive = match(location.pathname);
-                  return (
-                    <li key={to}>
-                      <Link
-                        to={to}
-                        aria-current={isActive ? "page" : undefined}
-                        className={getNavLinkClass(isActive)}
-                      >
+                {navItems.map(
+                  ({ to, label, description, Icon, match, external }) => {
+                    const isActive = match(location.pathname);
+                    const className = getNavLinkClass(isActive);
+                    const content = (
+                      <>
                         <Icon
                           size={20}
                           className={`shrink-0 ${
@@ -219,10 +227,32 @@ function Header() {
                             {description}
                           </span>
                         </span>
-                      </Link>
-                    </li>
-                  );
-                })}
+                      </>
+                    );
+                    return (
+                      <li key={to}>
+                        {external ? (
+                          <a
+                            href={to}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={className}
+                          >
+                            {content}
+                          </a>
+                        ) : (
+                          <Link
+                            to={to}
+                            aria-current={isActive ? "page" : undefined}
+                            className={className}
+                          >
+                            {content}
+                          </Link>
+                        )}
+                      </li>
+                    );
+                  },
+                )}
               </ul>
             </nav>
 

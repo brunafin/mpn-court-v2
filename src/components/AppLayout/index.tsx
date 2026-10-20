@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  MdOutlineGroups,
   MdOutlineLogout,
   MdOutlineNotifications,
   MdOutlineTune,
@@ -19,11 +20,13 @@ import {
 import PendingBillingModal from "../PendingBillingModal";
 import { buttonClassName } from "../Button";
 import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
+import { MPN_SPLIT_TEAMS_URL } from "../../constants/legal";
 type NavItem = {
   to: string;
   label: string;
   Icon: IconType;
   match: (path: string) => boolean;
+  external?: boolean;
 };
 
 function buildNavItems(
@@ -52,6 +55,13 @@ function buildNavItems(
       label: "Quadras",
       Icon: GiSoccerField,
       match: (path) => path.startsWith("/quadras"),
+    },
+    {
+      to: MPN_SPLIT_TEAMS_URL,
+      label: "Separar times",
+      Icon: MdOutlineGroups,
+      match: () => false,
+      external: true,
     },
     {
       to: billingPath,
@@ -132,22 +142,39 @@ function AppLayoutShell({ children }: AppLayoutProps) {
 
         <nav aria-label="Navegação principal" className="flex-1 px-3 py-2">
           <ul className="flex flex-col gap-1.5">
-            {navItems.map(({ to, label, Icon, match }) => {
+            {navItems.map(({ to, label, Icon, match, external }) => {
               const isActive = match(location.pathname);
+              const className = `flex min-h-11 items-center gap-3 rounded-xl px-3 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                isActive
+                  ? "bg-text-light/90 text-master"
+                  : "text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
+              }`;
+              const content = (
+                <>
+                  <Icon size={20} className="shrink-0" aria-hidden />
+                  <span className="truncate">{label}</span>
+                </>
+              );
               return (
                 <li key={to}>
-                  <Link
-                    to={to}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-                      isActive
-                        ? "bg-text-light/90 text-master"
-                        : "text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
-                    }`}
-                  >
-                    <Icon size={20} className="shrink-0" aria-hidden />
-                    <span className="truncate">{label}</span>
-                  </Link>
+                  {external ? (
+                    <a
+                      href={to}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={className}
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <Link
+                      to={to}
+                      aria-current={isActive ? "page" : undefined}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  )}
                 </li>
               );
             })}
