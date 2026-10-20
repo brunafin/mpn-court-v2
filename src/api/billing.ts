@@ -40,9 +40,13 @@ export type BillingPixPayload = {
   mpPaymentId: string | null;
 };
 
-export async function getBillingSummary(companyPublicId: string) {
+export async function getBillingSummary(
+  companyPublicId: string,
+  options?: { silentError?: boolean },
+) {
   const response = await api.get<BillingSummary>(
     `/companies/${companyPublicId}/billing`,
+    { silentError: options?.silentError },
   );
   return response.data;
 }

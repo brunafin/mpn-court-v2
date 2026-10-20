@@ -98,7 +98,9 @@ function PlansPage() {
     if (!companyPublicId) return;
     await withLoading(async () => {
       try {
-        const data = await getBillingSummary(companyPublicId);
+        const data = await getBillingSummary(companyPublicId, {
+          silentError: true,
+        });
         setSummary(data);
       } catch (error) {
         console.error(error);
