@@ -256,11 +256,17 @@ function ContactCard({
       }
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-semibold leading-snug text-text-light">
+        <p
+          className="truncate text-lg font-semibold leading-snug text-text-light clarity-mask"
+          data-clarity-mask="true"
+        >
           {contactName || "Sem nome"}
         </p>
         {contactPhone ? (
-          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-base font-medium leading-snug text-text-light">
+          <p
+            className="mt-0.5 flex min-w-0 items-center gap-1.5 text-base font-medium leading-snug text-text-light clarity-mask"
+            data-clarity-mask="true"
+          >
             <span className="truncate">{formatPhoneMask(contactPhone)}</span>
             <a
               href={`${import.meta.env.VITE_WHATSAPP_URL_BASE}${contactPhone}`}
@@ -344,7 +350,10 @@ export function BookedIdentity({
     <div role="group" aria-label={personName}>
       <div className="flex items-center gap-3">
         <div className="flex min-h-11 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="text-lg font-semibold leading-none text-text-light">
+          <p
+            className="text-lg font-semibold leading-none text-text-light clarity-mask"
+            data-clarity-mask="true"
+          >
             {personName}
           </p>
           <span
@@ -361,7 +370,8 @@ export function BookedIdentity({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`WhatsApp de ${personName}, ${phoneLabel}`}
-                className="flex size-11 items-center justify-center rounded-xl bg-master-light text-accent-green-ink transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-ink"
+                data-clarity-mask="true"
+                className="flex size-11 items-center justify-center rounded-xl bg-master-light text-accent-green-ink transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-ink clarity-mask"
               >
                 <BsWhatsapp size={20} aria-hidden />
               </a>

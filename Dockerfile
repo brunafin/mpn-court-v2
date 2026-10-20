@@ -1,10 +1,10 @@
 # Build stage
-FROM node:23-alpine as build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
 # Vite embute VITE_* no bundle no build — runtime env no container não basta.
 ARG VITE_WHATSAPP_URL_BASE
@@ -33,7 +33,7 @@ COPY . .
 RUN npm run build
 
 # Serve stage
-FROM node:23-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
@@ -48,4 +48,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Inicia o servidor com 'serve'
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["sh", "-c", "exec serve -s dist -l \"$PORT\""]

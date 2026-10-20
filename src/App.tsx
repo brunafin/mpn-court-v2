@@ -77,9 +77,24 @@ function App() {
         t.src = "https://www.clarity.ms/tag/" + i;
         y = l.getElementsByTagName(r)[0];
         y.parentNode.insertBefore(t, y);
-        // Replay mascarado; campos sensíveis também usam data-clarity-mask
-        c[a]("set", "maskingMode", "masked");
+        // Strict mascara o texto da sessão. Nome e telefone da agenda
+        // também levam data-clarity-mask.
+        c[a]("set", "maskingMode", "Strict");
       })(window, document, "clarity", "script", "skzyiavfyw");
+
+      const measurementId = "G-LT9PFG566M";
+      const gtagScript = document.createElement("script");
+      gtagScript.async = true;
+      gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+      document.head.appendChild(gtagScript);
+
+      const analyticsWindow = window as Window & { dataLayer?: unknown[] };
+      analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
+      const gtag = (...args: unknown[]) => {
+        analyticsWindow.dataLayer?.push(args);
+      };
+      gtag("js", new Date());
+      gtag("config", measurementId);
     }
   }, []);
 

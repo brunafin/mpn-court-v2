@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "serve -s dist -l $PORT",
-    "prepare": "husky"
+    "start": "serve -s dist -l $PORT"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
@@ -18,12 +17,10 @@
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.1",
-    "react-datepicker": "^8.3.0",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.2.1",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.5.1",
-    "react-server-dom-webpack": "^19.2.1",
     "serve": "^14.2.0",
     "tailwindcss": "^4.1.4"
   },
@@ -38,7 +35,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
-    "husky": "^9.1.7",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.1",

@@ -157,6 +157,9 @@ function ReservationItem({
         ? "Inativo"
         : customerName || label;
 
+  const showsCustomerName = Boolean(
+    customerName && !isPastAvailable && !isAvailable && !isInactive,
+  );
   const hasOptions = isNeedsNetting || isEvent || isBarbecueIncluded;
 
   const cardClassName =
@@ -211,7 +214,8 @@ function ReservationItem({
                   : isAvailable
                     ? "text-base font-semibold text-accent-green-ink"
                     : "text-base font-semibold text-text-light"
-              }`}
+              }${showsCustomerName ? " clarity-mask" : ""}`}
+              data-clarity-mask={showsCustomerName ? "true" : undefined}
             >
               {rightLabel}
             </span>
