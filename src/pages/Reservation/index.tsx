@@ -24,6 +24,7 @@ import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
 import {
+  createSchedulesFetchGuard,
   getSchedulesDayCache,
   isSchedulesDayCacheFresh,
   setSchedulesDayCache,
@@ -143,7 +144,7 @@ function Reservation() {
   const [agendaBootstrapping, setAgendaBootstrapping] = useState(
     () => Boolean(locationState?.agendaBootstrapping),
   );
-  const fetchGenRef = useRef(0);
+  const fetchGuardRef = useRef(createSchedulesFetchGuard());
   const forceGuideFromNavRef = useRef(Boolean(locationState?.showActivateGuide));
 
   useEffect(() => {
@@ -292,7 +293,7 @@ function Reservation() {
       if (!companyPublicId) {
         return;
       }
-      const gen = ++fetchGenRef.current;
+      const gen = fetchGuardRef.current.start();
       if (!opts?.silent) setDayLoadError(false);
       const run = async () => {
         const response = await getSchedulesByCompanyPublicIdAndDate({
@@ -300,7 +301,7 @@ function Reservation() {
           date: dateInput,
         });
         // Ignora resposta se o usuário já mudou de dia
-        if (gen !== fetchGenRef.current) return;
+        if (!fetchGuardRef.current.isCurrent(gen)) return;
         applyDayData(response, dateInput);
       };
       try {
@@ -310,7 +311,7 @@ function Reservation() {
           await withLoading(run);
         }
       } catch (error: any) {
-        if (gen === fetchGenRef.current && !opts?.silent) {
+        if (fetchGuardRef.current.isCurrent(gen) && !opts?.silent) {
           setLoadedDateKey(dateInput);
           setDayLoadError(true);
           setList([]);

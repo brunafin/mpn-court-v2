@@ -15,6 +15,20 @@ const MAX_DAYS = 14;
  */
 const FRESH_MS = 15_000;
 
+/** Descarta resposta de um dia que o gestor já deixou. */
+export function createSchedulesFetchGuard() {
+  let generation = 0;
+  return {
+    start(): number {
+      generation += 1;
+      return generation;
+    },
+    isCurrent(startedAt: number): boolean {
+      return startedAt === generation;
+    },
+  };
+}
+
 const store = new Map<string, DayCacheEntry>();
 
 function keyOf(companyPublicId: string, date: string) {
