@@ -8,19 +8,7 @@ import SignUpVerifyCode from "./pages/SignUp/VerifyCode";
 import CompleteProfile from "./pages/SignUp/CompleteProfile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ForgotPasswordReset from "./pages/ForgotPassword/Reset";
-import OnboardingArena from "./pages/Onboarding/Arena";
-import OnboardingChecklist from "./pages/Onboarding";
-import OnboardingSchedule from "./pages/Onboarding/Schedule";
-import OnboardingCourt from "./pages/Onboarding/Court";
-import Reservation from "./pages/Reservation";
-import ReservationDetails from "./pages/Reservation/Details";
 import ChangePassword from "./pages/ChangePassword";
-import Courts from "./pages/Courts";
-import Billing from "./pages/Billing";
-import Plans from "./pages/Plans";
-import ConfigDay from "./pages/ConfigDay";
-import Preferences from "./pages/Preferences";
-import Notifications from "./pages/Notifications";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ErrorsProvider, useErrors } from "./contexts/ErrorsContext";
@@ -31,6 +19,27 @@ import ProductInactiveModal from "./components/ProductInactiveModal";
 const DesignSystemPage = import.meta.env.DEV
   ? lazy(() => import("./pages/DesignSystem"))
   : null;
+
+const OnboardingChecklist = lazy(() => import("./pages/Onboarding"));
+const OnboardingArena = lazy(() => import("./pages/Onboarding/Arena"));
+const OnboardingSchedule = lazy(() => import("./pages/Onboarding/Schedule"));
+const OnboardingCourt = lazy(() => import("./pages/Onboarding/Court"));
+const Reservation = lazy(() => import("./pages/Reservation"));
+const ReservationDetails = lazy(() => import("./pages/Reservation/Details"));
+const Courts = lazy(() => import("./pages/Courts"));
+const ConfigDay = lazy(() => import("./pages/ConfigDay"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Plans = lazy(() => import("./pages/Plans"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Preferences = lazy(() => import("./pages/Preferences"));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-10">
+      <p className="text-base font-medium text-text-light/70">Carregando…</p>
+    </div>
+  );
+}
 
 /** Telas altas (auth + onboarding) — não podem herdar overflow-hidden do shell. */
 function isScrollableShellPath(pathname: string): boolean {
@@ -128,58 +137,56 @@ function App() {
           <InitAxiosNotifier />
           <ProductInactiveModal />
           <NotificationProvider>
-            <Routes>
-              {DesignSystemPage ? (
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                {DesignSystemPage ? (
+                  <Route
+                    path="/design-system"
+                    element={<DesignSystemPage />}
+                  />
+                ) : null}
+                <Route index element={<Login />} />
+                <Route path="/cadastro" element={<SignUp />} />
+                <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />
                 <Route
-                  path="/design-system"
-                  element={
-                    <Suspense fallback={null}>
-                      <DesignSystemPage />
-                    </Suspense>
-                  }
+                  path="/cadastro/completar"
+                  element={<CompleteProfile />}
                 />
-              ) : null}
-              <Route index element={<Login />} />
-              <Route path="/cadastro" element={<SignUp />} />
-              <Route path="/cadastro/codigo" element={<SignUpVerifyCode />} />
-              <Route
-                path="/cadastro/completar"
-                element={<CompleteProfile />}
-              />
-              <Route path="/esqueci-senha" element={<ForgotPassword />} />
-              <Route
-                path="/esqueci-senha/redefinir"
-                element={<ForgotPasswordReset />}
-              />
-              <Route element={<ProtectedRoute />}>
-                <Route path="/comecar" element={<OnboardingChecklist />} />
+                <Route path="/esqueci-senha" element={<ForgotPassword />} />
                 <Route
-                  path="/comecar/estabelecimento"
-                  element={<OnboardingArena />}
+                  path="/esqueci-senha/redefinir"
+                  element={<ForgotPasswordReset />}
                 />
-                <Route
-                  path="/comecar/horario"
-                  element={<OnboardingSchedule />}
-                />
-                <Route path="/comecar/quadra" element={<OnboardingCourt />} />
-                <Route path="/reservas" element={<Reservation />} />
-                <Route path="/reservas/:id" element={<ReservationDetails />} />
-                <Route path="/alterar-senha" element={<ChangePassword />} />
-                <Route
-                  path="/minhas-infos"
-                  element={<Navigate to="/quadras" replace />}
-                />
-                <Route path="/preferencias" element={<Preferences />} />
-                <Route path="/quadras" element={<Courts />} />
-                <Route path="/mensalidades" element={<Billing />} />
-                <Route path="/planos" element={<Plans />} />
-                <Route
-                  path="/configuracoes-horarios"
-                  element={<ConfigDay />}
-                />
-                <Route path="/notificacoes" element={<Notifications />} />
-              </Route>
-            </Routes>
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/comecar" element={<OnboardingChecklist />} />
+                  <Route
+                    path="/comecar/estabelecimento"
+                    element={<OnboardingArena />}
+                  />
+                  <Route
+                    path="/comecar/horario"
+                    element={<OnboardingSchedule />}
+                  />
+                  <Route path="/comecar/quadra" element={<OnboardingCourt />} />
+                  <Route path="/reservas" element={<Reservation />} />
+                  <Route path="/reservas/:id" element={<ReservationDetails />} />
+                  <Route path="/alterar-senha" element={<ChangePassword />} />
+                  <Route
+                    path="/minhas-infos"
+                    element={<Navigate to="/quadras" replace />}
+                  />
+                  <Route path="/preferencias" element={<Preferences />} />
+                  <Route path="/quadras" element={<Courts />} />
+                  <Route path="/mensalidades" element={<Billing />} />
+                  <Route path="/planos" element={<Plans />} />
+                  <Route
+                    path="/configuracoes-horarios"
+                    element={<ConfigDay />}
+                  />
+                  <Route path="/notificacoes" element={<Notifications />} />
+                </Route>
+              </Routes>
+            </Suspense>
           </NotificationProvider>
         </ErrorsProvider>
       </div>
