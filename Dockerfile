@@ -48,5 +48,6 @@ COPY --from=build /app/dist ./dist
 ENV PORT=3000
 EXPOSE 3000
 
-# Inicia o servidor com 'serve'
-CMD ["sh", "-c", "exec serve -s dist -l \"$PORT\""]
+# -l $PORT escuta só em "::" e o log mostra localhost. O proxy da Railway
+# chega por IPv4 e devolve 502. 0.0.0.0 aceita essa conexão.
+CMD ["sh", "-c", "exec serve -s dist -l \"tcp://0.0.0.0:${PORT}\""]

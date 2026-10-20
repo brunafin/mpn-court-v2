@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview",
-    "start": "serve -s dist -l $PORT",
+    "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
     "prepare": "husky"
   },
   "dependencies": {
