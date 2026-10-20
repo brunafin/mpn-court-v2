@@ -4,7 +4,7 @@ import {
   BillingSummary,
   getBillingSummary,
 } from "../../api/billing";
-import { getAccessTokenPayload } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { buttonClassName } from "../Button";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
@@ -29,12 +29,11 @@ function isDueOrOverdue(dueDate: string | null): boolean {
 function PendingBillingModal() {
   const location = useLocation();
   const caps = useCompanyCapabilities();
+  const companyPublicId = useCompanyPublicId();
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [open, setOpen] = useState(false);
 
   const refresh = useCallback(async () => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    const companyPublicId = payload?.companyPublicId;
     if (!companyPublicId) return;
     if (caps.ready && !caps.canPayBilling) {
       setOpen(false);
@@ -61,7 +60,7 @@ function PendingBillingModal() {
     } catch {
       // modal é best-effort
     }
-  }, [location.pathname, caps.ready, caps.canPayBilling]);
+  }, [location.pathname, caps.ready, caps.canPayBilling, companyPublicId]);
 
   useEffect(() => {
     void refresh();

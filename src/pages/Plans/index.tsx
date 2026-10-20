@@ -26,10 +26,8 @@ import {
   isPixUnavailableError,
   startBillingContract,
 } from "../../api/billing";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { formatDateToDDMMYYYY } from "../../utils/formatDateToDDMMYYYY";
 import { isPaidEntitlement } from "../../utils/billingNav";
@@ -66,7 +64,7 @@ function PlansPage() {
   const caps = useCompanyCapabilities();
   const { refreshCapabilities, companyName } = useCompanyBranding();
   const manualPix = isManualPixConfigured();
-  const [companyPublicId, setCompanyPublicId] = useState("");
+  const companyPublicId = useCompanyPublicId();
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [pix, setPix] = useState<BillingPixPayload | null>(null);
   const [paying, setPaying] = useState(false);
@@ -88,11 +86,6 @@ function PlansPage() {
       navigate("/mensalidades", { replace: true });
     }
   }, [caps.ready, caps.entitlement, navigate]);
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setCompanyPublicId(payload?.companyPublicId || "");
-  }, []);
 
   const load = useCallback(async () => {
     if (!companyPublicId) return;

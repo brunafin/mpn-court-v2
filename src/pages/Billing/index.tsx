@@ -17,10 +17,8 @@ import {
   getBillingSummary,
   getPayerDataNeeded,
 } from "../../api/billing";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import {
   useCompanyBranding,
@@ -79,7 +77,7 @@ function BillingPage() {
   const caps = useCompanyCapabilities();
   const { companyName } = useCompanyBranding();
   const manualPix = isManualPixConfigured();
-  const [companyPublicId, setCompanyPublicId] = useState("");
+  const companyPublicId = useCompanyPublicId();
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [paying, setPaying] = useState(false);
   const [pix, setPix] = useState<BillingPixPayload | null>(null);
@@ -103,11 +101,6 @@ function BillingPage() {
   }, [caps.ready, caps.entitlement, navigate]);
 
   const canGeneratePix = caps.ready && caps.canPayBilling;
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setCompanyPublicId(payload?.companyPublicId || "");
-  }, []);
 
   const load = useCallback(async () => {
     if (!companyPublicId) return;

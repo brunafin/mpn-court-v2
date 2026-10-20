@@ -45,7 +45,7 @@ import {
   isInternalSchedule,
   willFixAsInternal,
 } from "../scheduleVisibility";
-import { getAccessTokenPayload } from "../../../utils/authCookie";
+import { useCompanyPublicId } from "../../../hooks/useCompanyPublicId";
 import {
   invalidateSchedulesDayCache,
   patchSchedulesDayCacheSlot,
@@ -91,6 +91,7 @@ function ReservationDetails() {
   const { notifyError } = useErrors();
   const { refreshUnreadCount } = useNotification();
   const caps = useCompanyCapabilities();
+  const companyPublicId = useCompanyPublicId();
   const canMutate = caps.canMutate;
   const { id } = useParams();
   const location = useLocation();
@@ -306,8 +307,6 @@ function ReservationDetails() {
       setCustomerReservationName(contactName);
       setCustomerReservationPhone(contactPhone);
       setShowInfoCustomer(false);
-      const companyPublicId =
-        getAccessTokenPayload<{ companyPublicId?: string }>()?.companyPublicId;
       if (companyPublicId && dateFrom && court?.scheduleId) {
         patchSchedulesDayCacheSlot(
           companyPublicId,
@@ -452,8 +451,6 @@ function ReservationDetails() {
   };
 
   const invalidateAgendaCache = () => {
-    const companyPublicId =
-      getAccessTokenPayload<{ companyPublicId?: string }>()?.companyPublicId;
     if (companyPublicId && dateFrom) {
       invalidateSchedulesDayCache(companyPublicId, String(dateFrom));
     } else {
@@ -466,8 +463,6 @@ function ReservationDetails() {
     patch: Partial<IReservationItemProps>;
     clearOtherDays?: boolean;
   }) => {
-    const companyPublicId =
-      getAccessTokenPayload<{ companyPublicId?: string }>()?.companyPublicId;
     const scheduleId = court?.scheduleId;
     if (companyPublicId && dateFrom && scheduleId) {
       const patched = patchSchedulesDayCacheSlot(
@@ -515,9 +510,6 @@ function ReservationDetails() {
             { silentError: true },
           );
           if (internal || result?.removed) {
-            const companyPublicId =
-              getAccessTokenPayload<{ companyPublicId?: string }>()
-                ?.companyPublicId;
             const scheduleId = court?.scheduleId;
             if (companyPublicId && dateFrom && scheduleId) {
               removeSchedulesDayCacheSlot(
@@ -632,9 +624,6 @@ function ReservationDetails() {
           await deleteSchedule(court?.scheduleId || "", {
             silentError: true,
           });
-          const companyPublicId =
-            getAccessTokenPayload<{ companyPublicId?: string }>()
-              ?.companyPublicId;
           const scheduleId = court?.scheduleId;
           if (companyPublicId && dateFrom && scheduleId) {
             removeSchedulesDayCacheSlot(

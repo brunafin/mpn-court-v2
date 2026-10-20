@@ -11,8 +11,8 @@ import { infosByCompanyPublicId, type IInfo } from "../api/companies";
 import {
   getAccessToken,
   getAccessTokenPayload,
-  ACCESS_TOKEN_CHANGE_EVENT,
 } from "../utils/authCookie";
+import { useCompanyPublicId } from "../hooks/useCompanyPublicId";
 
 type CompanyCapabilities = NonNullable<IInfo["capabilities"]>;
 
@@ -59,18 +59,15 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
   );
   const [companyInfo, setCompanyInfo] = useState<IInfo | null>(null);
   const [capabilitiesError, setCapabilitiesError] = useState(false);
+  const companyPublicId = useCompanyPublicId();
 
   const loadInfos = useCallback(async () => {
-    const payload = getAccessTokenPayload<{
-      companyName?: string;
-      companyPublicId?: string | null;
-    }>();
+    const payload = getAccessTokenPayload<{ companyName?: string }>();
 
     if (payload?.companyName) {
       setCompanyName(payload.companyName);
     }
 
-    const companyPublicId = payload?.companyPublicId;
     if (!companyPublicId || !getAccessToken()) {
       // Sem estabelecimento ainda (onboarding) — não fica “ready” falso eterno
       // depois que o JWT ganhar companyPublicId; só limpa se perdeu a conta.
@@ -95,21 +92,10 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
     } catch {
       setCapabilitiesError(true);
     }
-  }, []);
+  }, [companyPublicId]);
 
   useEffect(() => {
     void loadInfos();
-  }, [loadInfos]);
-
-  // Pós-onboarding (e login) atualiza o JWT sem remount do provider.
-  useEffect(() => {
-    const onTokenChange = () => {
-      void loadInfos();
-    };
-    window.addEventListener(ACCESS_TOKEN_CHANGE_EVENT, onTokenChange);
-    return () => {
-      window.removeEventListener(ACCESS_TOKEN_CHANGE_EVENT, onTokenChange);
-    };
   }, [loadInfos]);
 
   useEffect(() => {

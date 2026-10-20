@@ -4,10 +4,8 @@ import AppLayout from "../../components/AppLayout";
 import Select from "../../components/Select";
 import ThemeModeSwitch from "../../components/ThemeModeSwitch";
 import { useErrors } from "../../contexts/ErrorsContext";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import {
   infosByCompanyPublicId,
   updatePreferencesByCompanyPublicId,
@@ -20,7 +18,7 @@ const HOURS_OPTIONS = [
 function Preferences() {
   const navigate = useNavigate();
   const { notifyError } = useErrors();
-  const [publicId, setPublicId] = useState("");
+  const publicId = useCompanyPublicId();
   const [hideInactive, setHideInactive] = useState(false);
   const [ready, setReady] = useState(false);
   const [savingHours, setSavingHours] = useState(false);
@@ -28,11 +26,6 @@ function Preferences() {
   useEffect(() => {
     if (!getAccessToken()) navigate("/");
   }, [navigate]);
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setPublicId(payload?.companyPublicId || "");
-  }, []);
 
   useEffect(() => {
     if (!publicId) return;

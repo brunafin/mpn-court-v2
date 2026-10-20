@@ -10,10 +10,8 @@ import {
 import { ReservationStatusEnum } from "../Reservation/enum";
 import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { StatusIcons } from "../Reservation/statusIcons";
 import EmptyState, {
   emptyStateActionClassName,
@@ -49,7 +47,7 @@ function ConfigDay() {
   const navigate = useNavigate();
   const caps = useCompanyCapabilities();
   const canMutate = caps.canMutate;
-  const [companyPublicId, setCompanyPublicId] = useState<string>("");
+  const companyPublicId = useCompanyPublicId();
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [date] = useState<Date>(() => parseIncomingDate(location.state?.date));
   const [confirmCloseDay, setConfirmCloseDay] = useState(false);
@@ -71,11 +69,6 @@ function ConfigDay() {
       navigate("/");
     }
   }, [navigate]);
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setCompanyPublicId(payload?.companyPublicId || "");
-  }, []);
 
   const fetchData = useCallback(
     async (dateInput: string) => {

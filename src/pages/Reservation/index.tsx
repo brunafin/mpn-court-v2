@@ -9,10 +9,8 @@ import { IReservationItemProps } from "./interface";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
 import { IInfo, IInfoCourt } from "../../api/companies";
 import AppLayout from "../../components/AppLayout";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLoading } from "../../hooks/useLoading";
 import ActivateCourtGuideModal from "../../components/ActivateCourtGuideModal";
@@ -140,7 +138,7 @@ function Reservation() {
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
   const [dayLoadError, setDayLoadError] = useState(false);
-  const [companyPublicId, setCompanyPublicId] = useState<string>("");
+  const companyPublicId = useCompanyPublicId();
   const [publicArenaUrl, setPublicArenaUrl] = useState<string | null>(null);
   const [agendaBootstrapping, setAgendaBootstrapping] = useState(
     () => Boolean(locationState?.agendaBootstrapping),
@@ -153,11 +151,6 @@ function Reservation() {
       navigate("/");
     }
   }, [navigate]);
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setCompanyPublicId(payload?.companyPublicId || "");
-  }, []);
 
   useEffect(() => {
     if (locationState?.logoUploadFailed) {

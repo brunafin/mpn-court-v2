@@ -8,10 +8,8 @@ import { checkIsRead, createNote, INote, notesByDate } from "../../api/notes";
 import { useNotification } from "../../contexts/NotificationContext";
 import DateStrip from "../Reservation/DateStrip";
 import CalendarButton from "../Reservation/CalendarButton";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { useErrors } from "../../contexts/ErrorsContext";
 import EmptyState, {
   emptyStateActionClassName,
@@ -45,7 +43,7 @@ function DayReminders() {
   const { withLoading } = useLoading();
   const caps = useCompanyCapabilities();
   const canMutate = caps.canMutate;
-  const [companyPublicId, setCompanyPublicId] = useState<string>("");
+  const companyPublicId = useCompanyPublicId();
   const [showNewReminderModal, setShowNewReminderModal] = useState(false);
   const [date, setDate] = useState<Date>(() =>
     parseIncomingDate(location.state?.date)
@@ -62,11 +60,6 @@ function DayReminders() {
       navigate("/");
     }
   }, [navigate]);
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setCompanyPublicId(payload?.companyPublicId || "");
-  }, []);
 
   const fetchNotifications = useCallback(async () => {
     if (!companyPublicId) return;

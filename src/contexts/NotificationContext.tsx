@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useLocation } from "react-router-dom";
 import { counterNotes } from "../api/notes";
-import { getAccessTokenPayload } from "../utils/authCookie";
+import { useCompanyPublicId } from "../hooks/useCompanyPublicId";
 
 interface NotificationContextProps {
   unreadCount: number;
@@ -22,11 +22,6 @@ interface NotificationContextProps {
 const NotificationContext = createContext<NotificationContextProps | undefined>(
   undefined
 );
-
-function getCompanyPublicIdFromCookie(): string {
-  const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-  return payload?.companyPublicId || "";
-}
 
 function normalizeCount(value: unknown): number {
   const parsed = Number(value);
@@ -51,12 +46,12 @@ function NotificationCounterSync({
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const companyPublicId = useCompanyPublicId();
   const [unreadCount, setUnreadCount] = useState(0);
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
   const lastUnreadReadAt = useRef(0);
 
   const refreshUnreadCount = useCallback(async () => {
-    const companyPublicId = getCompanyPublicIdFromCookie();
     if (!companyPublicId) return;
 
     try {
@@ -66,7 +61,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error("Erro ao buscar lembretes não lidos:", error);
     }
-  }, []);
+  }, [companyPublicId]);
 
   useEffect(() => {
     const onFocus = () => {

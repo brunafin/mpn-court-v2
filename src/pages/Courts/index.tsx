@@ -10,10 +10,8 @@ import {
 } from "../../api/companies";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { useErrors } from "../../contexts/ErrorsContext";
-import {
-  getAccessToken,
-  getAccessTokenPayload,
-} from "../../utils/authCookie";
+import { getAccessToken } from "../../utils/authCookie";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 import { buttonClassName } from "../../components/Button";
 import EmptyState, {
   emptyStateActionClassName,
@@ -178,7 +176,7 @@ function CourtsPage() {
   const { notifyError } = useErrors();
   const caps = useCompanyCapabilities();
   const { setLogoUrl, setCompanyName } = useCompanyBranding();
-  const [publicId, setPublicId] = useState("");
+  const publicId = useCompanyPublicId();
   const [info, setInfo] = useState<IInfo | null>(null);
   const [togglingCourtId, setTogglingCourtId] = useState<string | null>(null);
   const [editingCourt, setEditingCourt] = useState<IInfoCourt | null>(null);
@@ -195,11 +193,6 @@ function CourtsPage() {
       navigate("/");
     }
   }, [navigate]);
-
-  useEffect(() => {
-    const payload = getAccessTokenPayload<{ companyPublicId?: string }>();
-    setPublicId(payload?.companyPublicId || "");
-  }, []);
 
   const loadCourts = useCallback(async () => {
     if (!publicId) return;

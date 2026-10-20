@@ -36,6 +36,7 @@ import {
 } from "../../utils/normalizeFormText";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
 
 function OnboardingChecklist() {
   const navigate = useNavigate();
@@ -46,22 +47,20 @@ function OnboardingChecklist() {
   const [submitError, setSubmitError] = useState("");
   const [finishHint, setFinishHint] = useState("");
   const submittingRef = useRef(false);
+  const companyPublicId = useCompanyPublicId();
 
   useEffect(() => {
     if (!getAccessToken()) {
       navigate("/");
       return;
     }
-    const payload = getAccessTokenPayload<{
-      companyPublicId?: string | null;
-      username?: string;
-    }>();
-    if (payload?.companyPublicId) {
+    if (companyPublicId) {
       navigate("/reservas");
       return;
     }
+    const payload = getAccessTokenPayload<{ username?: string }>();
     setState(getOrCreateOnboardingDraft({ email: payload?.username }));
-  }, [navigate]);
+  }, [navigate, companyPublicId]);
 
   const items = useMemo(
     () => (state ? buildChecklist(state) : []),
