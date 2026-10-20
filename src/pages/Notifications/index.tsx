@@ -155,7 +155,7 @@ function DayReminders() {
               })
             }
             aria-label="Voltar para reservas"
-            className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <MdOutlineArrowBackIos size={20} aria-hidden />
           </button>
@@ -177,7 +177,7 @@ function DayReminders() {
                 type="button"
                 onClick={() => setShowNewReminderModal(true)}
                 aria-label="Criar lembrete"
-                className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <MdOutlinePostAdd size={22} aria-hidden />
               </button>
@@ -185,8 +185,8 @@ function DayReminders() {
           </div>
           {!canMutate && caps.ready ? (
             <p className="mx-auto mt-2 w-full text-base text-text-light/70 lg:max-w-6xl">
-              Conta em somente leitura. Não é possível criar ou marcar
-              lembretes.
+              Os lembretes continuam visíveis. Criar ou concluir fica pausado
+              até a mensalidade ser quitada.
             </p>
           ) : null}
         </div>
@@ -249,7 +249,7 @@ function DayReminders() {
                   onClick={() =>
                     handleCheckIsRead(notification.id.toString())
                   }
-                  className="mpn-tap flex size-10 shrink-0 items-center justify-center rounded-xl text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mpn-tap flex size-10 shrink-0 items-center justify-center rounded-xl text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <MdOutlineCheck size={20} aria-hidden />
                 </button>

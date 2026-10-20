@@ -1,32 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  /* Superfície */
-  --color-master: #081425;
-  /* Card só um passo acima do fundo. A borda é que separa a lista. */
-  --color-master-light: #122033;
+  /* Claro é o padrão. O escuro reaplica os tokens em .mpn-agenda-dark. */
+  --color-master: #f7f8fa;
+  --color-master-light: #ffffff;
+  --color-text-light: #122033;
+  /* Marca no claro: trecho mais claro da logo. Texto escuro por cima.
+     O escuro usa um passo mais fechado, em .mpn-agenda-dark. */
+  --color-accent: #8ec4d2;
+  --color-accent-active: #73a8bc;
+  --color-on-accent: #2c2c2c;
+  /* Foco do campo: escuro no claro. O teal claro some no branco. */
+  --color-focus: #2c2c2c;
+  --color-accent-soft: #e8f4f7;
+  /* Salvar e demais primários: o teal saturado da badge, não o preenchimento claro. */
+  --color-accent-badge: #226e81;
+  --color-accent-badge-active: #1a5c6e;
+  --color-on-accent-badge: #ffffff;
 
-  /* Texto */
-  --color-text-light: #D7E3FF;
+  /* Mesmos preenchimentos do escuro. O texto claro usa o próprio tom,
+     menos o verde: #36b083 no branco fica abaixo do contraste. */
+  --color-accent-blue: #2554a0;
+  --color-accent-blue-soft: #2554a0;
+  /* A faixa do horário. No escuro ela clareia para separar do card. */
+  --color-accent-blue-bar: #2554a0;
+  --color-accent-purple-bar: #7048a8;
 
-  /* Azul — ação e reservado */
-  --color-accent-blue: #2554A0;
-  --color-accent-blue-soft: #6B9AD4;
-
-  /* Verde — disponível */
-  --color-accent-green: #36B083;
+  /* Verde — disponível. A barra é a do escuro; a tinta é um passo mais fechado. */
+  --color-accent-green: #36b083;
+  --color-accent-green-ink: #216b50;
 
   /* Roxo — fixo */
-  --color-accent-purple: #7048A8;
-  --color-accent-purple-soft: #A78BDB;
+  --color-accent-purple: #7048a8;
+  --color-accent-purple-soft: #7048a8;
 
-  /* Vermelho — erro, inativo e ação destrutiva */
-  --color-danger-soft: #F87171;
+  /* Vermelho — erro, inativo e ação destrutiva.
+     O wash é o preenchimento clarinho do admin (danger-soft de lá). */
+  --color-danger-soft: #c4233c;
+  --color-danger-ink: #b42318;
+  --color-danger-wash: #f8e9e8;
   --color-danger-400: #cf1448;
-  --color-danger-600: #b10000;
+  --color-danger-600: #9d0018;
 
   /* Amarelo — faixa de ambiente de teste */
-  --color-warning-500: #FFBF00;
+  --color-warning-500: #e8a317;
 
   --breakpoint-xs: 300px;
 }
@@ -54,7 +71,7 @@ body,
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -128,9 +145,9 @@ body {
   transition: background-color 99999s ease-out 0s !important;
 }
 
-/* Placeholder mais suave que o valor preenchido */
+/* Placeholder mais suave que o valor preenchido. No claro, 55% fica abaixo de 4.5:1. */
 .mpn-field-dark::placeholder {
-  color: color-mix(in srgb, var(--color-text-light) 55%, transparent);
+  color: color-mix(in srgb, var(--color-text-light) 72%, transparent);
   font-weight: 400;
   opacity: 1;
 }
@@ -223,40 +240,100 @@ input[type="checkbox"]:checked {
 }
 
 /*
-  Preferência clara (html.mpn-theme-light). O escuro segue nos tokens de :root.
-  Tinta sobre preenchimento saturado volta a ser clara, porque o token de
-  texto passa a ser escuro. Amarelo mantém tinta escura.
+  No claro, azul e roxo levam tinta clara. O verde do escuro é claro
+  demais para texto branco, então a barra verde leva tinta escura.
+  Amarelo também.
 */
-html.mpn-theme-light {
-  color-scheme: light;
-  --color-master: #e8eef6;
-  --color-master-light: #ffffff;
-  --color-text-light: #122033;
-  --color-accent-blue: #1e4d96;
-  --color-accent-blue-soft: #1a4b8c;
-  --color-accent-green: #127a56;
-  --color-accent-purple: #5b3d96;
-  --color-accent-purple-soft: #643eae;
-  --color-danger-soft: #c4233c;
-  --color-danger-600: #9d0018;
-  --color-warning-500: #e8a317;
-  color: var(--color-text-light);
-}
-
-html.mpn-theme-light .bg-accent-blue,
-html.mpn-theme-light .bg-accent-green,
-html.mpn-theme-light .bg-accent-purple,
-html.mpn-theme-light .bg-danger-soft,
-html.mpn-theme-light .bg-danger-400,
-html.mpn-theme-light .bg-danger-600 {
+html .bg-accent-blue,
+html .bg-accent-purple,
+html .bg-danger-400,
+html .bg-danger-600 {
   color: #f7f9ff;
 }
 
-html.mpn-theme-light .bg-warning-500,
-html.mpn-theme-light .bg-warning-500\/90 {
+html .bg-accent-green {
   color: #122033;
 }
 
-html.mpn-theme-light [class~="[&_button]:bg-accent-blue"] button {
+/* Quadra selecionada no claro: wash, porque a tinta é escura. */
+.mpn-court-chip-selected {
+  background-color: var(--color-accent-soft);
+  color: var(--color-on-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 70%, white);
+}
+
+.mpn-agenda-dark .mpn-court-chip-selected {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: none;
+}
+
+/* Chips da agenda no claro: cinza leve, tinta um passo mais aberta. */
+.mpn-option-chip-soft {
+  background-color: #eef0f3;
+  color: #4a5968;
+}
+
+.mpn-agenda-dark .mpn-option-chip-soft {
+  background-color: color-mix(in srgb, var(--color-text-light) 12%, transparent);
+  color: var(--color-text-light);
+}
+
+html .bg-warning-500,
+html .bg-warning-500\/90 {
+  color: #122033;
+}
+
+html [class~="[&_button]:bg-accent-blue"] button {
   color: #f7f9ff;
+}
+
+/* 55% do texto escuro fica abaixo de 4.5:1 no fundo claro. */
+.text-text-light\/55 {
+  color: color-mix(in srgb, var(--color-text-light) 75%, transparent);
+}
+
+/* Painel escuro: tokens antigos, quando o dono escolhe Escuro. */
+.mpn-agenda-dark {
+  color-scheme: dark;
+  --color-master: #081425;
+  --color-master-light: #122033;
+  --color-text-light: #d7e3ff;
+  --color-focus: #f3f4f6;
+  --color-accent: #73a8bc;
+  --color-accent-active: #5d9dad;
+  --color-accent-badge: #3db4cc;
+  --color-accent-badge-active: #2aa3bf;
+  --color-on-accent-badge: #122033;
+  --color-accent-blue: #2554a0;
+  --color-accent-blue-soft: #6b9ad4;
+  --color-accent-blue-bar: #2f6bcd;
+  --color-accent-purple-bar: #835cb9;
+  --color-accent-green: #36b083;
+  --color-accent-green-ink: #36b083;
+  --color-accent-purple: #7048a8;
+  --color-accent-purple-soft: #a78bdb;
+  --color-danger-soft: #f87171;
+  --color-danger-600: #b10000;
+  --color-warning-500: #ffbf00;
+  color: var(--color-text-light);
+}
+
+.mpn-agenda-dark .bg-accent-blue,
+.mpn-agenda-dark .bg-accent-purple,
+.mpn-agenda-dark .bg-danger-400,
+.mpn-agenda-dark .bg-danger-600,
+.mpn-agenda-dark [class~="[&_button]:bg-accent-blue"] button {
+  color: var(--color-text-light);
+}
+
+.mpn-agenda-dark .bg-accent-green,
+.mpn-agenda-dark .bg-warning-500,
+.mpn-agenda-dark .bg-warning-500\/90 {
+  color: var(--color-master);
+}
+
+.mpn-agenda-dark .text-text-light\/55,
+.mpn-agenda-dark .mpn-field-dark::placeholder {
+  color: color-mix(in srgb, var(--color-text-light) 55%, transparent);
 }

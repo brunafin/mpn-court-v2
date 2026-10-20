@@ -56,7 +56,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
         aria-label={`Selecionar data. Mês atual: ${monthLabel}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="mpn-tap -mx-1 inline-flex min-h-11 min-w-0 max-w-full items-center gap-0.5 rounded-xl px-1 text-left text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+        className="mpn-tap -mx-1 inline-flex min-h-11 min-w-0 max-w-full items-center gap-0.5 rounded-xl px-1 text-left text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <span className="truncate">{monthLabel}</span>
         <MdExpandMore
@@ -67,7 +67,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center">
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center sm:items-center sm:p-4">
           <button
             type="button"
             aria-label="Fechar calendário"
@@ -79,7 +79,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="relative z-10 flex w-full max-h-[90dvh] flex-col rounded-t-2xl bg-master sm:mx-4 sm:max-w-sm sm:rounded-2xl"
+            className="relative z-10 flex max-h-[90dvh] w-full flex-col rounded-t-2xl bg-master shadow-2xl sm:max-w-sm sm:rounded-2xl"
           >
             <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
 
@@ -141,7 +141,7 @@ function CalendarButton({ selectedDate, setSelectedDate }: Props) {
                   outside: "[&_button]:text-text-light/45",
                   disabled: "[&_button]:text-text-light/45",
                   focused:
-                    "[&_button]:outline [&_button]:outline-2 [&_button]:outline-accent-blue/50",
+                    "[&_button]:outline [&_button]:outline-2 [&_button]:outline-accent/50",
                 }}
               />
             </div>

@@ -47,8 +47,17 @@ const PALETTE = [
     steps: [{ name: "text-light", className: "bg-text-light", ink: "text-master" }],
   },
   {
+    name: "Marca",
+    note: "No claro, o trecho mais claro da logo. No escuro, um passo mais fechado. Texto escuro por cima.",
+    steps: [
+      { name: "accent-soft", className: "bg-accent-soft", ink: "text-on-accent" },
+      { name: "accent", className: "bg-accent", ink: "text-on-accent" },
+      { name: "accent-active", className: "bg-accent-active", ink: "text-on-accent" },
+    ],
+  },
+  {
     name: "Azul",
-    note: "Botão e reservado. O claro é texto e link.",
+    note: "Reservado. No claro o texto usa o mesmo tom. No escuro, o suave fica mais claro.",
     steps: [
       { name: "accent-blue", className: "bg-accent-blue", ink: "text-text-light" },
       { name: "accent-blue-soft", className: "bg-accent-blue-soft", ink: "text-master" },
@@ -56,12 +65,12 @@ const PALETTE = [
   },
   {
     name: "Verde",
-    note: "Disponível e confirmação.",
+    note: "Disponível. A barra é a do escuro. O texto no fundo claro é um passo mais fechado.",
     steps: [{ name: "accent-green", className: "bg-accent-green", ink: "text-master" }],
   },
   {
     name: "Roxo",
-    note: "Fixo. O claro é ícone e texto.",
+    note: "Fixo. No claro o texto usa o mesmo tom. No escuro, o suave fica mais claro.",
     steps: [
       { name: "accent-purple", className: "bg-accent-purple", ink: "text-text-light" },
       { name: "accent-purple-soft", className: "bg-accent-purple-soft", ink: "text-master" },
@@ -447,7 +456,7 @@ export default function DesignSystem() {
               description="A grade deste dia aparece aqui quando há horários."
               action={
                 <button type="button" className={emptyStateActionClassName()}>
-                  Detalhes do dia
+                  Informações do dia
                 </button>
               }
             />

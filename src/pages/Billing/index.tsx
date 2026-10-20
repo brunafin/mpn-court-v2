@@ -30,17 +30,28 @@ import { isPaidEntitlement } from "../../utils/billingNav";
 import { formatCpfMask, isValidCpf } from "../../utils/formatCpf";
 import { isManualPixConfigured, isMercadoPagoPixUiEnabled } from "../../utils/manualPix";
 
-function statusLabel(status: BillingPaymentItem["status"]): string {
-  switch (status) {
-    case "paid":
-      return "Pago";
-    case "awaiting_pix":
-      return "Aguardando PIX";
-    case "overdue":
-      return "Vencido";
-    default:
-      return "Em aberto";
-  }
+function todayIso(): string {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
+}
+
+function isOverdue(payment: BillingPaymentItem): boolean {
+  if (payment.paid || payment.status === "paid") return false;
+  if (payment.status === "overdue") return true;
+  return Boolean(payment.dueDate && payment.dueDate < todayIso());
+}
+
+function latestPayment(summary: BillingSummary): BillingPaymentItem | null {
+  if (summary.openPayment) return summary.openPayment;
+  const history = summary.history ?? [];
+  if (history.length === 0) return null;
+  return [...history].sort((a, b) => {
+    const byDate = (b.dueDate ?? "").localeCompare(a.dueDate ?? "");
+    if (byDate !== 0) return byDate;
+    return b.id - a.id;
+  })[0];
 }
 
 function formatDue(dueDate: string | null): string {
@@ -117,7 +128,10 @@ function BillingPage() {
     void load();
   }, [load]);
 
-  const openPayment = summary?.openPayment ?? null;
+  const latest = summary && !summary.isTrial ? latestPayment(summary) : null;
+  const latestOverdue = latest ? isOverdue(latest) : false;
+  const latestPayable =
+    latest != null && !latest.paid && latest.status !== "paid";
 
   useEffect(() => {
     if (!paying || !pix || !companyPublicId || pix.paid) return;
@@ -183,7 +197,7 @@ function BillingPage() {
 
   const onSubmitPayerData = async (event: FormEvent) => {
     event.preventDefault();
-    if (!openPayment) return;
+    if (!latest || !latestPayable) return;
     const digits = cpf.replace(/\D/g, "");
     const trimmedEmail = email.trim();
     if (needEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
@@ -199,7 +213,7 @@ function BillingPage() {
       });
       return;
     }
-    await startPay(openPayment, {
+    await startPay(latest, {
       ...(needEmail || trimmedEmail
         ? { email: trimmedEmail }
         : {}),
@@ -243,7 +257,7 @@ function BillingPage() {
     <AppLayout>
       <main className="mx-auto flex w-full max-w-2xl min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-4 lg:px-8">
         <div>
-          <PageEyebrow>Mensalidades</PageEyebrow>
+          <PageEyebrow>Planos e pagamentos</PageEyebrow>
         </div>
 
         {loading && !summary ? (
@@ -256,7 +270,7 @@ function BillingPage() {
               Teste grátis ativo
             </p>
             <p className="mt-1 text-base text-text-light/70">
-              Nenhuma cobrança enquanto o teste grátis estiver válido.
+              Nenhuma mensalidade enquanto o teste grátis estiver válido.
               {summary.dayDue
                 ? ` Depois do teste grátis, o vencimento fica no dia ${summary.dayDue}.`
                 : null}
@@ -264,32 +278,39 @@ function BillingPage() {
           </section>
         ) : null}
 
-        {openPayment ? (
+        {latest ? (
           <section className="rounded-xl bg-master-light px-4 py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-base text-text-light/55">A pagar</p>
+                <p
+                  className={`text-base font-semibold ${
+                    latestOverdue
+                      ? "text-danger-ink"
+                      : "text-accent-green-ink"
+                  }`}
+                >
+                  {latestOverdue ? "Atrasado" : "Em dia"}
+                </p>
                 <p className="mt-1 text-base font-semibold text-text-light">
-                  {formatMonthYear(openPayment.dueDate)}
+                  {formatMonthYear(latest.dueDate)}
                 </p>
                 <p className="mt-1 text-base text-text-light/70">
-                  Vencimento {formatDue(openPayment.dueDate)} ·{" "}
-                  {statusLabel(openPayment.status)}
+                  Vencimento {formatDue(latest.dueDate)}
                 </p>
               </div>
               <p className="text-base font-semibold text-text-light">
-                {formatCurrencyBRL(openPayment.value)}
+                {formatCurrencyBRL(latest.value)}
               </p>
             </div>
 
-            {!paying ? (
+            {!paying && latestPayable ? (
               <>
                 {showAutoPix && canGeneratePix ? (
                   <button
                     type="button"
                     disabled={generating}
                     className={`${buttonClassName({ variant: "primary", size: "md" })} mt-4 w-full`}
-                    onClick={() => void startPay(openPayment)}
+                    onClick={() => void startPay(latest)}
                   >
                     {generating
                       ? "Gerando PIX…"
@@ -300,9 +321,9 @@ function BillingPage() {
                   <ManualPixPay
                     className="mt-4"
                     primary={!showAutoPix}
-                    amount={openPayment.value}
+                    amount={latest.value}
                     companyName={companyName || null}
-                    dueLabel={formatMonthYear(openPayment.dueDate)}
+                    dueLabel={formatMonthYear(latest.dueDate)}
                   />
                 ) : null}
                 {canGeneratePix && !showAutoPix && !manualPix ? (
@@ -369,7 +390,7 @@ function BillingPage() {
             {paying && pix && !needPayerData ? (
               <div className="mt-4 space-y-4">
                 {pix.paid ? (
-                  <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-base font-semibold text-accent-green">
+                  <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-base font-semibold text-accent-green-ink">
                     Pagamento confirmado. Obrigado!
                   </p>
                 ) : (
@@ -409,7 +430,7 @@ function BillingPage() {
                         className="mt-2"
                         amount={pix.value}
                         companyName={companyName || null}
-                        dueLabel={formatMonthYear(openPayment.dueDate)}
+                        dueLabel={formatMonthYear(latest.dueDate)}
                       />
                     ) : null}
                   </>
@@ -426,8 +447,8 @@ function BillingPage() {
           </section>
         ) : !summary?.isTrial ? (
           <EmptyState
-            title="Nenhuma mensalidade em aberto"
-            description="Quando houver cobrança, ela aparece aqui."
+            title="Nenhuma mensalidade ainda"
+            description="Quando houver uma mensalidade, ela aparece aqui."
           />
         ) : null}
       </main>

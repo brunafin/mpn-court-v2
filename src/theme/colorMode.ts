@@ -1,33 +1,39 @@
 export type ColorMode = "dark" | "light";
 
-export const COLOR_MODE_STORAGE_KEY = "mpn-color-mode";
+/** Preferência de aparência do painel inteiro. */
+export const AGENDA_COLOR_MODE_KEY = "mpn-agenda-color-mode";
 
-const THEME_COLOR: Record<ColorMode, string> = {
-  dark: "#081425",
-  light: "#e8eef6",
-};
+/** Seletor antigo, com o mesmo efeito. */
+const LEGACY_COLOR_MODE_KEY = "mpn-color-mode";
 
-export function readColorMode(): ColorMode {
+const THEME_COLOR = {
+  light: "#f7f8fa",
+  agendaDark: "#081425",
+} as const;
+
+export function readAgendaColorMode(): ColorMode {
   try {
-    return localStorage.getItem(COLOR_MODE_STORAGE_KEY) === "light"
-      ? "light"
-      : "dark";
+    const stored = localStorage.getItem(AGENDA_COLOR_MODE_KEY);
+    if (stored === "dark" || stored === "light") return stored;
+    // Quem tinha escolhido escuro no seletor antigo mantém o painel escuro.
+    if (localStorage.getItem(LEGACY_COLOR_MODE_KEY) === "dark") return "dark";
+    return "light";
   } catch {
-    return "dark";
+    return "light";
   }
 }
 
-export function applyColorMode(mode: ColorMode) {
-  document.documentElement.classList.toggle("mpn-theme-light", mode === "light");
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", THEME_COLOR[mode]);
-}
-
-export function writeColorMode(mode: ColorMode) {
+export function writeAgendaColorMode(mode: ColorMode) {
   try {
-    localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+    localStorage.setItem(AGENDA_COLOR_MODE_KEY, mode);
   } catch {
     // preferência segue só nesta sessão se o armazenamento estiver bloqueado
   }
-  applyColorMode(mode);
+}
+
+export function applyAgendaChrome(dark: boolean) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    meta.setAttribute("content", dark ? THEME_COLOR.agendaDark : THEME_COLOR.light);
+  }
 }

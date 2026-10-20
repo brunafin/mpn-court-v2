@@ -30,6 +30,7 @@ export interface IReservationDetailsItemProps {
     isEvent: boolean;
     isNeedsNetting: boolean;
     sportName: string;
+    sportId?: number;
   } | null;
   court: string;
   floor?: string | null;
@@ -38,6 +39,7 @@ export interface IReservationDetailsItemProps {
   sports: {
     id: number;
     name: string;
+    needsNet?: boolean;
   }[];
   time: string;
   price: string;

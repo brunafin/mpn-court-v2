@@ -15,6 +15,8 @@ interface ISelectProps {
   onFocus?: (e: React.FocusEvent<HTMLSelectElement>) => void;
   required?: boolean;
   mode: "light" | "dark";
+  /** `raised` quando o campo está no fundo da página, sem cartão. */
+  surface?: "inset" | "raised";
   className?: string;
   disabled?: boolean;
   placeholder?: string;
@@ -30,6 +32,7 @@ function Select({
   onFocus,
   required,
   mode = "light",
+  surface = "inset",
   className,
   disabled = false,
   placeholder = "Selecione...",
@@ -46,7 +49,7 @@ function Select({
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
+            <span className="font-semibold text-danger-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -68,7 +71,11 @@ function Select({
           className={`w-full min-h-14 appearance-none rounded-xl px-4 py-3.5 pr-12 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out
             focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
             disabled:cursor-not-allowed disabled:opacity-60
-            mpn-field-dark border-0 bg-master text-text-light focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light
+            mpn-field-dark border border-text-light/25 text-text-light focus-visible:ring-focus ${
+              surface === "raised"
+                ? "bg-master-light focus-visible:ring-offset-master"
+                : "bg-master focus-visible:ring-offset-master-light"
+            }
             ${!hasValue ? "font-normal text-text-light/55" : ""}
           `}
         >

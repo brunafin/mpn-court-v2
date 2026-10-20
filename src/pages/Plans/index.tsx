@@ -256,7 +256,7 @@ function PlansPage() {
     <AppLayout>
       <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 py-4 lg:px-8">
         <div>
-          <PageEyebrow>Planos</PageEyebrow>
+          <PageEyebrow>Planos e pagamentos</PageEyebrow>
           <p className="mt-2 max-w-xl text-base leading-7 text-text-light/70">
             {introCopy}
           </p>
@@ -301,7 +301,7 @@ function PlansPage() {
                   >
                     <MdCheckCircleOutline
                       size={22}
-                      className="mt-0.5 shrink-0 text-accent-green"
+                      className="mt-0.5 shrink-0 text-accent-green-ink"
                       aria-hidden
                     />
                     <span>{item}</span>
@@ -418,7 +418,7 @@ function PlansPage() {
               {paying && pix && !needPayerData ? (
                 <div className="mt-6 space-y-4">
                   {pix.paid ? (
-                    <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-base font-semibold text-accent-green">
+                    <p className="rounded-xl bg-accent-green/15 px-3 py-3 text-base font-semibold text-accent-green-ink">
                       Pagamento confirmado. Liberando seu plano…
                     </p>
                   ) : (

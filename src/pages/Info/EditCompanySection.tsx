@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+  type Ref,
+} from "react";
 import Input from "../../components/Input";
 import CheckboxGroup from "../../components/CheckboxGroup";
 import { buttonClassName } from "../../components/Button";
-import { emptyStateActionClassName } from "../../components/EmptyState";
 import { lookupCep } from "../../api/viaCep";
 import { IInfo, patchCompany } from "../../api/companies";
 import {
@@ -13,8 +18,14 @@ import {
 import { formatPhoneMask, onlyPhoneDigits } from "../../utils/formatPhone";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
+import InfoSheet from "./Sheet";
 import { COMPANY_CHARACTERISTICS } from "../../constants/companyCharacteristics";
 import { normalizeInstagramUrl } from "../../utils/normalizeInstagramUrl";
+import {
+  collapseSpaces,
+  sanitizeTitleInput,
+  uppercaseAddressInput,
+} from "../../utils/normalizeFormText";
 
 type EditCompanySectionProps = {
   publicId: string;
@@ -23,12 +34,14 @@ type EditCompanySectionProps = {
   onSaved: (partial: Partial<IInfo>) => void;
 };
 
-export default function EditCompanySection({
-  publicId,
-  info,
-  canMutate,
-  onSaved,
-}: EditCompanySectionProps) {
+export type EditCompanySectionHandle = {
+  open: () => void;
+};
+
+function EditCompanySection(
+  { publicId, info, canMutate, onSaved }: EditCompanySectionProps,
+  ref: Ref<EditCompanySectionHandle>,
+) {
   const { notifyError } = useErrors();
   const { setCompanyName: setBrandingCompanyName } = useCompanyBranding();
   const [editing, setEditing] = useState(false);
@@ -67,16 +80,17 @@ export default function EditCompanySection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [info]);
 
-  const addressLine = [
-    info.address?.street,
-    info.address?.number,
-    info.address?.neighborhood,
-    info.address?.city && info.address?.uf
-      ? `${info.address.city}/${info.address.uf}`
-      : info.address?.city || info.address?.uf,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const instagramLabel = (() => {
+    const url = info.instagramUrl;
+    if (!url) return "";
+    try {
+      const handle = new URL(url).pathname.replace(/^\//, "").split("/")[0];
+      if (handle) return `@${handle}`;
+    } catch {
+      return url;
+    }
+    return url;
+  })();
 
   const fillAddressFromCep = async (rawCep: string) => {
     if (!isValidCep(rawCep)) return;
@@ -88,10 +102,10 @@ export default function EditCompanySection({
         setCepHint("CEP não encontrado. Confira e tente de novo.");
         return;
       }
-      setStreet(address.street);
-      setNeighborhood(address.neighborhood);
-      setCity(address.city);
-      setUf(address.uf);
+      setStreet(uppercaseAddressInput(address.street, 100));
+      setNeighborhood(uppercaseAddressInput(address.neighborhood, 50));
+      setCity(uppercaseAddressInput(address.city, 50));
+      setUf(address.uf.toUpperCase().slice(0, 2));
       setCep(formatCepMask(address.cep));
     } catch {
       setCepHint("Não foi possível consultar o CEP. Tente novamente.");
@@ -125,33 +139,35 @@ export default function EditCompanySection({
     try {
       const instagramUrl = normalizeInstagramUrl(instagram);
       await patchCompany(publicId, {
-        name: name.trim(),
+        name: collapseSpaces(sanitizeTitleInput(name, 50)),
         phone: phoneDigits || undefined,
         instagram_url: instagramUrl,
         cep: cepDigits ? formatCepMask(cepDigits) : undefined,
-        street: street.trim() || undefined,
-        number: number.trim() || undefined,
-        neighborhood: neighborhood.trim() || undefined,
-        city: city.trim() || undefined,
-        uf: uf.trim().toUpperCase() || undefined,
+        street: collapseSpaces(uppercaseAddressInput(street, 100)) || undefined,
+        number: number.replace(/\D/g, "").slice(0, 10) || undefined,
+        neighborhood:
+          collapseSpaces(uppercaseAddressInput(neighborhood, 50)) || undefined,
+        city: collapseSpaces(uppercaseAddressInput(city, 50)) || undefined,
+        uf: uf.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2) || undefined,
         characteristics,
       });
       const nextPartial: Partial<IInfo> = {
-        companyName: name.trim(),
+        companyName: collapseSpaces(sanitizeTitleInput(name, 50)),
         companyPhone: phoneDigits || null,
         instagramUrl,
         characteristics,
         address: {
           cep: cepDigits ? formatCepMask(cepDigits) : null,
-          street: street.trim() || null,
-          number: number.trim() || null,
-          neighborhood: neighborhood.trim() || null,
-          city: city.trim() || null,
-          uf: uf.trim().toUpperCase() || null,
+          street: collapseSpaces(uppercaseAddressInput(street, 100)) || null,
+          number: number.replace(/\D/g, "").slice(0, 10) || null,
+          neighborhood:
+            collapseSpaces(uppercaseAddressInput(neighborhood, 50)) || null,
+          city: collapseSpaces(uppercaseAddressInput(city, 50)) || null,
+          uf: uf.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2) || null,
         },
       };
       onSaved(nextPartial);
-      setBrandingCompanyName(name.trim());
+      setBrandingCompanyName(collapseSpaces(sanitizeTitleInput(name, 50)));
       notifyError({ message: "Dados atualizados.", type: "success" });
       setEditing(false);
     } catch (error) {
@@ -163,71 +179,54 @@ export default function EditCompanySection({
   };
 
   const hasProfile =
-    Boolean(info.instagramUrl) ||
-    Boolean(addressLine) ||
-    (info.characteristics?.length ?? 0) > 0;
+    Boolean(info.instagramUrl) || (info.characteristics?.length ?? 0) > 0;
 
   const profileFacts = hasProfile ? (
-    <dl className="mt-2 space-y-3 text-base text-text-light">
+    <div className="min-w-0 space-y-1 text-base text-text-light">
       {info.instagramUrl ? (
-        <div>
-          <dt className="text-base text-text-light/55">Instagram</dt>
-          <dd className="break-all">{info.instagramUrl}</dd>
-        </div>
-      ) : null}
-      {addressLine ? (
-        <div>
-          <dt className="text-base text-text-light/55">Endereço</dt>
-          <dd>{addressLine}</dd>
-        </div>
+        <a
+          href={info.instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-accent-badge underline-offset-2 hover:underline"
+        >
+          {instagramLabel}
+        </a>
       ) : null}
       {(info.characteristics?.length ?? 0) > 0 ? (
-        <div>
-          <dt className="text-base text-text-light/55">Comodidades</dt>
-          <dd className="text-text-light/70">
-            {info.characteristics!.join(" · ")}
-          </dd>
-        </div>
+        <p className="text-text-light/70">{info.characteristics!.join(" · ")}</p>
       ) : null}
-    </dl>
-  ) : (
-    <p className="mt-2 text-base text-text-light/55">
-      Sem endereço, Instagram ou comodidades.
-    </p>
-  );
+    </div>
+  ) : null;
+
+  useImperativeHandle(ref, () => ({
+    open() {
+      if (!canMutate) return;
+      syncFromInfo();
+      setEditing(true);
+    },
+  }));
 
   if (!canMutate && !editing) {
-    return (
-      <div>
-        <h3 className="text-base text-text-light/55">Dados</h3>
-        {profileFacts}
-      </div>
-    );
+    if (!profileFacts) return null;
+    return <div className="mt-3">{profileFacts}</div>;
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base text-text-light/55">Dados</h3>
-        {canMutate && !editing ? (
-          <button
-            type="button"
-            onClick={() => {
-              syncFromInfo();
-              setEditing(true);
-            }}
-            className={emptyStateActionClassName("-mr-3")}
-          >
-            Editar
-          </button>
-        ) : null}
-      </div>
+      {profileFacts ? <div className="mt-3">{profileFacts}</div> : null}
 
-      {!editing ? (
-        profileFacts
-      ) : (
+      <InfoSheet
+        open={editing}
+        title="Editar"
+        onClose={() => {
+          if (saving) return;
+          syncFromInfo();
+          setEditing(false);
+        }}
+      >
         <form
-          className="mt-3 space-y-1 rounded-xl bg-master-light px-3 py-4"
+          className="space-y-1"
           onSubmit={(e) => {
             e.preventDefault();
             void handleSave();
@@ -241,7 +240,7 @@ export default function EditCompanySection({
             maxLength={50}
             showCount
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setName(sanitizeTitleInput(e.target.value, 50))}
           />
           <Input
             name="companyPhone"
@@ -282,7 +281,9 @@ export default function EditCompanySection({
             title="Rua"
             mode="dark"
             value={street}
-            onChange={(e) => setStreet(e.target.value)}
+            onChange={(e) =>
+              setStreet(uppercaseAddressInput(e.target.value, 100))
+            }
           />
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -290,14 +291,20 @@ export default function EditCompanySection({
               title="Número"
               mode="dark"
               value={number}
-              onChange={(e) => setNumber(e.target.value)}
+              onChange={(e) =>
+                setNumber(e.target.value.replace(/\D/g, "").slice(0, 10))
+              }
             />
             <Input
               name="uf"
               title="UF"
               mode="dark"
               value={uf}
-              onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))}
+              onChange={(e) =>
+                setUf(
+                  e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2),
+                )
+              }
               maxLength={2}
             />
           </div>
@@ -306,14 +313,16 @@ export default function EditCompanySection({
             title="Bairro"
             mode="dark"
             value={neighborhood}
-            onChange={(e) => setNeighborhood(e.target.value)}
+            onChange={(e) =>
+              setNeighborhood(uppercaseAddressInput(e.target.value, 50))
+            }
           />
           <Input
             name="city"
             title="Cidade"
             mode="dark"
             value={city}
-            onChange={(e) => setCity(e.target.value)}
+            onChange={(e) => setCity(uppercaseAddressInput(e.target.value, 50))}
           />
           <CheckboxGroup
             name="characteristics"
@@ -346,13 +355,15 @@ export default function EditCompanySection({
                 syncFromInfo();
                 setEditing(false);
               }}
-              className={emptyStateActionClassName()}
+              className="inline-flex min-h-11 items-center justify-center text-base font-semibold text-text-light/70"
             >
               Cancelar
             </button>
           </div>
         </form>
-      )}
+      </InfoSheet>
     </div>
   );
 }
+
+export default forwardRef(EditCompanySection);

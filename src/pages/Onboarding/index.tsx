@@ -28,6 +28,12 @@ import {
 } from "../../utils/authCookie";
 import { getPendingLogoFile } from "../../onboarding/pendingLogo";
 import { formatCepForStorage } from "../../utils/formatCep";
+import {
+  collapseSpaces,
+  COURT_NAME_MAX_LENGTH,
+  sanitizeTitleInput,
+  uppercaseAddressInput,
+} from "../../utils/normalizeFormText";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { useCompanyBranding } from "../../contexts/CompanyBrandingContext";
 
@@ -75,18 +81,20 @@ function OnboardingChecklist() {
     setSubmitting(true);
     try {
       const response = await completeOnboarding({
-        companyName: state.arenaName.trim(),
+        companyName: collapseSpaces(sanitizeTitleInput(state.arenaName, 50)),
         companyPhone: state.companyPhone?.replace(/\D/g, "") || undefined,
         instagramUrl: state.instagramUrl?.trim() || undefined,
         cep: formatCepForStorage(state.cep),
-        street: state.street.trim(),
-        number: state.number.trim(),
-        neighborhood: state.neighborhood.trim(),
-        city: state.city.trim(),
-        uf: state.uf.trim().toUpperCase(),
+        street: collapseSpaces(uppercaseAddressInput(state.street, 100)),
+        number: state.number.replace(/\D/g, "").slice(0, 10),
+        neighborhood: collapseSpaces(uppercaseAddressInput(state.neighborhood, 50)),
+        city: collapseSpaces(uppercaseAddressInput(state.city, 50)),
+        uf: state.uf.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2),
         weekTemplate: buildWeekTemplatePayload(state.scheduleTemplate),
         courts: state.courts.slice(0, state.courtCount).map((court) => ({
-          name: court.name,
+          name: collapseSpaces(
+            sanitizeTitleInput(court.name, COURT_NAME_MAX_LENGTH),
+          ),
           sports: buildCourtSportsPayload(court),
           floor: court.floor as string,
           is_covered: court.isCovered ?? true,
@@ -115,7 +123,7 @@ function OnboardingChecklist() {
             notifyError({
               type: "error",
               message:
-                "Estabelecimento criado, mas a logo não foi enviada. Envie em Minhas informações.",
+                "Estabelecimento criado, mas a logo não foi enviada. Envie em Quadras.",
             });
           },
         );
@@ -164,9 +172,9 @@ function OnboardingChecklist() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.14),_transparent_50%)]" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col lg:min-h-full">
-        <p className="mb-4 rounded-lg bg-master-light px-3 py-2 text-base font-medium text-text-light/70">
+        <h1 className="mb-5 text-2xl font-bold leading-8 tracking-tight">
           Complete os passos abaixo para começar a usar a agenda
-        </p>
+        </h1>
 
         {!ready ? (
           <>
@@ -179,7 +187,7 @@ function OnboardingChecklist() {
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-master-light">
                 <div
-                  className="h-full rounded-full bg-accent-blue transition-all"
+                  className="h-full rounded-full bg-accent transition-all"
                   style={{
                     width: `${(progress.done / Math.max(progress.total, 1)) * 100}%`,
                   }}
@@ -201,7 +209,7 @@ function OnboardingChecklist() {
                       {item.done ? (
                         <MdCheckCircle
                           size={26}
-                          className="text-accent-green"
+                          className="text-accent-green-ink"
                           aria-label="Concluído"
                         />
                       ) : (
@@ -273,7 +281,7 @@ function OnboardingChecklist() {
                     >
                       <MdCheckCircle
                         size={26}
-                        className="shrink-0 text-accent-green"
+                        className="shrink-0 text-accent-green-ink"
                         aria-label="Concluído"
                       />
                       <span className="min-w-0 flex-1">{item.title}</span>

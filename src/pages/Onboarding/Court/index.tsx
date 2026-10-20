@@ -4,12 +4,14 @@ import { MdChevronLeft } from "react-icons/md";
 import Input from "../../../components/Input";
 import Button, { buttonClassName } from "../../../components/Button";
 import CheckboxGroup from "../../../components/CheckboxGroup";
+import { ChoiceCheck, choiceRowClass } from "../../../components/ChoiceCheck";
 import Select from "../../../components/Select";
 import OnboardingFooter from "../../../components/OnboardingFooter";
 import {
   areAllCourtsCreated,
   COURT_FLOORS,
   COURT_SPORTS,
+  COURT_SPORTS_PREVIEW_COUNT,
   CourtFloor,
   CourtSport,
   getEnabledScheduleSlots,
@@ -27,6 +29,11 @@ import {
   capCourtPriceDigits,
   MAX_COURT_PRICE_REAIS,
 } from "../../../utils/courtPrice";
+import {
+  collapseSpaces,
+  COURT_NAME_MAX_LENGTH,
+  sanitizeTitleInput,
+} from "../../../utils/normalizeFormText";
 
 function scrollCourtPageToTop(pageEl: HTMLElement | null) {
   window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -83,7 +90,12 @@ function OnboardingCourt() {
 
   const openEditor = useCallback((slotIndex: number, court?: MockCourt | null) => {
     setEditingIndex(slotIndex);
-    setCourtName(court?.name ?? `Q${slotIndex + 1}`);
+    setCourtName(
+      sanitizeTitleInput(
+        court?.name ?? `Q${slotIndex + 1}`,
+        COURT_NAME_MAX_LENGTH,
+      ),
+    );
     setPriceDigits(
       court && court.defaultPrice > 0
         ? digitsFromReais(court.defaultPrice)
@@ -233,7 +245,9 @@ function OnboardingCourt() {
     upsertMockCourt(
       {
         id: existing?.id ?? `court-${editingIndex + 1}-${Date.now()}`,
-        name: courtName.trim(),
+        name: collapseSpaces(
+          sanitizeTitleInput(courtName, COURT_NAME_MAX_LENGTH),
+        ),
         defaultPrice: price,
         customPricingEnabled: customPricing || undefined,
         priceOverrides,
@@ -370,12 +384,16 @@ function OnboardingCourt() {
                 <Input
                   name="courtName"
                   title="Nome da quadra"
-                  placeholder="Nome da sua quadra"
+                  placeholder="Ex.: Q1"
                   type="text"
                   mode="dark"
+                  maxLength={COURT_NAME_MAX_LENGTH}
+                  showCount
                   value={courtName}
                   onChange={(e) => {
-                    setCourtName(e.target.value);
+                    setCourtName(
+                      sanitizeTitleInput(e.target.value, COURT_NAME_MAX_LENGTH),
+                    );
                     if (formError) setFormError("");
                   }}
                   required
@@ -407,10 +425,10 @@ function OnboardingCourt() {
                   }
                 />
 
-                <label className="mt-3 flex min-h-14 cursor-pointer items-center gap-3 rounded-xl bg-master/40 px-3 py-3">
+                <label className={choiceRowClass(customPricing, "mt-3")}>
                   <input
                     type="checkbox"
-                    className="size-5 shrink-0 accent-accent-blue"
+                    className="peer sr-only"
                     checked={customPricing}
                     onChange={(e) => {
                       const on = e.target.checked;
@@ -419,6 +437,7 @@ function OnboardingCourt() {
                       if (formError) setFormError("");
                     }}
                   />
+                  <ChoiceCheck checked={customPricing} />
                   <span>
                     <span className="block text-base font-medium text-text-light">
                       Preços personalizados
@@ -493,7 +512,7 @@ function OnboardingCourt() {
                                         e.target.value,
                                       )
                                     }
-                                    className="mpn-field-dark min-h-14 min-w-0 flex-1 rounded-xl border-0 bg-master px-4 py-3.5 text-lg font-medium leading-7 text-text-light placeholder:font-normal placeholder:text-text-light/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-2 focus-visible:ring-offset-master-light"
+                                    className="mpn-field-dark min-h-14 min-w-0 flex-1 rounded-xl border-0 bg-master px-4 py-3.5 text-lg font-medium leading-7 text-text-light placeholder:font-normal placeholder:text-text-light/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-master-light"
                                   />
                                 </li>
                               );
@@ -515,6 +534,7 @@ function OnboardingCourt() {
                     value: s.key,
                     label: s.label,
                   }))}
+                  previewCount={COURT_SPORTS_PREVIEW_COUNT}
                   value={sports}
                   onChange={(next) => {
                     setSports(next as CourtSport[]);
@@ -541,23 +561,25 @@ function OnboardingCourt() {
                   }}
                 />
 
-                <div className="mt-4 space-y-3 rounded-xl bg-master px-3 py-3">
-                  <label className="flex cursor-pointer items-center gap-3 text-base text-text-light">
+                <div className="mt-4 flex flex-col gap-2">
+                  <label className={choiceRowClass(isCovered)}>
                     <input
                       type="checkbox"
-                      className="size-4 accent-primary"
+                      className="peer sr-only"
                       checked={isCovered}
                       onChange={(e) => setIsCovered(e.target.checked)}
                     />
+                    <ChoiceCheck checked={isCovered} />
                     Quadra coberta
                   </label>
-                  <label className="flex cursor-pointer items-center gap-3 text-base text-text-light">
+                  <label className={choiceRowClass(isCanHaveNet)}>
                     <input
                       type="checkbox"
-                      className="size-4 accent-primary"
+                      className="peer sr-only"
                       checked={isCanHaveNet}
                       onChange={(e) => setIsCanHaveNet(e.target.checked)}
                     />
+                    <ChoiceCheck checked={isCanHaveNet} />
                     Pode ter rede
                   </label>
                 </div>

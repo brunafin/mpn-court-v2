@@ -10,15 +10,6 @@ export type PortalStatus = {
   reason: string;
 };
 
-function humanizeAccessReason(reason: string | null | undefined): string | null {
-  if (!reason?.trim()) return null;
-  const key = reason.trim().toLowerCase();
-  if (key === "delinquency" || key === "inadimplencia") {
-    return "inadimplência";
-  }
-  return reason.trim();
-}
-
 /**
  * Status unificado do estabelecimento no portal
  * (portalEligible + is_active / quadras show).
@@ -51,13 +42,11 @@ export function resolveCompanyPortalStatus(input: {
       };
     }
     if (caps.accessMode === "read_only") {
-      const detail = humanizeAccessReason(caps.accessReason);
       return {
         onSite: false,
         label: "Fora do site",
-        reason: detail
-          ? `Conta em modo somente leitura (${detail}). O portal fica oculto até a liberação.`
-          : "Conta em modo somente leitura. O portal fica oculto até a liberação.",
+        reason:
+          "Mensalidade em aberto. A agenda segue para consulta e as quadras ficam fora do site até o pagamento.",
       };
     }
     return {
@@ -102,7 +91,7 @@ export function resolveCourtPortalStatus(input: {
       onSite: false,
       label: "Fora do site",
       reason:
-        "Marcada para o site, mas o plano ou o acesso da conta bloqueia o portal.",
+        "Marcada para o site. Ela volta a aparecer quando a conta estiver liberada.",
     };
   }
   return {

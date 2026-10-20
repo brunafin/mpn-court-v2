@@ -29,6 +29,16 @@ import {
   isAllowedImageFile,
 } from "../../../utils/imageUpload";
 import { normalizeInstagramUrl } from "../../../utils/normalizeInstagramUrl";
+import {
+  collapseSpaces,
+  sanitizeTitleInput,
+  uppercaseAddressInput,
+} from "../../../utils/normalizeFormText";
+
+const MAX_COURTS = 15;
+const SUPPORT_WHATSAPP =
+  import.meta.env.VITE_WHATSAPP_CONTRACT_URL ||
+  "https://wa.me/5551989589197?text=Ol%C3%A1%2C%20preciso%20cadastrar%20mais%20de%2015%20quadras";
 
 function OnboardingArena() {
   const navigate = useNavigate();
@@ -72,10 +82,15 @@ function OnboardingArena() {
 
   const phoneDigits = onlyPhoneDigits(companyPhone);
   const courtCountNumber = Number.parseInt(courtCount, 10);
+  const courtCountTooMany =
+    Number.isInteger(courtCountNumber) && courtCountNumber > MAX_COURTS;
+  const courtCountTooSmall =
+    courtCount !== "" &&
+    (!Number.isInteger(courtCountNumber) || courtCountNumber < 1);
   const courtCountValid =
     Number.isInteger(courtCountNumber) &&
     courtCountNumber >= 1 &&
-    courtCountNumber <= 20;
+    courtCountNumber <= MAX_COURTS;
 
   const fillAddressFromCep = async (rawCep: string) => {
     if (!isValidCep(rawCep)) return;
@@ -87,10 +102,10 @@ function OnboardingArena() {
         setCepHint("CEP não encontrado. Confira e tente de novo.");
         return;
       }
-      setStreet(address.street);
-      setNeighborhood(address.neighborhood);
-      setCity(address.city);
-      setUf(address.uf);
+      setStreet(uppercaseAddressInput(address.street, 100));
+      setNeighborhood(uppercaseAddressInput(address.neighborhood, 50));
+      setCity(uppercaseAddressInput(address.city, 50));
+      setUf(address.uf.toUpperCase().slice(0, 2));
       setCep(formatCepMask(address.cep));
       setCepHint("");
       if (formError) setFormError("");
@@ -169,8 +184,11 @@ function OnboardingArena() {
       setFormError("Informe um celular com DDD (11 dígitos).");
       return;
     }
+    if (courtCountTooMany) {
+      return;
+    }
     if (!courtCountValid) {
-      setFormError("Informe de 1 a 20 quadras.");
+      setFormError("Informe pelo menos 1 quadra.");
       return;
     }
 
@@ -178,15 +196,15 @@ function OnboardingArena() {
     const nextCourts = (current?.courts ?? []).slice(0, courtCountNumber);
 
     updateMockOnboarding({
-      arenaName: arenaName.trim(),
+      arenaName: collapseSpaces(sanitizeTitleInput(arenaName, 50)),
       companyPhone: phoneDigits,
       instagramUrl: normalizeInstagramUrl(instagram) ?? "",
       courtCount: courtCountNumber,
       cep: formatCepMask(cep),
-      street: street.trim(),
+      street: collapseSpaces(uppercaseAddressInput(street, 100)),
       number: number.trim(),
-      neighborhood: neighborhood.trim(),
-      city: city.trim(),
+      neighborhood: collapseSpaces(uppercaseAddressInput(neighborhood, 50)),
+      city: collapseSpaces(uppercaseAddressInput(city, 50)),
       uf: uf.trim().toUpperCase(),
       courts: nextCourts,
       isPublished: false,
@@ -223,13 +241,76 @@ function OnboardingArena() {
             mode="dark"
             value={arenaName}
             onChange={(e) => {
-              setArenaName(e.target.value);
+              setArenaName(sanitizeTitleInput(e.target.value, 50));
               if (formError) setFormError("");
             }}
             required
             autoComplete="organization"
             maxLength={50}
             showCount
+          />
+
+          <Input
+            name="courtCount"
+            title="Número de quadras"
+            placeholder="1"
+            type="text"
+            inputMode="numeric"
+            mode="dark"
+            value={courtCount}
+            onChange={(e) => {
+              setCourtCount(e.target.value.replace(/\D/g, "").slice(0, 2));
+              if (formError) setFormError("");
+            }}
+            required
+            error={
+              courtCountTooSmall ? "Informe pelo menos 1 quadra." : undefined
+            }
+          />
+          {courtCountTooMany && (
+            <p className="-mt-1 text-base font-medium text-danger-soft" role="alert">
+              Para mais de {MAX_COURTS} quadras,{" "}
+              <a
+                href={SUPPORT_WHATSAPP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold underline underline-offset-2"
+              >
+                fale com o suporte
+              </a>
+              .
+            </p>
+          )}
+
+          <Input
+            name="companyPhone"
+            title="Contato"
+            placeholder="(00) 90000-0000"
+            type="tel"
+            mode="dark"
+            value={companyPhone}
+            onChange={(e) => {
+              setCompanyPhone(formatPhoneMask(e.target.value));
+              if (formError) setFormError("");
+            }}
+            required
+            autoComplete="tel"
+            inputMode="tel"
+          />
+
+          <Input
+            name="instagram"
+            title="Instagram"
+            placeholder="@suaarena ou URL"
+            type="text"
+            mode="dark"
+            value={instagram}
+            onChange={(e) => {
+              setInstagram(e.target.value);
+              if (formError) setFormError("");
+            }}
+            autoComplete="off"
+            maxLength={200}
           />
 
           <div className="pt-4">
@@ -268,7 +349,7 @@ function OnboardingArena() {
               mode="dark"
               value={street}
               onChange={(e) => {
-                setStreet(e.target.value);
+                setStreet(uppercaseAddressInput(e.target.value, 100));
                 if (formError) setFormError("");
               }}
               required
@@ -299,7 +380,7 @@ function OnboardingArena() {
                 mode="dark"
                 value={neighborhood}
                 onChange={(e) => {
-                  setNeighborhood(e.target.value);
+                  setNeighborhood(uppercaseAddressInput(e.target.value, 50));
                   if (formError) setFormError("");
                 }}
                 required
@@ -314,7 +395,7 @@ function OnboardingArena() {
                 mode="dark"
                 value={city}
                 onChange={(e) => {
-                  setCity(e.target.value);
+                  setCity(uppercaseAddressInput(e.target.value, 50));
                   if (formError) setFormError("");
                 }}
                 required
@@ -343,75 +424,9 @@ function OnboardingArena() {
             </div>
           </div>
 
-          <div className="pt-4 space-y-4">
-            <div>
-              <Input
-                name="companyPhone"
-                title="Contato"
-                placeholder="(00) 90000-0000"
-                type="tel"
-                mode="dark"
-                value={companyPhone}
-                onChange={(e) => {
-                  setCompanyPhone(formatPhoneMask(e.target.value));
-                  if (formError) setFormError("");
-                }}
-                required
-                autoComplete="tel"
-                inputMode="tel"
-              />
-              <p className="-mt-1 text-base text-text-light/55">
-                Telefone do estabelecimento (WhatsApp)
-              </p>
-            </div>
-            <div>
-              <Input
-                name="instagram"
-                title="Instagram"
-                placeholder="@suaarena ou URL"
-                type="text"
-                mode="dark"
-                value={instagram}
-                onChange={(e) => {
-                  setInstagram(e.target.value);
-                  if (formError) setFormError("");
-                }}
-                autoComplete="off"
-                maxLength={200}
-              />
-              <p className="-mt-1 text-base text-text-light/55">
-                Opcional — aparece no perfil da arena
-              </p>
-            </div>
-          </div>
-
           <div className="pt-4">
-            <Input
-              name="courtCount"
-              title="Número de quadras"
-              placeholder="1"
-              type="text"
-              inputMode="numeric"
-              mode="dark"
-              value={courtCount}
-              onChange={(e) => {
-                setCourtCount(e.target.value.replace(/\D/g, "").slice(0, 2));
-                if (formError) setFormError("");
-              }}
-              required
-            />
-            <p className="-mt-1 text-base text-text-light/55">
-              Quantidade de espaços físicos (futsal, vôlei, society)
-            </p>
-          </div>
-
-          <div className="pt-4">
-            <p className="mb-1 text-base font-medium text-text-light/70">
-              Logo{" "}
-              <span className="font-normal text-text-light/55">(opcional)</span>
-            </p>
-            <p className="mb-3 text-base text-text-light/55">
-              O envio acontece ao concluir a configuração
+            <p className="mb-3 text-base font-medium text-text-light/70">
+              Logo
             </p>
             <input
               ref={logoInputRef}
@@ -428,7 +443,7 @@ function OnboardingArena() {
                   ? "Alterar logo do estabelecimento"
                   : "Enviar logo do estabelecimento"
               }
-              className="group relative flex min-h-36 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed border-text-light/20 bg-master/40 px-4 py-6 transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              className="group relative flex min-h-36 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed border-text-light/20 bg-master/40 px-4 py-6 transition hover:border-accent-blue/50 hover:bg-master/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               {logoPreview ? (
                 <img

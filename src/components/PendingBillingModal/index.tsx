@@ -73,12 +73,12 @@ function PendingBillingModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/60 p-4 sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="pending-billing-title"
     >
-      <div className="w-full max-w-md rounded-2xl bg-master p-5">
+      <div className="w-full max-w-md rounded-2xl bg-master p-5 shadow-2xl">
         <p
           id="pending-billing-title"
           className="text-lg font-semibold text-text-light"
@@ -86,7 +86,7 @@ function PendingBillingModal() {
           Mensalidade pendente
         </p>
         <p className="mt-2 text-base text-text-light/70">
-          Há uma cobrança de {formatCurrencyBRL(payment.value)}
+          Há uma mensalidade de {formatCurrencyBRL(payment.value)}
           {payment.dueDate
             ? ` com vencimento em ${payment.dueDate.split("-").reverse().join("/")}`
             : ""}

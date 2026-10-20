@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MdCheck, MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { ChoiceCheck } from "../../../components/ChoiceCheck";
 import Button, { buttonClassName } from "../../../components/Button";
 import {
   WEEK_DAYS,
@@ -213,22 +214,13 @@ function OnboardingSchedule() {
                   slot.enabled ? "bg-master-light" : "bg-master-light/50"
                 }`}
               >
-                <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-md border-2 ${
-                    slot.enabled
-                      ? "border-accent-blue bg-accent-blue text-text-light"
-                      : "border-text-light/35 bg-master"
-                  }`}
-                  aria-hidden
-                >
-                  {slot.enabled && <MdCheck size={18} />}
-                </span>
                 <input
                   type="checkbox"
-                  className="sr-only"
+                  className="peer sr-only"
                   checked={slot.enabled}
                   onChange={() => handleToggle(slot.hour)}
                 />
+                <ChoiceCheck checked={slot.enabled} />
                 <span
                   className={`text-lg font-bold tabular-nums ${
                     slot.enabled ? "text-text-light" : "text-text-light/55"

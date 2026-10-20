@@ -7,7 +7,7 @@ import {
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
-import { IInfo, infosByCompanyPublicId } from "../../api/companies";
+import { IInfo, IInfoCourt, infosByCompanyPublicId } from "../../api/companies";
 import AppLayout from "../../components/AppLayout";
 import {
   getAccessToken,
@@ -21,7 +21,7 @@ import DateStrip from "./DateStrip";
 import CalendarButton from "./CalendarButton";
 import { addDays, format, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MdOutlineEventNote, MdOutlineFilterList } from "react-icons/md";
+import { MdChevronRight, MdOutlineFilterList, MdOutlineInfo } from "react-icons/md";
 import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
@@ -69,7 +69,7 @@ function AgendaConfiguringPanel({
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-10 text-text-light">
       <div className="w-full max-w-sm text-center">
         <div
-          className="mx-auto mb-5 size-12 rounded-full border-2 border-accent-blue/25 border-t-accent-blue animate-spin"
+          className="mx-auto mb-5 size-12 rounded-full border-2 border-accent/30 border-t-accent animate-spin"
           aria-hidden
         />
         <p className="text-lg font-semibold tracking-tight">
@@ -131,6 +131,7 @@ function Reservation() {
   const [courtSportsByName, setCourtSportsByName] = useState<
     Record<string, string[]>
   >({});
+  const [portalCourts, setPortalCourts] = useState<IInfoCourt[]>([]);
   const [list, setList] = useState<IReservationItemProps[]>([]);
   const [courtsNameList, setCourtsNameList] = useState<string[]>([]);
   const [loadedDateKey, setLoadedDateKey] = useState<string | null>(null);
@@ -159,7 +160,7 @@ function Reservation() {
       notifyError({
         type: "error",
         message:
-          "Estabelecimento criado, mas a logo não foi enviada. Envie em Minhas informações.",
+          "Estabelecimento criado, mas a logo não foi enviada. Envie em Quadras.",
       });
     }
     if (
@@ -209,6 +210,7 @@ function Reservation() {
             .filter(Boolean);
         }
         setCourtSportsByName(byName);
+        setPortalCourts(info.courts ?? []);
 
         const active =
           typeof info.isActive === "boolean"
@@ -228,6 +230,7 @@ function Reservation() {
       } catch {
         if (!cancelled) {
           setCourtSportsByName({});
+          setPortalCourts([]);
         }
       }
     };
@@ -535,6 +538,18 @@ function Reservation() {
     periodSelected ? agendaPeriodLabel(periodSelected) : null,
   ].filter(Boolean) as string[];
 
+  const inactiveCourts = portalCourts.filter((court) => !court.show);
+  const bannerCourts =
+    courtSelected === "all"
+      ? inactiveCourts
+      : inactiveCourts.filter((court) => court.name === courtSelected);
+  const showInactiveBanner =
+    caps.canMutate &&
+    caps.portalEligible !== false &&
+    !agendaBootstrapping &&
+    !showListLoading &&
+    bannerCourts.length > 0;
+
   const hoursList =
     agendaBootstrapping || showListLoading ? (
       <AgendaConfiguringPanel />
@@ -610,7 +625,7 @@ function Reservation() {
             state={{ date: date }}
             className={emptyStateActionClassName()}
           >
-            Detalhes do dia
+            Informações do dia
           </Link>
         )
       }
@@ -689,10 +704,11 @@ function Reservation() {
               <Link
                 to="/configuracoes-horarios"
                 state={{ date }}
-                aria-label="Detalhes do dia"
-                className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                aria-label="Informações do dia"
+                title="Informações do dia"
+                className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
-                <MdOutlineEventNote size={22} aria-hidden />
+                <MdOutlineInfo size={22} aria-hidden />
               </Link>
             </div>
           </div>
@@ -717,7 +733,7 @@ function Reservation() {
                     placeholder="Buscar cliente"
                     autoComplete="off"
                     enterKeyHint="search"
-                    className="mpn-tap h-10 w-full rounded-xl bg-master-light px-3.5 text-base text-text-light placeholder:text-text-light/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                    className="mpn-tap h-10 w-full rounded-xl bg-master-light px-3.5 text-base text-text-light placeholder:text-text-light/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   />
                 </label>
                 <button
@@ -729,19 +745,13 @@ function Reservation() {
                       : "Filtros"
                   }
                   aria-pressed={sheetFiltersActive}
-                  className={`mpn-tap relative flex size-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+                  className={`mpn-tap flex size-10 shrink-0 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                     sheetFiltersActive
-                      ? "bg-accent-blue/20 text-accent-blue-soft"
-                      : "bg-master-light text-text-light/70 hover:bg-text-light/10"
+                      ? "mpn-court-chip-selected"
+                      : "bg-master-light text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
                   }`}
                 >
                   <MdOutlineFilterList size={20} aria-hidden />
-                  {sheetFiltersActive ? (
-                    <span
-                      className="absolute -right-1 -top-1 size-2.5 rounded-full bg-accent-blue"
-                      aria-hidden
-                    />
-                  ) : null}
                 </button>
               </div>
 
@@ -754,6 +764,29 @@ function Reservation() {
             </div>
           </div>
 
+          {showInactiveBanner ? (
+            <div className="mx-auto w-full px-3 pt-2 lg:max-w-6xl lg:px-8">
+              <Link
+                to="/quadras"
+                className="mpn-tap flex min-h-14 items-center gap-3 rounded-xl bg-accent-soft px-3 py-3 text-on-accent shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-accent)_55%,white)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold">
+                    Ative suas quadras no site
+                  </span>
+                  <span className="mt-0.5 block text-base leading-6 text-on-accent/75">
+                    Você tem quadras que não aparecem para os clientes.
+                  </span>
+                </span>
+                <MdChevronRight
+                  size={24}
+                  className="shrink-0 text-on-accent/75"
+                  aria-hidden
+                />
+              </Link>
+            </div>
+          ) : null}
+
           {hoursList}
         </div>
 
@@ -761,10 +794,6 @@ function Reservation() {
           isOpen={showActivateGuide}
           onClose={handleCloseActivateGuide}
           publicUrl={publicArenaUrl}
-          onGoToCourts={() => {
-            handleCloseActivateGuide();
-            navigate("/quadras");
-          }}
         />
         <AgendaFiltersSheet
           open={filtersSheetOpen}

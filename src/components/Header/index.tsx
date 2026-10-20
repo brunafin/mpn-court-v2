@@ -1,13 +1,14 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { BsList, BsX } from "react-icons/bs";
 import {
-  MdOutlineHome,
-  MdOutlineInfo,
   MdOutlineLogout,
   MdOutlineNotifications,
-  MdOutlinePayments,
+  MdOutlineTune,
 } from "react-icons/md";
+import { TbMoneybag } from "react-icons/tb";
+import type { IconType } from "react-icons";
 import { GiSoccerField } from "react-icons/gi";
+import BrandCalendarIcon from "../Icons/BrandCalendarIcon";
 import { Link, useLocation } from "react-router-dom";
 import { logoutAndRedirect } from "../../utils/authCookie";
 import {
@@ -21,13 +22,11 @@ import {
   billingNavLabel,
   billingNavPath,
 } from "../../utils/billingNav";
-import ThemeModeSwitch from "../ThemeModeSwitch";
-
 type NavItem = {
   to: string;
   label: string;
   description: string;
-  Icon: typeof MdOutlineHome;
+  Icon: IconType;
   match: (path: string) => boolean;
 };
 
@@ -42,9 +41,9 @@ function buildNavItems(
   return [
     {
       to: "/reservas",
-      label: "Início",
+      label: "Agenda",
       description: "Reservas do dia",
-      Icon: MdOutlineHome,
+      Icon: BrandCalendarIcon,
       match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
     },
     {
@@ -57,24 +56,24 @@ function buildNavItems(
     {
       to: "/quadras",
       label: "Quadras",
-      description: "Ativar no site",
+      description: "Arena e quadras",
       Icon: GiSoccerField,
       match: (path) => path.startsWith("/quadras"),
-    },
-    {
-      to: "/minhas-infos",
-      label: "Minhas informações",
-      description: "Dados da conta",
-      Icon: MdOutlineInfo,
-      match: (path) => path.startsWith("/minhas-infos"),
     },
     {
       to: billingPath,
       label: billingNavLabel(effective),
       description: billingNavDescription(effective),
-      Icon: MdOutlinePayments,
+      Icon: TbMoneybag,
       match: (path) =>
         path.startsWith("/mensalidades") || path.startsWith("/planos"),
+    },
+    {
+      to: "/preferencias",
+      label: "Preferências",
+      description: "Tema e agenda",
+      Icon: MdOutlineTune,
+      match: (path) => path.startsWith("/preferencias"),
     },
   ];
 }
@@ -114,7 +113,7 @@ function Header() {
   }, [menuOpen]);
 
   const getNavLinkClass = (isActive: boolean) =>
-    `flex min-h-14 items-center gap-3 rounded-xl px-3 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+    `flex min-h-14 items-center gap-3 rounded-xl px-3 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
       isActive
         ? "bg-text-light/90 text-master"
         : "text-text-light hover:bg-text-light/10"
@@ -127,7 +126,7 @@ function Header() {
       <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-text-light sm:text-lg">
         <Link
           to="/reservas"
-          className="block truncate rounded-lg py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          className="block truncate rounded-lg py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           {companyName}
         </Link>
@@ -140,7 +139,7 @@ function Header() {
           aria-expanded={menuOpen}
           aria-haspopup="dialog"
           onClick={() => setMenuOpen(true)}
-          className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          className="mpn-tap flex size-11 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <BsList size={26} aria-hidden />
         </button>
@@ -181,7 +180,7 @@ function Header() {
                 type="button"
                 onClick={() => setMenuOpen(false)}
                 aria-label="Fechar"
-                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <BsX size={24} aria-hidden />
               </button>
@@ -228,12 +227,9 @@ function Header() {
             </nav>
 
             <div className="px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-              <div className="mb-2 px-1">
-                <ThemeModeSwitch />
-              </div>
               <button
                 type="button"
-                className="mpn-tap flex min-h-14 w-full items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                className="mpn-tap flex min-h-14 w-full items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 onClick={() => {
                   void logoutAndRedirect();
                 }}

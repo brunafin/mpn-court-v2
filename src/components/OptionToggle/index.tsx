@@ -1,4 +1,5 @@
 import { ReactNode, useId } from "react";
+import { ChoiceCheck, choiceRowClass } from "../ChoiceCheck";
 
 type OptionToggleProps = {
   label: string;
@@ -30,27 +31,10 @@ function OptionToggle({
     <label
       htmlFor={inputId}
       aria-disabled={disabled || undefined}
-      className={`mpn-tap flex min-h-14 items-center justify-between gap-3 rounded-xl px-3 py-3 transition focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent-blue ${
-        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-      } ${
-        checked
-          ? "bg-text-light/90 text-master"
-          : "bg-master text-text-light hover:bg-text-light/10"
+      className={`${choiceRowClass(checked, "w-full")} ${
+        disabled ? "cursor-not-allowed opacity-60" : ""
       }`}
     >
-      <span
-        className={`flex min-w-0 items-center gap-3 text-base font-medium ${
-          checked ? "text-master" : "text-text-light"
-        }`}
-      >
-        <span
-          className={`shrink-0 ${checked ? "text-master/70" : "text-text-light/70"}`}
-          aria-hidden
-        >
-          {icon}
-        </span>
-        {label}
-      </span>
       <input
         type="checkbox"
         id={inputId}
@@ -58,8 +42,13 @@ function OptionToggle({
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-6 shrink-0 rounded accent-accent-blue disabled:cursor-not-allowed"
+        className="peer sr-only"
       />
+      <ChoiceCheck checked={checked} />
+      <span className="shrink-0 text-text-light/70" aria-hidden>
+        {icon}
+      </span>
+      <span>{label}</span>
     </label>
   );
 }

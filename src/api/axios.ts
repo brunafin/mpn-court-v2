@@ -104,7 +104,7 @@ export function userFacingErrorMessage(error: unknown): string {
     return (
       message ||
       (code === 'ACCOUNT_READ_ONLY'
-        ? 'Sua conta está em modo somente leitura. Regularize a pendência para editar a agenda.'
+        ? 'A agenda continua aberta para consulta. Para reservar ou alterar horários, quite a mensalidade em Planos e pagamentos.'
         : 'Seu teste grátis expirou. Contrate um plano para continuar usando a agenda.')
     );
   }

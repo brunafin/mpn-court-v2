@@ -17,6 +17,7 @@ import {
   setAccessToken,
 } from '../../../utils/authCookie';
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from '../../../constants/legal';
+import { ChoiceCheck } from '../../../components/ChoiceCheck';
 import { MPN_LOGO_URL } from '../../../constants/brand';
 
 type LoginTokenPayload = {
@@ -219,8 +220,9 @@ function CompleteProfile() {
                 setAcceptedTerms(e.target.checked);
                 if (formError) setFormError('');
               }}
-              className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue disabled:cursor-not-allowed"
+              className="peer sr-only"
             />
+            <ChoiceCheck checked={acceptedTerms} />
             <span>
               Li e aceito os{' '}
               <a

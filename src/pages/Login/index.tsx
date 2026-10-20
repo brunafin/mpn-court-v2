@@ -188,18 +188,14 @@ function Login() {
   const canSubmit = Boolean(username.trim() && password) && !loading;
 
   return (
-    <div className="relative flex min-h-full flex-col items-center bg-master px-4 py-10 text-text-light">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(37,84,160,0.18),_transparent_55%)]" />
-
-      <div className="relative z-10 my-auto w-full max-w-md">
+    <div className="flex min-h-full flex-col items-center bg-master-light px-4 pt-10 text-text-light">
+      <div className="my-auto w-full max-w-md pb-8">
         <div className="mb-5 flex flex-col items-center text-center">
-          <div className="mb-3 flex w-28 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 sm:w-32 sm:rounded-xl sm:p-2">
-            <img
-              src={MPN_LOGO_URL}
-              alt="Marca Pra Nós"
-              className="h-auto w-full object-contain"
-            />
-          </div>
+          <img
+            src={MPN_LOGO_URL}
+            alt="Marca Pra Nós"
+            className="mb-3 h-auto w-28 object-contain sm:w-32"
+          />
           <h1 className="text-2xl font-bold tracking-tight text-text-light">
             Entrar
           </h1>
@@ -207,17 +203,17 @@ function Login() {
             Acesse com Google ou com e-mail e senha.
           </p>
           {signupOk && (
-            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-base font-medium text-accent-green">
+            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-base font-medium text-accent-green-ink">
               Conta criada. Entre para configurar o estabelecimento.
             </p>
           )}
           {passwordResetOk && (
-            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-base font-medium text-accent-green">
+            <p className="mt-3 rounded-lg bg-accent-green/15 px-3 py-2 text-base font-medium text-accent-green-ink">
               Senha redefinida. Entre com a nova senha.
             </p>
           )}
           {unverifiedEmail && (
-            <div className="mt-3 rounded-lg bg-accent-blue/15 px-3 py-2 text-base text-text-light">
+            <div className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-base text-on-accent">
               <p className="font-medium">
                 Confirme seu e-mail antes de entrar.
               </p>
@@ -228,7 +224,7 @@ function Login() {
                     state: { email: unverifiedEmail },
                   })
                 }
-                className="mt-1 font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
+                className="mt-1 font-semibold underline-offset-2 hover:underline"
               >
                 Confirmar e-mail / reenviar código
               </button>
@@ -236,7 +232,7 @@ function Login() {
           )}
         </div>
 
-        <div className="rounded-xl bg-master-light p-5 sm:p-6">
+        <div>
           {googleEnabled && !linkGoogleToken && (
             <>
               <GoogleSignInButton
@@ -293,7 +289,7 @@ function Login() {
               <button
                 type="button"
                 disabled={googleLoading}
-                className="mt-3 w-full text-center text-base font-semibold text-accent-blue-soft underline-offset-2 hover:underline disabled:opacity-50"
+                className="mt-3 w-full text-center text-base font-semibold text-text-light underline-offset-2 hover:underline disabled:opacity-50"
                 onClick={() => {
                   setLinkGoogleToken(null);
                   setLinkPassword('');
@@ -343,7 +339,7 @@ function Login() {
               <p className="mt-3 text-right text-base">
                 <Link
                   to="/esqueci-senha"
-                  className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                  className="font-semibold text-text-light underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   Esqueci minha senha
                 </Link>
@@ -364,7 +360,7 @@ function Login() {
                 Não tem conta?{' '}
                 <Link
                   to="/cadastro"
-                  className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                  className="font-semibold text-text-light underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   Cadastrar
                 </Link>
@@ -372,29 +368,29 @@ function Login() {
             </form>
           )}
         </div>
-
-        <nav
-          className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-base text-text-light/55"
-          aria-label="Documentos legais"
-        >
-          <a
-            href={MPN_PRIVACY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline-offset-2 hover:text-text-light/70 hover:underline"
-          >
-            Privacidade
-          </a>
-          <a
-            href={MPN_TERMS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline-offset-2 hover:text-text-light/70 hover:underline"
-          >
-            Termos de Uso
-          </a>
-        </nav>
       </div>
+
+      <nav
+        className="flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-1 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 text-center text-base text-text-light/70"
+        aria-label="Documentos legais"
+      >
+        <a
+          href={MPN_PRIVACY_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 hover:text-text-light"
+        >
+          Privacidade
+        </a>
+        <a
+          href={MPN_TERMS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 hover:text-text-light"
+        >
+          Termos de Uso
+        </a>
+      </nav>
     </div>
   );
 }

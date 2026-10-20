@@ -41,7 +41,7 @@ function CompanyAvatar({
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center bg-accent-blue/20 font-bold uppercase tracking-wide text-accent-blue-soft ${sizeClass} ${roundedClass} ${className}`}
+      className={`flex shrink-0 items-center justify-center bg-accent-soft font-bold uppercase tracking-wide text-on-accent ${sizeClass} ${roundedClass} ${className}`}
       aria-hidden={decorative || undefined}
       aria-label={decorative ? undefined : alt}
       role={decorative ? undefined : "img"}
@@ -49,7 +49,7 @@ function CompanyAvatar({
       {initials ? (
         <span className="select-none text-[0.85em] leading-none">{initials}</span>
       ) : (
-        <span className="size-1/2 rounded-full bg-accent-blue/35" aria-hidden />
+        <span className="size-1/2 rounded-full bg-on-accent/25" aria-hidden />
       )}
     </span>
   );

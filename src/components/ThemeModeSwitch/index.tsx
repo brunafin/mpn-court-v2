@@ -3,17 +3,24 @@ import { useColorMode } from "../../contexts/ColorModeContext";
 import type { ColorMode } from "../../theme/colorMode";
 
 const OPTIONS: { id: ColorMode; label: string }[] = [
-  { id: "dark", label: "Escuro" },
   { id: "light", label: "Claro" },
+  { id: "dark", label: "Escuro" },
 ];
 
-function ThemeModeSwitch() {
+function ThemeModeSwitch({ showLabel = false }: { showLabel?: boolean }) {
   const { colorMode, setColorMode } = useColorMode();
   const labelId = useId();
 
   return (
-    <div className="flex flex-col gap-2">
-      <p id={labelId} className="text-sm font-semibold text-text-light/70">
+    <div className={showLabel ? "mb-3" : undefined}>
+      <p
+        id={labelId}
+        className={
+          showLabel
+            ? "mb-2 text-base font-semibold leading-6 text-text-light"
+            : "sr-only"
+        }
+      >
         Aparência
       </p>
       <div
@@ -29,10 +36,8 @@ function ThemeModeSwitch() {
               type="button"
               aria-pressed={selected}
               onClick={() => setColorMode(option.id)}
-              className={`min-h-10 flex-1 rounded-full px-4 text-sm font-semibold ${
-                selected
-                  ? "bg-accent-blue text-text-light"
-                  : "text-text-light/70"
+              className={`min-h-11 flex-1 rounded-full px-4 text-base font-semibold ${
+                selected ? "mpn-court-chip-selected" : "text-text-light/75"
               }`}
             >
               {option.label}

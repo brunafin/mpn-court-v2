@@ -55,8 +55,8 @@ export default defineConfig({
         short_name: 'MPN',
         description: 'Gerenciamento de reservas de horários em quadras esportivas',
         display: 'standalone',
-        background_color: '#081425',
-        theme_color: '#081425',
+        background_color: '#f7f8fa',
+        theme_color: '#f7f8fa',
         icons: isProduction
           ? [
             {

@@ -62,7 +62,7 @@ const toastMeta: Record<
   success: {
     Icon: MdCheckCircleOutline,
     barClass: "bg-accent-green",
-    iconWrapClass: "bg-accent-green/20 text-accent-green",
+    iconWrapClass: "bg-accent-green/20 text-accent-green-ink",
     label: "Sucesso",
   },
 };
@@ -131,7 +131,7 @@ export const ErrorsProvider = ({ children }: { children: ReactNode }) => {
                   type="button"
                   onClick={() => dismiss(e.id)}
                   aria-label="Fechar aviso"
-                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-text-light/55 transition hover:bg-master hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-text-light/55 transition hover:bg-master hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   <MdClose size={20} aria-hidden />
                 </button>

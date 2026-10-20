@@ -5,10 +5,14 @@ type OptionChipProps = {
   icon: ReactNode;
   /** Quando true, mostra só o ícone (lista compacta). */
   iconOnly?: boolean;
+  /** Preenchimento e tinta mais leves no tema claro. */
+  soft?: boolean;
 };
 
-const chipClass =
-  "inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 rounded-md bg-text-light/12 px-2 text-base font-medium leading-none text-text-light";
+const chipLayout =
+  "inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 rounded-md px-2 text-base font-medium leading-none";
+
+const chipSurface = "bg-text-light/12 text-text-light";
 
 const iconWrapClass =
   "inline-flex size-4 shrink-0 items-center justify-center overflow-hidden [&>svg]:block [&>svg]:size-4";
@@ -16,11 +20,13 @@ const iconWrapClass =
 /**
  * Chip visual único para opções da reserva (rede, evento, churrasqueira, etc.).
  */
-function OptionChip({ label, icon, iconOnly = false }: OptionChipProps) {
+function OptionChip({ label, icon, iconOnly = false, soft = false }: OptionChipProps) {
+  const surface = soft ? "mpn-option-chip-soft" : chipSurface;
+
   if (iconOnly) {
     return (
       <span
-        className={`${chipClass} size-8 justify-center px-0`}
+        className={`${chipLayout} ${surface} size-8 justify-center px-0`}
         aria-label={label}
       >
         <span className={iconWrapClass} aria-hidden>
@@ -31,7 +37,7 @@ function OptionChip({ label, icon, iconOnly = false }: OptionChipProps) {
   }
 
   return (
-    <span className={chipClass} aria-label={label}>
+    <span className={`${chipLayout} ${surface}`} aria-label={label}>
       <span className={iconWrapClass} aria-hidden>
         {icon}
       </span>

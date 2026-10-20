@@ -6,6 +6,7 @@ import { formatPhoneMask } from "../../../utils/formatPhone";
 import { formatCurrencyBRL } from "../../../utils/formatCurrency";
 import { getStatusIcon, StatusIcons } from "../statusIcons";
 import { buttonClassName } from "../../../components/Button";
+import VoleyNetIcon from "../../../components/Icons/VoleyNetIcon";
 import {
   CourtFloor,
   courtFloorLabel,
@@ -96,6 +97,47 @@ export function CourtSummaryCard({
   );
 }
 
+/** Horário livre: selo e a linha da quadra, no fundo da página. */
+export function AvailableIdentity({
+  courtName,
+  price,
+  status,
+  isPublic,
+}: {
+  courtName: string;
+  price?: string | null;
+  status?: ReservationStatusEnum | null;
+  isPublic?: boolean | null;
+}) {
+  const accent = getStatusAccent(status);
+  const statusLabel = getStatusLabel(status, isPublic);
+  const priceLabel =
+    price != null && price !== ""
+      ? formatCurrencyBRL(parseFloat(price) || 0)
+      : null;
+  const detailLine = [courtName, priceLabel].filter(Boolean).join(" - ");
+
+  return (
+    <div className="mb-5" role="group" aria-label={statusLabel}>
+      <p
+        className={`-mx-3 -mt-3 flex min-h-12 w-[calc(100%+1.5rem)] items-center justify-center px-4 text-center text-base font-semibold lg:-mx-8 lg:w-[calc(100%+4rem)] ${accent.surface} ${accent.text}`}
+      >
+        {statusLabel}
+      </p>
+      {detailLine ? (
+        <p className="mt-3 text-base leading-snug text-text-light/70">
+          {detailLine}
+        </p>
+      ) : null}
+      {isPublic === false ? (
+        <p className="mt-2 text-base leading-6 text-text-light/70">
+          {getStatusDescription(status, isPublic)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function getReservationIcon(
   status?: ReservationStatusEnum | null,
   size = 20
@@ -129,7 +171,7 @@ export function getStatusAccent(status?: ReservationStatusEnum | null) {
     case ReservationStatusEnum.AVAILABLE:
       return {
         surface: "bg-accent-green/20",
-        text: "text-accent-green",
+        text: "text-accent-green-ink",
         iconBg: "bg-accent-green text-master",
       };
     default:
@@ -226,7 +268,7 @@ function ContactCard({
               rel="noopener noreferrer"
               aria-label={`WhatsApp de ${contactName || "contato"}`}
               title="Abrir WhatsApp"
-              className="inline-flex shrink-0 items-center justify-center rounded-md p-0.5 text-accent-green/85 transition hover:bg-accent-green/10 hover:text-accent-green focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green"
+              className="inline-flex shrink-0 items-center justify-center rounded-md p-0.5 text-accent-green-ink/85 transition hover:bg-accent-green/10 hover:text-accent-green-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-ink"
             >
               <BsWhatsapp size={16} aria-hidden />
             </a>
@@ -244,7 +286,7 @@ function ContactCard({
           onClick={onEditContact}
           title="Editar contato"
           aria-label="Editar contato"
-          className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-master text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-master text-text-light transition hover:bg-master/80 active:bg-master/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <MdOutlineEdit size={22} aria-hidden />
         </button>
@@ -252,6 +294,120 @@ function ContactCard({
     </div>
   );
 }
+
+/** Quem reservou, como falar, e a quadra numa linha. O status é um selo. */
+export function BookedIdentity({
+  contactName,
+  contactPhone,
+  onEditContact,
+  courtName,
+  sportName,
+  sports,
+  price,
+  status,
+  isPublic,
+  statusAction,
+  needsNet = false,
+}: {
+  contactName?: string | null;
+  contactPhone?: string | null;
+  onEditContact?: () => void;
+  courtName: string;
+  sportName?: string | null;
+  sports?: { id: number; name: string }[] | null;
+  price?: string | null;
+  status?: ReservationStatusEnum | null;
+  isPublic?: boolean | null;
+  /** Fixar horário ou Liberar fixo, numa linha própria. */
+  statusAction?: ReactNode;
+  /** Tarja abaixo da linha da quadra. */
+  needsNet?: boolean;
+}) {
+  const accent = getStatusAccent(status);
+  const statusLabel = getStatusLabel(status, isPublic);
+  const sportsLabel =
+    sportName?.trim() ||
+    (sports && sports.length > 0
+      ? sports.map((sport) => sport.name).join(", ")
+      : null);
+  const priceLabel =
+    price != null && price !== ""
+      ? formatCurrencyBRL(parseFloat(price) || 0)
+      : null;
+  const detailLine = [courtName, sportsLabel, priceLabel]
+    .filter(Boolean)
+    .join(" - ");
+  const phoneLabel = contactPhone ? formatPhoneMask(contactPhone) : "";
+  const personName = contactName?.trim() || "Sem nome";
+
+  return (
+    <div role="group" aria-label={personName}>
+      <div className="flex items-center gap-3">
+        <div className="flex min-h-11 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="text-lg font-semibold leading-none text-text-light">
+            {personName}
+          </p>
+          <span
+            className={`inline-flex items-center rounded-md px-3 py-1.5 text-base font-semibold ${accent.surface} ${accent.text}`}
+          >
+            {statusLabel}
+          </span>
+        </div>
+        {contactPhone || onEditContact ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {contactPhone ? (
+              <a
+                href={`${import.meta.env.VITE_WHATSAPP_URL_BASE}${contactPhone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`WhatsApp de ${personName}, ${phoneLabel}`}
+                className="flex size-11 items-center justify-center rounded-xl bg-master-light text-accent-green-ink transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-ink"
+              >
+                <BsWhatsapp size={20} aria-hidden />
+              </a>
+            ) : null}
+            {onEditContact ? (
+              <button
+                type="button"
+                onClick={onEditContact}
+                aria-label="Editar contato"
+                className="flex size-11 items-center justify-center rounded-xl bg-master-light text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <MdOutlineEdit size={22} aria-hidden />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {detailLine ? (
+        <p className="mt-3 text-base leading-snug text-text-light/70">
+          {detailLine}
+        </p>
+      ) : null}
+      {isPublic === false ? (
+        <p className="mt-2 text-base leading-6 text-text-light/70">
+          {getStatusDescription(status, isPublic)}
+        </p>
+      ) : null}
+      {needsNet ? (
+        <p className="-mx-3 mt-4 flex min-h-12 w-[calc(100%+1.5rem)] items-center justify-center gap-2 bg-accent-soft px-4 text-center text-base font-semibold text-on-accent lg:-mx-8 lg:w-[calc(100%+4rem)]">
+          <VoleyNetIcon className="size-5 shrink-0" aria-hidden />
+          Precisa de rede
+        </p>
+      ) : null}
+      {statusAction ? <div className="mt-4">{statusAction}</div> : null}
+    </div>
+  );
+}
+
+/** Fixar ou liberar, em linha própria, sem cor de status. */
+export const statusActionClassName =
+  "inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full border border-text-light/30 px-4 text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50";
+
+/** Lembrete na linha da observação. */
+export const quietActionClassName =
+  "inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50";
 
 export function getMeanByStatus(
   onEditContact: (() => void) | undefined,
@@ -409,22 +565,6 @@ export function renderButtonByStatus(
   );
 
   switch (status) {
-    case ReservationStatusEnum.FIXED:
-      return (
-        <button
-          type="button"
-          onClick={handlers.onLiberarFixo}
-          className={buttonClassName({
-            variant: "secondary",
-            size: "md",
-            className:
-              "border-accent-green text-accent-green hover:bg-accent-green/10 focus-visible:outline-accent-green",
-          })}
-        >
-          <StatusIcons.unlock size={20} className="shrink-0" aria-hidden />
-          Liberar fixo
-        </button>
-      );
     case ReservationStatusEnum.INACTIVE: {
       const canDeleteInternal =
         opts?.isPublic !== true && typeof handlers.onExcluir === "function";
@@ -476,22 +616,6 @@ export function renderButtonByStatus(
         </button>
       );
     }
-    case ReservationStatusEnum.RESERVED:
-      return (
-        <button
-          type="button"
-          onClick={handlers.onFixar}
-          className={buttonClassName({
-            variant: "secondary",
-            size: "md",
-            className:
-              "border-accent-purple-soft text-accent-purple-soft hover:bg-accent-purple/10 focus-visible:outline-accent-purple-soft",
-          })}
-        >
-          <StatusIcons.fixed size={20} className="shrink-0" aria-hidden />
-          Fixar horário
-        </button>
-      );
     case ReservationStatusEnum.AVAILABLE: {
       const canDeleteInternal =
         opts?.isPublic !== true && typeof handlers.onExcluir === "function";

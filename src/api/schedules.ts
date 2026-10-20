@@ -81,13 +81,14 @@ export const createReservation = async (
 
 export const updateObservationByPublicId = async (
   publicId: string,
-  data: { observation?: string; isBarbecueIncluded?: boolean, isEvent?: boolean }
+  data: { observation?: string; isBarbecueIncluded?: boolean, isEvent?: boolean, sportId?: number }
 ) => {
   try {
     const response = await api.patch<IReservationDetailsItemProps>(`/reservation/${publicId}/extra`, {
       observation: data.observation,
       is_barbecue_included: data.isBarbecueIncluded,
-      is_event: data.isEvent
+      is_event: data.isEvent,
+      ...(data.sportId !== undefined && { sport_id: data.sportId }),
     });
     return response.data;
   } catch (error) {

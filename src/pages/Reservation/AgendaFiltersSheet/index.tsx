@@ -1,12 +1,5 @@
 import { useEffect, useId, type ReactNode } from "react";
 import { BsX } from "react-icons/bs";
-import {
-  MdCheck,
-  MdOutlineDarkMode,
-  MdOutlineSchedule,
-  MdOutlineWbSunny,
-  MdOutlineWbTwilight,
-} from "react-icons/md";
 import type { IconType } from "react-icons";
 import { ReservationStatusEnum } from "../enum";
 import { StatusIcons } from "../statusIcons";
@@ -49,50 +42,32 @@ const STATUS_OPTIONS: {
   value: ReservationStatusEnum | null;
   Icon?: IconType;
   iconClass?: string;
-  selectedClass?: string;
 }[] = [
   { label: "Todos", value: null },
   {
     label: "Disponível",
     value: ReservationStatusEnum.AVAILABLE,
     Icon: StatusIcons.available,
-    iconClass: "bg-accent-green/15 text-accent-green",
-    selectedClass: "bg-accent-green/20 text-accent-green ring-accent-green/50",
+    iconClass: "bg-accent-green/15 text-accent-green-ink",
   },
   {
     label: "Reservado",
     value: ReservationStatusEnum.RESERVED,
     Icon: StatusIcons.reserved,
     iconClass: "bg-accent-blue/15 text-accent-blue-soft",
-    selectedClass:
-      "bg-accent-blue/20 text-accent-blue-soft ring-accent-blue/50",
   },
   {
     label: "Fixo",
     value: ReservationStatusEnum.FIXED,
     Icon: StatusIcons.fixed,
     iconClass: "bg-accent-purple/15 text-accent-purple-soft",
-    selectedClass:
-      "bg-accent-purple/20 text-accent-purple-soft ring-accent-purple/50",
   },
   {
     label: "Inativo",
     value: ReservationStatusEnum.INACTIVE,
     Icon: StatusIcons.inactive,
     iconClass: "bg-danger-400/15 text-danger-soft",
-    selectedClass: "bg-danger-400/20 text-danger-soft ring-danger-soft/50",
   },
-];
-
-const PERIOD_VISUAL: {
-  value: AgendaPeriodFilter;
-  hint: string;
-  Icon: IconType;
-}[] = [
-  { value: "", hint: "O dia inteiro", Icon: MdOutlineSchedule },
-  { value: "morning", hint: "5h–12h", Icon: MdOutlineWbSunny },
-  { value: "afternoon", hint: "12h–18h", Icon: MdOutlineWbTwilight },
-  { value: "evening", hint: "18h–5h", Icon: MdOutlineDarkMode },
 ];
 
 export function agendaStatusLabel(
@@ -208,7 +183,6 @@ function AgendaFiltersSheet({
                   key={option.label}
                   selected={selectedStatus === option.value}
                   label={option.label}
-                  selectedClass={option.selectedClass}
                   onClick={() => onSelectStatus(option.value)}
                   icon={
                     option.Icon ? (
@@ -226,48 +200,15 @@ function AgendaFiltersSheet({
 
           <section aria-label="Horário">
             <SectionLabel>Horário</SectionLabel>
-            <div className="grid grid-cols-2 gap-3">
-              {PERIOD_VISUAL.map((option) => {
-                const selected = selectedPeriod === option.value;
-                const label =
-                  AGENDA_PERIOD_OPTIONS.find(
-                    (item) => item.value === option.value,
-                  )?.label ?? option.hint;
-                return (
-                  <button
-                    key={option.value || "any"}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => onSelectPeriod(option.value)}
-                    className={`mpn-tap flex min-h-[4.75rem] items-center gap-3 rounded-xl px-3.5 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
-                      selected
-                        ? "bg-accent-blue/20 text-text-light ring-1 ring-inset ring-accent-blue/50"
-                        : "bg-master-light text-text-light/70 hover:bg-text-light/10"
-                    }`}
-                  >
-                    <span
-                      className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                        selected
-                          ? "bg-accent-blue text-text-light"
-                          : "bg-accent-blue/15 text-accent-blue-soft"
-                      }`}
-                    >
-                      <option.Icon size={18} aria-hidden />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-base font-semibold">
-                        {label}
-                      </span>
-                      <span className="block text-base text-text-light/55">
-                        {option.hint}
-                      </span>
-                    </span>
-                    {selected ? (
-                      <MdCheck className="ml-auto shrink-0" size={18} aria-hidden />
-                    ) : null}
-                  </button>
-                );
-              })}
+            <div className="flex flex-wrap gap-2.5">
+              {AGENDA_PERIOD_OPTIONS.map((option) => (
+                <ChoiceChip
+                  key={option.value || "any"}
+                  selected={selectedPeriod === option.value}
+                  label={option.label}
+                  onClick={() => onSelectPeriod(option.value)}
+                />
+              ))}
             </div>
           </section>
 
@@ -296,7 +237,7 @@ function AgendaFiltersSheet({
             <button
               type="button"
               onClick={clearFilters}
-              className="mpn-tap text-base font-semibold text-accent-blue-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+              className="mpn-tap text-base font-semibold text-accent-badge focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Limpar filtros
             </button>
@@ -320,30 +261,27 @@ function ChoiceChip({
   label,
   onClick,
   icon,
-  selectedClass = "bg-accent-blue/20 text-text-light ring-accent-blue/50",
 }: {
   selected: boolean;
   label: string;
   onClick: () => void;
   icon?: ReactNode;
-  selectedClass?: string;
 }) {
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`mpn-tap inline-flex min-h-11 items-center gap-2 rounded-full text-base font-semibold ring-1 ring-inset transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
-        icon ? "py-1 pl-1.5 pr-3" : "px-3.5"
+      className={`mpn-tap inline-flex min-h-10 items-center gap-2 rounded-full text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+        icon ? "py-1 pl-1.5 pr-3.5" : "px-3.5"
       } ${
         selected
-          ? selectedClass
-          : "bg-master-light text-text-light/70 ring-transparent hover:bg-text-light/10"
+          ? "mpn-court-chip-selected"
+          : "bg-master-light text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
       }`}
     >
       {icon}
       {label}
-      {selected ? <MdCheck size={16} aria-hidden /> : null}
     </button>
   );
 }

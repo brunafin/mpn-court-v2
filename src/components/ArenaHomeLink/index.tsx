@@ -22,7 +22,7 @@ function ArenaHomeLink({
       <Link
         to="/reservas"
         aria-label={homeLabel}
-        className="block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+        className="block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <CompanyAvatar sizeClass={sizeClass} roundedClass={roundedClass} decorative />
       </Link>
@@ -31,7 +31,7 @@ function ArenaHomeLink({
           to="/notificacoes"
           state={reminderDate ? { date: reminderDate } : undefined}
           aria-label={`${unreadCount} lembrete${unreadCount > 1 ? "s" : ""} não lido${unreadCount > 1 ? "s" : ""}`}
-          className="absolute -right-1.5 -top-1.5 z-10 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+          className="absolute -right-1.5 -top-1.5 z-10 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <span aria-hidden>
             <ReminderBadge count={unreadCount} />

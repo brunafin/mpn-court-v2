@@ -16,6 +16,8 @@ interface ITextareaProps {
   required?: boolean;
   disabled?: boolean;
   mode: "light" | "dark";
+  /** `raised` quando o campo está no fundo da página, sem cartão. */
+  surface?: "inset" | "raised";
   className?: string;
   rows?: number;
   cols?: number;
@@ -36,6 +38,7 @@ function Textarea({
   required,
   disabled = false,
   mode = "light",
+  surface = "inset",
   className,
   rows = 3,
   cols,
@@ -62,7 +65,7 @@ function Textarea({
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
+            <span className="font-semibold text-danger-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -80,7 +83,11 @@ function Textarea({
         className={`w-full min-h-[6rem] resize-none rounded-xl px-4 py-3 text-lg font-medium leading-7 transition-colors duration-150 ease-in-out clarity-mask
           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
           disabled:cursor-not-allowed disabled:opacity-60
-          mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/55 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light
+          mpn-field-dark border border-text-light/25 text-text-light placeholder:font-normal placeholder:text-text-light/55 focus-visible:ring-focus ${
+            surface === "raised"
+              ? "bg-master-light focus-visible:ring-offset-master"
+              : "bg-master focus-visible:ring-offset-master-light"
+          }
         `}
         data-clarity-mask="true"
         onChange={onChange}

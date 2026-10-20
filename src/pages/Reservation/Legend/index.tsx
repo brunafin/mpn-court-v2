@@ -23,9 +23,9 @@ function LegendAndFilters({
   if (!hasCourts) return null;
 
   const chipClass = (selected: boolean) =>
-    `mpn-tap flex min-h-10 shrink-0 items-center rounded-full px-3.5 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+    `mpn-tap flex min-h-10 shrink-0 items-center rounded-full px-3.5 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
       selected
-        ? "bg-text-light/90 text-master"
+        ? "mpn-court-chip-selected"
         : "bg-master-light text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
     }`;
 

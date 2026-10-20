@@ -9,6 +9,8 @@ type ConfirmSheetProps = {
   title: string;
   description: ReactNode;
   confirmLabel: string;
+  /** Ícone à esquerda do botão de confirmar. */
+  confirmIcon?: ReactNode;
   cancelLabel?: string;
   tone?: ConfirmTone;
   loading?: boolean;
@@ -17,6 +19,26 @@ type ConfirmSheetProps = {
   onConfirm: () => void | Promise<void>;
   onClose: () => void;
 };
+
+/** O flex no <button> não centraliza no Safari móvel. O miolo sim. */
+function ConfirmContent({
+  icon,
+  label,
+}: {
+  icon?: ReactNode;
+  label: string;
+}) {
+  return (
+    <span className="flex w-full items-center justify-center gap-2">
+      {icon ? (
+        <span className="inline-flex shrink-0 items-center justify-center leading-none [&_svg]:block">
+          {icon}
+        </span>
+      ) : null}
+      <span className="text-center leading-none">{label}</span>
+    </span>
+  );
+}
 
 const toneToVariant: Record<ConfirmTone, ButtonVariant> = {
   danger: "danger",
@@ -30,6 +52,7 @@ function ConfirmSheet({
   title,
   description,
   confirmLabel,
+  confirmIcon,
   cancelLabel = "Cancelar",
   tone = "primary",
   loading = false,
@@ -116,9 +139,11 @@ function ConfirmSheet({
             onClick={onClose}
             disabled={loading}
             aria-label="Fechar"
-            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
           >
-            <BsX size={24} aria-hidden />
+            <span className="flex size-full items-center justify-center">
+              <BsX size={24} aria-hidden className="block" />
+            </span>
           </button>
         </div>
         <div
@@ -138,7 +163,12 @@ function ConfirmSheet({
             }}
             className={
               calmDanger
-                ? "mpn-tap inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-master-light px-4 text-base font-semibold text-danger-soft transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-44"
+                ? buttonClassName({
+                    variant: "dangerSoft",
+                    size: "md",
+                    fullWidth: false,
+                    className: "w-full rounded-full! sm:w-auto sm:min-w-44",
+                  })
                 : buttonClassName({
                     variant: toneToVariant[tone],
                     size: "md",
@@ -147,7 +177,10 @@ function ConfirmSheet({
                   })
             }
           >
-            {loading ? "Aguarde…" : confirmLabel}
+            <ConfirmContent
+              icon={loading ? undefined : confirmIcon}
+              label={loading ? "Aguarde…" : confirmLabel}
+            />
           </button>
           {!alertOnly && (
             <button
@@ -155,9 +188,11 @@ function ConfirmSheet({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="mpn-tap inline-flex min-h-11 w-full items-center justify-center rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="mpn-tap inline-flex min-h-11 w-full items-center justify-center rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
-              {cancelLabel}
+              <span className="flex w-full items-center justify-center text-center leading-none">
+                {cancelLabel}
+              </span>
             </button>
           )}
         </div>

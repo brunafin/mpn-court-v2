@@ -1,13 +1,14 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  MdOutlineCalendarMonth,
-  MdOutlineInfo,
   MdOutlineLogout,
   MdOutlineNotifications,
-  MdOutlinePayments,
+  MdOutlineTune,
 } from "react-icons/md";
+import { TbMoneybag } from "react-icons/tb";
+import type { IconType } from "react-icons";
 import { GiSoccerField } from "react-icons/gi";
+import BrandCalendarIcon from "../Icons/BrandCalendarIcon";
 import { logoutAndRedirect } from "../../utils/authCookie";
 import Header from "../Header";
 import ArenaHomeLink from "../ArenaHomeLink";
@@ -18,12 +19,10 @@ import {
 import PendingBillingModal from "../PendingBillingModal";
 import { buttonClassName } from "../Button";
 import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
-import ThemeModeSwitch from "../ThemeModeSwitch";
-
 type NavItem = {
   to: string;
   label: string;
-  Icon: typeof MdOutlineCalendarMonth;
+  Icon: IconType;
   match: (path: string) => boolean;
 };
 
@@ -38,8 +37,8 @@ function buildNavItems(
   return [
     {
       to: "/reservas",
-      label: "Início",
-      Icon: MdOutlineCalendarMonth,
+      label: "Agenda",
+      Icon: BrandCalendarIcon,
       match: (path) => path === "/reservas" || path.startsWith("/reservas/"),
     },
     {
@@ -55,17 +54,17 @@ function buildNavItems(
       match: (path) => path.startsWith("/quadras"),
     },
     {
-      to: "/minhas-infos",
-      label: "Minhas informações",
-      Icon: MdOutlineInfo,
-      match: (path) => path.startsWith("/minhas-infos"),
-    },
-    {
       to: billingPath,
       label: billingNavLabel(effective),
-      Icon: MdOutlinePayments,
+      Icon: TbMoneybag,
       match: (path) =>
         path.startsWith("/mensalidades") || path.startsWith("/planos"),
+    },
+    {
+      to: "/preferencias",
+      label: "Preferências",
+      Icon: MdOutlineTune,
+      match: (path) => path.startsWith("/preferencias"),
     },
   ];
 }
@@ -89,12 +88,12 @@ function AccessBanners() {
         className="shrink-0 border-b border-warning-500/35 bg-warning-500/15 px-4 py-3"
       >
         <p className="text-base font-semibold text-text-light">
-          Conta em modo somente leitura
+          Mensalidade em aberto
         </p>
         <p className="mt-1 text-base text-text-light/70">
-          Você pode visualizar a agenda, mas não criar, alterar ou excluir.
-          Suas quadras ficam ocultas no site até a regularização (sem alterar
-          quais estavam publicadas).
+          Dá para consultar a agenda normalmente. Reservar, cancelar e alterar
+          horários ficam pausados até o pagamento — a escrita volta na hora.
+          Enquanto isso, as quadras ficam fora do site e voltam sozinhas depois.
         </p>
         {!onBilling ? (
           <Link
@@ -106,7 +105,7 @@ function AccessBanners() {
               fullWidth: false,
             })}
           >
-            Ir para {billingNavLabel(caps.entitlement).toLowerCase()}
+            Quitar mensalidade
           </Link>
         ) : null}
       </div>
@@ -140,7 +139,7 @@ function AppLayoutShell({ children }: AppLayoutProps) {
                   <Link
                     to={to}
                     aria-current={isActive ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue ${
+                    className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                       isActive
                         ? "bg-text-light/90 text-master"
                         : "text-text-light/70 hover:bg-text-light/10 hover:text-text-light"
@@ -156,12 +155,9 @@ function AppLayoutShell({ children }: AppLayoutProps) {
         </nav>
 
         <div className="px-3 pb-3 pt-2">
-          <div className="mb-2 px-1">
-            <ThemeModeSwitch />
-          </div>
           <button
             type="button"
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             onClick={() => {
               void logoutAndRedirect();
             }}

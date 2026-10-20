@@ -1,15 +1,13 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import {
-  applyColorMode,
-  readColorMode,
-  writeColorMode,
+  readAgendaColorMode,
+  writeAgendaColorMode,
   type ColorMode,
 } from "../theme/colorMode";
 
@@ -23,14 +21,12 @@ const ColorModeContext = createContext<ColorModeContextValue | undefined>(
 );
 
 export function ColorModeProvider({ children }: { children: ReactNode }) {
-  const [colorMode, setColorModeState] = useState<ColorMode>(() => readColorMode());
-
-  useEffect(() => {
-    applyColorMode(colorMode);
-  }, [colorMode]);
+  const [colorMode, setColorModeState] = useState<ColorMode>(() =>
+    readAgendaColorMode(),
+  );
 
   const setColorMode = (mode: ColorMode) => {
-    writeColorMode(mode);
+    writeAgendaColorMode(mode);
     setColorModeState(mode);
   };
 

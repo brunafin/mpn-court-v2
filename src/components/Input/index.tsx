@@ -18,6 +18,8 @@ interface IInputProps {
   readOnly?: boolean;
   disabled?: boolean;
   mode: "light" | "dark";
+  /** `raised` quando o campo está no fundo da página, sem cartão. */
+  surface?: "inset" | "raised";
   className?: string;
   inputMode?:
     | "text"
@@ -61,6 +63,7 @@ function Input({
   readOnly = false,
   disabled = false,
   mode = "light",
+  surface = "inset",
   inputMode,
   className,
   autoComplete,
@@ -91,8 +94,12 @@ function Input({
     focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
     disabled:cursor-not-allowed disabled:opacity-60
     ${isPassword ? "pr-14" : ""}
-    mpn-field-dark border-0 bg-master text-text-light placeholder:font-normal placeholder:text-text-light/55 focus-visible:ring-accent-blue/80 focus-visible:ring-offset-master-light ${
-      error ? "ring-2 ring-danger-soft" : ""
+    mpn-field-dark border text-text-light placeholder:font-normal placeholder:text-text-light/55 focus-visible:ring-focus ${
+      surface === "raised"
+        ? "bg-master-light focus-visible:ring-offset-master"
+        : "bg-master focus-visible:ring-offset-master-light"
+    } ${
+      error ? "border-danger-soft ring-2 ring-danger-soft" : "border-text-light/25"
     }`;
 
   return (
@@ -104,7 +111,7 @@ function Input({
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
+            <span className="font-semibold text-danger-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -147,7 +154,7 @@ function Input({
             aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             aria-pressed={showPassword}
             disabled={disabled}
-            className="absolute right-1.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-text-light/70 transition hover:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-60"
+            className="absolute right-1.5 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-text-light/70 transition hover:bg-master-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60"
           >
             {showPassword ? (
               <MdVisibilityOff size={22} aria-hidden />

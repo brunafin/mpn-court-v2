@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useColorMode } from "./contexts/ColorModeContext";
+import { applyAgendaChrome } from "./theme/colorMode";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import SignUpVerifyCode from "./pages/SignUp/VerifyCode";
@@ -13,11 +15,11 @@ import OnboardingCourt from "./pages/Onboarding/Court";
 import Reservation from "./pages/Reservation";
 import ReservationDetails from "./pages/Reservation/Details";
 import ChangePassword from "./pages/ChangePassword";
-import Info from "./pages/Info";
 import Courts from "./pages/Courts";
 import Billing from "./pages/Billing";
 import Plans from "./pages/Plans";
 import ConfigDay from "./pages/ConfigDay";
+import Preferences from "./pages/Preferences";
 import Notifications from "./pages/Notifications";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -50,7 +52,17 @@ function showTestEnvBanner(): boolean {
 
 function App() {
   const { pathname } = useLocation();
+  const { colorMode } = useColorMode();
   const scrollableShell = isScrollableShellPath(pathname);
+  const isDark = colorMode === "dark";
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("mpn-agenda-dark", isDark);
+    applyAgendaChrome(isDark);
+    return () => {
+      document.documentElement.classList.remove("mpn-agenda-dark");
+    };
+  }, [isDark]);
 
   useEffect(() => {
     if (import.meta.env.VITE_ENVIRONMENT === "production") {
@@ -82,7 +94,9 @@ function App() {
   };
 
   return (
-    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-master">
+    <div
+      className="flex h-dvh min-h-0 flex-col overflow-hidden bg-master"
+    >
       {showTestEnvBanner() && (
         <p className="shrink-0 bg-warning-500/90 px-3 py-1.5 text-center text-base font-semibold text-master">
           Ambiente de teste — dados podem ser fictícios
@@ -136,7 +150,11 @@ function App() {
                 <Route path="/reservas" element={<Reservation />} />
                 <Route path="/reservas/:id" element={<ReservationDetails />} />
                 <Route path="/alterar-senha" element={<ChangePassword />} />
-                <Route path="/minhas-infos" element={<Info />} />
+                <Route
+                  path="/minhas-infos"
+                  element={<Navigate to="/quadras" replace />}
+                />
+                <Route path="/preferencias" element={<Preferences />} />
                 <Route path="/quadras" element={<Courts />} />
                 <Route path="/mensalidades" element={<Billing />} />
                 <Route path="/planos" element={<Plans />} />

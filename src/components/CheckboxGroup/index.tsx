@@ -1,4 +1,5 @@
-import { MdCheck } from "react-icons/md";
+import { useState } from "react";
+import { ChoiceCheck, choiceRowClass } from "../ChoiceCheck";
 
 interface ICheckboxOption {
   value: string;
@@ -15,6 +16,8 @@ interface ICheckboxGroupProps {
   required?: boolean;
   error?: string;
   className?: string;
+  /** Quantas opções ficam visíveis antes de "Ver mais". */
+  previewCount?: number;
 }
 
 /**
@@ -31,9 +34,22 @@ function CheckboxGroup({
   required,
   error,
   className,
+  previewCount,
 }: ICheckboxGroupProps) {
   void mode;
   const errorId = error ? `${name}-error` : undefined;
+  const [expanded, setExpanded] = useState(false);
+  const limit =
+    previewCount != null && previewCount > 0 ? previewCount : options.length;
+  const canPreview = limit < options.length;
+  const visibleOptions =
+    !canPreview || expanded
+      ? options
+      : options.filter(
+          (option, index) => index < limit || value.includes(option.value),
+        );
+  const hasHidden =
+    canPreview && !expanded && visibleOptions.length < options.length;
 
   const toggle = (optionValue: string) => {
     onChange(
@@ -54,7 +70,7 @@ function CheckboxGroup({
         >
           {title}
           {required && (
-            <span className="font-semibold text-accent-blue-soft" aria-hidden="true">
+            <span className="font-semibold text-danger-soft" aria-hidden="true">
               {" "}
               *
             </span>
@@ -63,18 +79,15 @@ function CheckboxGroup({
       )}
 
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
+        {visibleOptions.map((option) => {
           const checked = value.includes(option.value);
           return (
             <label
               key={option.value}
-              className={`mpn-tap flex min-h-14 grow basis-[calc(50%-0.25rem)] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-base font-medium transition-colors
-                ${
-                  checked
-                    ? "border-accent-blue bg-accent-blue/15"
-                    : "border-text-light/15 bg-master hover:border-text-light/30"
-                }
-                text-text-light`}
+              className={choiceRowClass(
+                checked,
+                "grow basis-[calc(50%-0.25rem)]",
+              )}
             >
               <input
                 type="checkbox"
@@ -82,24 +95,25 @@ function CheckboxGroup({
                 value={option.value}
                 checked={checked}
                 onChange={() => toggle(option.value)}
-                className="sr-only"
+                className="peer sr-only"
               />
-              <span
-                aria-hidden
-                className={`flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors
-                  ${
-                    checked
-                      ? "border-accent-blue bg-accent-blue text-text-light"
-                      : "border-text-light/45"
-                  }`}
-              >
-                {checked && <MdCheck size={18} />}
-              </span>
+              <ChoiceCheck checked={checked} />
               <span className="whitespace-nowrap">{option.label}</span>
             </label>
           );
         })}
       </div>
+
+      {(hasHidden || expanded) && (
+        <button
+          type="button"
+          className="mpn-tap mt-2 min-h-12 self-start px-1 text-base font-semibold text-accent-blue"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((open) => !open)}
+        >
+          {expanded ? "Ver menos" : "Ver mais"}
+        </button>
+      )}
 
       {error && (
         <p

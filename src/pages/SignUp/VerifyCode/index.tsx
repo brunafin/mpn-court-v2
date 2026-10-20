@@ -275,7 +275,7 @@ function SignUpVerifyCode() {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
                   aria-label={`Dígito ${index + 1}`}
-                  className="size-12 rounded-xl border-0 bg-master text-center text-2xl font-semibold text-text-light outline-none ring-1 ring-inset ring-text-light/15 focus:ring-2 focus:ring-accent-blue disabled:cursor-not-allowed disabled:opacity-60 sm:size-14 clarity-mask"
+                  className="size-12 rounded-xl border-0 bg-master text-center text-2xl font-semibold text-text-light outline-none ring-1 ring-inset ring-text-light/15 focus:ring-2 focus:ring-focus disabled:cursor-not-allowed disabled:opacity-60 sm:size-14 clarity-mask"
                   data-clarity-mask="true"
                 />
               ))}

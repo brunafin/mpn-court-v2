@@ -19,7 +19,7 @@ function getStatusMeta(
     case ReservationStatusEnum.FIXED:
       return {
         label: isPublic === false ? "Fixo interno" : "Fixo",
-        barClass: "bg-accent-purple",
+        barClass: "bg-accent-purple-bar",
         iconWrapClass: "bg-accent-purple/15 text-accent-purple-soft",
         Icon,
         markerIconClass: "size-[16px] scale-110 sm:size-[18px]",
@@ -27,7 +27,7 @@ function getStatusMeta(
     case ReservationStatusEnum.RESERVED:
       return {
         label: "Reservado",
-        barClass: "bg-accent-blue",
+        barClass: "bg-accent-blue-bar",
         iconWrapClass: "bg-accent-blue/15 text-accent-blue-soft",
         Icon,
         markerIconClass: "size-[16px] sm:size-[18px]",
@@ -36,7 +36,7 @@ function getStatusMeta(
       return {
         label: isPublic === false ? "Disponível (interno)" : "Disponível",
         barClass: "bg-accent-green",
-        iconWrapClass: "bg-accent-green/15 text-accent-green",
+        iconWrapClass: "bg-accent-green/15 text-accent-green-ink",
         Icon,
         markerIconClass: "size-[16px] sm:size-[18px]",
       };
@@ -84,18 +84,21 @@ function OptionIcons({
       {isNeedsNetting && (
         <OptionChip
           label="Rede"
+          soft
           icon={<VoleyNetIcon className="size-3.5" />}
         />
       )}
       {isEvent && (
         <OptionChip
           label="Evento"
+          soft
           icon={<MdOutlineCelebration size={13} />}
         />
       )}
       {isBarbecueIncluded && (
         <OptionChip
           label="Churrasqueira"
+          soft
           icon={<MdOutlineRestaurant size={14} />}
         />
       )}
@@ -157,7 +160,7 @@ function ReservationItem({
   const hasOptions = isNeedsNetting || isEvent || isBarbecueIncluded;
 
   const cardClassName =
-    "relative flex min-h-14 items-stretch overflow-hidden rounded-xl bg-master-light transition hover:bg-text-light/10 active:bg-text-light/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue";
+    "relative flex min-h-14 items-stretch overflow-hidden rounded-xl bg-master-light transition hover:bg-text-light/10 active:bg-text-light/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
   const cardBody = (
     <>
@@ -206,7 +209,7 @@ function ReservationItem({
                 isPastDate
                   ? "text-base font-medium text-text-light/55"
                   : isAvailable
-                    ? "text-base font-semibold text-accent-green"
+                    ? "text-base font-semibold text-accent-green-ink"
                     : "text-base font-semibold text-text-light"
               }`}
             >

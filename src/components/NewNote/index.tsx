@@ -93,7 +93,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4"
+      className="fixed inset-0 z-[1100] flex items-end justify-center sm:items-center sm:p-4"
       role="presentation"
     >
       <button
@@ -112,7 +112,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="relative z-10 flex w-full max-h-[92dvh] flex-col rounded-t-2xl bg-master-light text-text-light sm:max-w-md sm:rounded-2xl"
+        className="relative z-10 flex max-h-[92dvh] w-full flex-col rounded-t-2xl bg-master-light text-text-light shadow-2xl sm:max-w-md sm:rounded-2xl"
       >
         <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
 
@@ -137,7 +137,7 @@ const NewReminderModal: React.FC<NewReminderModalProps> = ({
             onClick={onClose}
             aria-label="Fechar"
             disabled={isSubmitting}
-            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full border border-text-light/20 bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
           >
             <BsX size={24} aria-hidden />
           </button>

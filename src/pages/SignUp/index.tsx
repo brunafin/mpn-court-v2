@@ -18,7 +18,12 @@ import {
   PASSWORD_HINT,
 } from "../../utils/passwordPolicy";
 import { MPN_PRIVACY_URL, MPN_TERMS_URL } from "../../constants/legal";
+import { ChoiceCheck } from "../../components/ChoiceCheck";
 import { MPN_LOGO_URL } from "../../constants/brand";
+import {
+  sanitizePersonName,
+  sanitizePersonNameInput,
+} from "../../utils/sanitizePersonName";
 
 type LoginTokenPayload = {
   updatedPassword?: boolean;
@@ -211,7 +216,7 @@ function SignUp() {
     const normalizedEmail = email.trim().toLowerCase();
     try {
       await signup({
-        name: ownerName.trim(),
+        name: sanitizePersonName(ownerName),
         email: normalizedEmail,
         phone: phoneDigits,
         cpf: cpfDigits,
@@ -357,7 +362,7 @@ function SignUp() {
                   disabled={loading || googleLoading}
                   value={ownerName}
                   onChange={(e) => {
-                    setOwnerName(e.target.value);
+                    setOwnerName(sanitizePersonNameInput(e.target.value));
                     clearErrors();
                   }}
                   required
@@ -469,8 +474,9 @@ function SignUp() {
                     setAcceptedTerms(e.target.checked);
                     clearErrors();
                   }}
-                  className="mt-0.5 size-4 shrink-0 rounded border-text-light/30 bg-master accent-accent-blue disabled:cursor-not-allowed"
+                  className="peer sr-only"
                 />
+                <ChoiceCheck checked={acceptedTerms} />
                 <span>
                   Li e aceito os{" "}
                   <a
@@ -526,7 +532,7 @@ function SignUp() {
                 Já tem conta?{" "}
                 <Link
                   to="/"
-                  className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+                  className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   Entrar
                 </Link>

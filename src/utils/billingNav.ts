@@ -2,11 +2,11 @@ import type { IInfo } from "../api/companies";
 
 type Entitlement = NonNullable<IInfo["capabilities"]>["entitlement"];
 
-/** Teste grátis / sem plano: Planos. Cliente pago: Mensalidades. */
+/** A mesma tela cobre o plano e a cobrança. */
 export function billingNavLabel(
-  entitlement: Entitlement | null | undefined,
+  _entitlement: Entitlement | null | undefined,
 ): string {
-  return entitlement === "paid" ? "Mensalidades" : "Planos";
+  return "Planos e pagamentos";
 }
 
 export function billingNavPath(
@@ -16,11 +16,9 @@ export function billingNavPath(
 }
 
 export function billingNavDescription(
-  entitlement: Entitlement | null | undefined,
+  _entitlement: Entitlement | null | undefined,
 ): string {
-  return entitlement === "paid"
-    ? "Cobrança da plataforma"
-    : "Escolha e contrate seu plano";
+  return "Seu plano e as mensalidades";
 }
 
 export function isPaidEntitlement(

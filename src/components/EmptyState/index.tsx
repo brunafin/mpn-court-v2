@@ -31,7 +31,7 @@ export function emptyStateActionClassName(extra = "") {
   return [
     "inline-flex min-h-11 items-center justify-center rounded-xl px-3 text-base font-semibold text-accent-blue-soft transition",
     "hover:bg-text-light/10",
-    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
     extra,
   ]
     .filter(Boolean)

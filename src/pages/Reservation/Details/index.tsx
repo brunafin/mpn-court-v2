@@ -5,11 +5,10 @@ import { isBookedStatus, ReservationStatusEnum } from "../enum";
 import {
   MdOutlineArrowBackIos,
   MdOutlineCelebration,
-  MdOutlinePostAdd,
   MdOutlineRestaurant,
 } from "react-icons/md";
 import { IReservationDetailsItemProps } from "../interface";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import Input from "../../../components/Input";
 import {
   cancelReservation,
@@ -41,7 +40,7 @@ import {
   sanitizeNoteText,
   sanitizeNoteTextInput,
 } from "../../../utils/sanitizeNoteText";
-import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle, CourtSummaryCard } from "./utils";
+import { getMeanByStatus, renderButtonByStatus, formatSchedulePageTitle, CourtSummaryCard, BookedIdentity, AvailableIdentity, quietActionClassName, statusActionClassName } from "./utils";
 import {
   isInternalSchedule,
   willFixAsInternal,
@@ -77,6 +76,7 @@ type ConfirmAction = {
   title: string;
   description: string;
   confirmLabel: string;
+  confirmIcon?: ReactNode;
   tone: ConfirmTone;
   run: () => Promise<void>;
 };
@@ -151,7 +151,7 @@ function ReservationDetails() {
     name: string;
   } | null>(null);
   const [courtSports, setCourtSports] = useState<
-    { id: number; name: string }[]
+    { id: number; name: string; needsNet?: boolean }[]
   >([]);
 
   const fetchData = async (scheduleId: string) => {
@@ -162,7 +162,13 @@ function ReservationDetails() {
       setIsEvent(response?.reservation?.isEvent || false);
       setObservation(response?.reservation?.observation || "");
       setCourtSports(response?.sports || []);
-      setSportSelected(response.sports[0]);
+      const sports = response?.sports || [];
+      const reservedSport =
+        sports.find((sport) => sport.id === response.reservation?.sportId) ||
+        sports.find((sport) => sport.name === response.reservation?.sportName) ||
+        sports[0] ||
+        null;
+      setSportSelected(reservedSport);
     });
   };
 
@@ -323,10 +329,12 @@ function ReservationDetails() {
     observation,
     isBarbecueIncluded,
     isEvent,
+    sportId,
   }: {
     observation?: string;
     isBarbecueIncluded?: boolean;
     isEvent?: boolean;
+    sportId?: number;
   }): Promise<void> => {
     if (!court?.reservation?.publicId) {
       notifyError({
@@ -346,7 +354,30 @@ function ReservationDetails() {
       ...(safeObservation !== undefined && { observation: safeObservation }),
       ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
       ...(isEvent !== undefined && { isEvent }),
+      ...(sportId !== undefined && { sportId }),
     });
+    const selectedSport = courtSports.find((sport) => sport.id === sportId);
+    setCourt((prev) =>
+      prev?.reservation
+        ? {
+            ...prev,
+            reservation: {
+              ...prev.reservation,
+              ...(safeObservation !== undefined && {
+                observation: safeObservation,
+              }),
+              ...(isBarbecueIncluded !== undefined && { isBarbecueIncluded }),
+              ...(isEvent !== undefined && { isEvent }),
+              ...(sportId !== undefined && {
+                sportId,
+                sportName: selectedSport?.name ?? prev.reservation.sportName,
+                isNeedsNetting:
+                  selectedSport?.needsNet ?? prev.reservation.isNeedsNetting,
+              }),
+            },
+          }
+        : prev,
+    );
   };
 
   const handleSaveObservation = async () => {
@@ -357,6 +388,9 @@ function ReservationDetails() {
         observation,
         isBarbecueIncluded,
         isEvent,
+        ...(courtSports.length > 1 && sportSelected?.id
+          ? { sportId: sportSelected.id }
+          : {}),
       });
     } finally {
       setSavingObservation(false);
@@ -543,6 +577,9 @@ function ReservationDetails() {
           ? `O cliente fica com este horário de forma recorrente na agenda. Horário interno — não aparece no site.${barbecueNote}`
           : `O cliente fica com este horário de forma recorrente.${barbecueNote}`,
         confirmLabel: "Fixar horário",
+        confirmIcon: (
+          <StatusIcons.fixed size={20} className="shrink-0" aria-hidden />
+        ),
         tone: "neutral",
         run: async () => {
           await fixSchedule(
@@ -679,12 +716,27 @@ function ReservationDetails() {
   const consultationOnly =
     isPastConsultation || (caps.ready && !canMutate);
   // Passado abre em leitura; cancelamento só com escrita liberada.
-  const showCancelSticky = Boolean(booked && canMutate);
+  const savedObservation = court?.reservation?.observation || "";
+  const savedSportId =
+    court?.reservation?.sportId ??
+    courtSports.find((sport) => sport.name === court?.reservation?.sportName)
+      ?.id ??
+    null;
+  const detailsDirty = Boolean(
+    court?.reservation &&
+      (observation !== savedObservation ||
+        isBarbecueIncluded !== Boolean(court.reservation.isBarbecueIncluded) ||
+        isEvent !== Boolean(court.reservation.isEvent) ||
+        (courtSports.length > 1 &&
+          sportSelected?.id != null &&
+          sportSelected.id !== savedSportId)),
+  );
   const showSaveSticky = Boolean(
     booked &&
       canMutate &&
       !consultationOnly &&
-      court?.reservation?.publicId,
+      court?.reservation?.publicId &&
+      detailsDirty,
   );
   const showCreateSticky = Boolean(
     canMutate &&
@@ -695,23 +747,23 @@ function ReservationDetails() {
   return (
     <div className="mpn-page bg-master text-text-light">
       <header className="mpn-chrome-top z-20 shrink-0 bg-master px-3 pb-2 lg:px-8">
-        <div className="relative mx-auto flex w-full max-w-lg items-center justify-center lg:max-w-3xl">
+        <div className="relative mx-auto flex w-full max-w-3xl items-center justify-center">
           <button
             type="button"
             onClick={() => goBackToList({ stale: false })}
             aria-label="Voltar para lista de reservas"
-            className="mpn-tap absolute left-0 flex size-11 items-center justify-center rounded-xl text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap absolute left-0 flex size-11 items-center justify-center rounded-xl text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <MdOutlineArrowBackIos size={20} aria-hidden />
           </button>
-          <PageTitle align="center" className="max-w-[min(70%,18rem)] text-lg sm:max-w-[75%] sm:text-xl">
+          <PageTitle align="center" className="max-w-[min(70%,18rem)] text-base! sm:max-w-[75%]">
             {isInitialLoading ? "Carregando…" : pageTitle}
           </PageTitle>
         </div>
       </header>
 
       <section
-        className={`mpn-page-scroll mx-auto w-full max-w-6xl px-3 pb-4 pt-3 transition-opacity lg:px-8 ${
+        className={`mpn-page-scroll mx-auto w-full max-w-3xl px-3 pb-4 pt-3 transition-opacity lg:px-8 ${
           loading && court ? "opacity-80" : ""
         }`}
         aria-busy={loading}
@@ -734,20 +786,236 @@ function ReservationDetails() {
             )}
             {!canMutate && caps.ready && !isPastConsultation && (
               <p className="mb-4 text-base font-medium text-text-light/70">
-                Conta em somente leitura — não é possível reservar, cancelar
-                nem criar lembretes.
+                Dá para ver este horário. Reservar, cancelar e criar lembretes
+                ficam pausados até a mensalidade ser quitada.
               </p>
             )}
 
-            <CourtSummaryCard
-              name={court.court}
-              sports={court.sports}
-              floor={court.floor}
-              isCovered={court.isCovered}
-              isCanHaveNet={court.isCanHaveNet}
-            />
+            {booked ? (
+              <form
+                id="reservation-edit-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!consultationOnly) void handleSaveObservation();
+                }}
+                noValidate
+                aria-label="Reserva"
+                aria-busy={savingObservation || undefined}
+              >
+                <BookedIdentity
+                  contactName={court.reservation?.contactName}
+                  contactPhone={court.reservation?.contactPhone}
+                  onEditContact={
+                    consultationOnly ? undefined : openEditContact
+                  }
+                  courtName={court.court}
+                  sportName={
+                    !consultationOnly && courtSports.length > 1
+                      ? undefined
+                      : court.reservation?.sportName
+                  }
+                  sports={
+                    !consultationOnly && courtSports.length > 1
+                      ? undefined
+                      : court.sports
+                  }
+                  price={court.price}
+                  status={court.status}
+                  isPublic={court.isPublic}
+                  statusAction={
+                    canMutate && !consultationOnly ? (
+                      <button
+                        type="button"
+                        disabled={
+                          loading || confirmLoading || savingObservation
+                        }
+                        onClick={
+                          court.status === ReservationStatusEnum.FIXED
+                            ? statusActionHandlers.onLiberarFixo
+                            : statusActionHandlers.onFixar
+                        }
+                        className={`${statusActionClassName} w-full justify-center sm:w-fit`}
+                      >
+                        {court.status === ReservationStatusEnum.FIXED ? (
+                          <StatusIcons.unlock size={20} className="shrink-0" aria-hidden />
+                        ) : (
+                          <StatusIcons.fixed size={20} className="shrink-0" aria-hidden />
+                        )}
+                        {court.status === ReservationStatusEnum.FIXED
+                          ? "Liberar fixo"
+                          : "Fixar horário"}
+                      </button>
+                    ) : undefined
+                  }
+                  needsNet={Boolean(
+                    courtSports.find((sport) => sport.id === sportSelected?.id)
+                      ?.needsNet ?? court.reservation.isNeedsNetting,
+                  )}
+                />
 
-            {getMeanByStatus(
+                {court.reservation?.publicId ? (
+                  consultationOnly ? (
+                    isBarbecueIncluded ||
+                    isEvent ||
+                    observation?.trim() ? (
+                      <div className="mt-5">
+                        {(isBarbecueIncluded || isEvent) && (
+                          <div
+                            className="mb-4 flex flex-wrap gap-2"
+                            role="group"
+                            aria-label="Opções da reserva"
+                          >
+                            {isEvent && (
+                              <OptionChip
+                                label="Evento"
+                                icon={<MdOutlineCelebration size={13} />}
+                              />
+                            )}
+                            {isBarbecueIncluded && (
+                              <OptionChip
+                                label="Churrasqueira"
+                                icon={<MdOutlineRestaurant size={14} />}
+                              />
+                            )}
+                          </div>
+                        )}
+                        {observation?.trim() ? (
+                          <div>
+                            <p className="text-base font-semibold text-text-light">
+                              Observação
+                            </p>
+                            <p className="mt-2 break-words text-base leading-6 whitespace-pre-wrap text-text-light [overflow-wrap:anywhere]">
+                              {observation}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null
+                  ) : (
+                    <>
+                      {courtSports.length > 1 ? (
+                        <Select
+                          name="reservation-sport"
+                          title="Esporte"
+                          required
+                          value={sportSelected?.id}
+                          options={courtSports}
+                          mode="dark"
+                          surface="raised"
+                          disabled={savingObservation}
+                          className="mt-5 mb-0"
+                          onChange={(e) => {
+                            const selectedId = Number(e.target.value);
+                            const selectedSport = courtSports.find(
+                              (sport) => sport.id === selectedId,
+                            );
+                            setSportSelected(selectedSport || null);
+                          }}
+                        />
+                      ) : null}
+                      <fieldset className="mt-5" disabled={savingObservation}>
+                        <legend className="mb-2 text-base font-semibold text-text-light">
+                          Opções da reserva
+                        </legend>
+                        <div className="space-y-2">
+                        <OptionToggle
+                          label="Com churrasqueira"
+                          checked={isBarbecueIncluded}
+                          onChange={setIsBarbecueIncluded}
+                          disabled={savingObservation}
+                          icon={<MdOutlineRestaurant size={20} />}
+                        />
+                        <OptionToggle
+                          label="É um evento"
+                          checked={isEvent}
+                          onChange={setIsEvent}
+                          disabled={savingObservation}
+                          icon={<MdOutlineCelebration size={20} />}
+                        />
+                        </div>
+                      </fieldset>
+                      <div className="mb-2 mt-4 flex items-center justify-between gap-3">
+                        <label
+                          htmlFor="observation-edit"
+                          className="text-base font-semibold leading-6 text-text-light"
+                        >
+                          Observação
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowNewReminderModal(true)}
+                          className={quietActionClassName}
+                        >
+                          Criar lembrete
+                        </button>
+                      </div>
+                      <Textarea
+                        placeholder="Jogo contra, 10 pessoas, churrasqueira por 2h"
+                        name="observation-edit"
+                        value={observation}
+                        onChange={(e) => {
+                          setObservation(
+                            sanitizeNoteTextInput(
+                              e.target.value,
+                              OBSERVATION_MAX_LENGTH,
+                            ),
+                          );
+                        }}
+                        onBeforeInput={(e) => {
+                          const native = e.nativeEvent as InputEvent;
+                          if (native.isComposing || native.data == null) return;
+                          if (noteTextInsertHasDisallowedChars(native.data)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        disabled={savingObservation}
+                        mode="dark"
+                        surface="raised"
+                        maxLength={OBSERVATION_MAX_LENGTH}
+                        showCount={false}
+                        rows={3}
+                        className="mb-0 mt-0"
+                      />
+                    </>
+                  )
+                ) : null}
+
+                {canMutate ? (
+                  <button
+                    type="button"
+                    disabled={loading || confirmLoading || savingObservation}
+                    onClick={askCancelReservation}
+                    className={buttonClassName({
+                      variant: "dangerSoft",
+                      size: "md",
+                      fullWidth: true,
+                      className: "mt-5 rounded-full!",
+                    })}
+                  >
+                    Cancelar reserva
+                  </button>
+                ) : null}
+              </form>
+            ) : court.status === ReservationStatusEnum.AVAILABLE ? (
+              <AvailableIdentity
+                courtName={court.court}
+                price={court.price}
+                status={court.status}
+                isPublic={court.isPublic}
+              />
+            ) : (
+              <CourtSummaryCard
+                name={court.court}
+                sports={court.sports}
+                floor={court.floor}
+                isCovered={court.isCovered}
+                isCanHaveNet={court.isCanHaveNet}
+              />
+            )}
+
+            {!booked &&
+              court.status !== ReservationStatusEnum.AVAILABLE &&
+              getMeanByStatus(
               consultationOnly ? undefined : openEditContact,
               court?.status,
               {
@@ -760,174 +1028,15 @@ function ReservationDetails() {
             )}
 
             {canMutate &&
-              !isPastSchedule &&
-              court.status === ReservationStatusEnum.AVAILABLE &&
-              renderButtonByStatus(court.status, statusActionHandlers, {
-                isPublic: court.isPublic,
-              })}
-
-            {canMutate &&
               court.status === ReservationStatusEnum.INACTIVE &&
               renderButtonByStatus(court?.status, statusActionHandlers, {
                 isPublic: court.isPublic,
                 canActivate: !isPastSchedule,
               })}
 
-            {canMutate &&
-              !consultationOnly &&
-              (court.status === ReservationStatusEnum.FIXED ||
-                court.status === ReservationStatusEnum.RESERVED) && (
-                <div className="mb-5 grid grid-cols-2 gap-2">
-                  {renderButtonByStatus(
-                    court.status,
-                    statusActionHandlers,
-                    { isPublic: court.isPublic },
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setShowNewReminderModal(true)}
-                    className="mpn-tap inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-master-light px-4 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
-                  >
-                    <MdOutlinePostAdd
-                      size={20}
-                      className="shrink-0"
-                      aria-hidden
-                    />
-                    Criar lembrete
-                  </button>
-                </div>
-              )}
-
-            {court.status !== ReservationStatusEnum.INACTIVE &&
-              court.status !== ReservationStatusEnum.AVAILABLE &&
-              court.reservation?.publicId &&
-              (consultationOnly ? (
-                <div className="mb-5 rounded-xl bg-master-light p-4 sm:p-5">
-                  <p className="mb-4 text-lg font-semibold text-text-light">
-                    Informações adicionais
-                  </p>
-
-                  {(isBarbecueIncluded ||
-                    isEvent ||
-                    court.reservation?.isNeedsNetting) && (
-                    <div
-                      className="mb-5 flex flex-wrap gap-2"
-                      role="group"
-                      aria-label="Opções da reserva"
-                    >
-                      {court.reservation?.isNeedsNetting && (
-                        <OptionChip
-                          label="Rede"
-                          icon={<VoleyNetIcon className="size-3.5" />}
-                        />
-                      )}
-                      {isEvent && (
-                        <OptionChip
-                          label="Evento"
-                          icon={<MdOutlineCelebration size={13} />}
-                        />
-                      )}
-                      {isBarbecueIncluded && (
-                        <OptionChip
-                          label="Churrasqueira"
-                          icon={<MdOutlineRestaurant size={14} />}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  <div>
-                    <p className="text-base font-semibold text-text-light">
-                      Observação
-                    </p>
-                    <p
-                      className={`mt-2 break-words text-base leading-6 whitespace-pre-wrap [overflow-wrap:anywhere] ${
-                        observation?.trim()
-                          ? "text-text-light"
-                          : "text-text-light/55"
-                      }`}
-                    >
-                      {observation?.trim()
-                        ? observation
-                        : "Nenhuma observação registrada"}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <form
-                  id="reservation-edit-form"
-                  className="mb-5 rounded-xl bg-master-light p-4 sm:p-5"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void handleSaveObservation();
-                  }}
-                  noValidate
-                  aria-label="Editar reserva"
-                  aria-busy={savingObservation || undefined}
-                >
-                  <fieldset
-                    className="mb-4 space-y-2"
-                    disabled={savingObservation}
-                  >
-                    <legend className="mb-1 text-base font-semibold text-text-light">
-                      Opções da reserva
-                    </legend>
-                    {court.reservation?.isNeedsNetting && (
-                      <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master/50 px-3.5 py-2.5">
-                        <VoleyNetIcon className="size-5 shrink-0 text-text-light/70" />
-                        <p className="text-base font-medium text-text-light">
-                          Precisa de rede
-                        </p>
-                      </div>
-                    )}
-                    <OptionToggle
-                      label="Com churrasqueira"
-                      checked={isBarbecueIncluded}
-                      onChange={setIsBarbecueIncluded}
-                      disabled={savingObservation}
-                      icon={<MdOutlineRestaurant size={20} />}
-                    />
-                    <OptionToggle
-                      label="É um evento"
-                      checked={isEvent}
-                      onChange={setIsEvent}
-                      disabled={savingObservation}
-                      icon={<MdOutlineCelebration size={20} />}
-                    />
-                  </fieldset>
-
-                  <Textarea
-                    title="Observação"
-                    placeholder="Jogo contra, 10 pessoas, churrasqueira por 2h"
-                    name="observation-edit"
-                    value={observation}
-                    onChange={(e) => {
-                      setObservation(
-                        sanitizeNoteTextInput(
-                          e.target.value,
-                          OBSERVATION_MAX_LENGTH,
-                        ),
-                      );
-                    }}
-                    onBeforeInput={(e) => {
-                      const native = e.nativeEvent as InputEvent;
-                      if (native.isComposing || native.data == null) return;
-                      if (noteTextInsertHasDisallowedChars(native.data)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    disabled={savingObservation}
-                    mode="dark"
-                    maxLength={OBSERVATION_MAX_LENGTH}
-                    rows={3}
-                    className="mb-0"
-                  />
-                </form>
-              ))}
-
             {court?.status === ReservationStatusEnum.AVAILABLE &&
               isPastSchedule && (
-                <div className="rounded-xl bg-master-light p-4 sm:p-5">
+                <div className="mb-5">
                   <p className="text-lg font-semibold text-text-light">
                     Horário encerrado
                   </p>
@@ -940,7 +1049,7 @@ function ReservationDetails() {
             {court?.status === ReservationStatusEnum.AVAILABLE &&
               !isPastSchedule &&
               caps.loadError && (
-                <div className="mb-4 rounded-xl bg-master-light p-4 sm:p-5">
+                <div className="mb-5">
                   <p className="text-lg font-semibold text-text-light">
                     Não foi possível confirmar o acesso
                   </p>
@@ -966,13 +1075,13 @@ function ReservationDetails() {
               !isPastSchedule &&
               caps.ready &&
               !canMutate && (
-                <div className="rounded-xl bg-master-light p-4 sm:p-5">
+                <div className="mb-5">
                   <p className="text-lg font-semibold text-text-light">
-                    Reserva indisponível
+                    Reserva pausada
                   </p>
                   <p className="mt-2 text-base leading-6 text-text-light/70">
-                    Sua conta está em somente leitura. Regularize a pendência
-                    para voltar a reservar horários.
+                    Este horário dá para consultar. Para reservar, quite a
+                    mensalidade — a escrita volta na hora.
                   </p>
                 </div>
               )}
@@ -990,7 +1099,6 @@ function ReservationDetails() {
                 aria-label="Formulário de nova reserva"
                 aria-busy={isSubmitting || undefined}
               >
-                <div className="mb-5 rounded-xl bg-master-light p-4 sm:p-5">
                   <Input
                     name="name"
                     title="Nome"
@@ -1019,16 +1127,16 @@ function ReservationDetails() {
                     required
                     disabled={isSubmitting}
                     mode="dark"
+                    surface="raised"
                     autoComplete="name"
                     autoCapitalize="words"
                     enterKeyHint="next"
                     maxLength={PERSON_NAME_MAX_LENGTH}
-                    showCount
                     error={nameError || undefined}
                   />
                   <Input
                     name="phone"
-                    title="Telefone com DDD (opcional)"
+                    title="Telefone com DDD"
                     placeholder={PHONE_MASK_PLACEHOLDER}
                     type="tel"
                     inputMode="tel"
@@ -1053,6 +1161,7 @@ function ReservationDetails() {
                     }}
                     disabled={isSubmitting}
                     mode="dark"
+                    surface="raised"
                     autoComplete="tel"
                     enterKeyHint={courtSports.length > 1 ? "next" : "done"}
                   />
@@ -1064,6 +1173,7 @@ function ReservationDetails() {
                       value={sportSelected?.id}
                       options={courtSports}
                       mode="dark"
+                      surface="raised"
                       disabled={isSubmitting}
                       onChange={(e) => {
                         const selectedId = Number(e.target.value);
@@ -1078,27 +1188,23 @@ function ReservationDetails() {
                       name="court-sport"
                       title="Esporte"
                       mode="dark"
+                      surface="raised"
                       value={courtSports[0].name}
                       readOnly
                       required
                     />
                   ) : null}
 
-                  <fieldset
-                    className="mt-3 pt-5"
-                    disabled={isSubmitting}
-                  >
-                    <legend className="mb-3 text-base font-semibold text-text-light">
+                  <fieldset className="mt-5" disabled={isSubmitting}>
+                    <legend className="mb-2 text-base font-semibold text-text-light">
                       Opções da reserva
                     </legend>
                     <div className="mb-3 space-y-2">
                       {court.reservation?.isNeedsNetting && (
-                        <div className="flex min-h-12 items-center gap-2.5 rounded-xl bg-master/50 px-3.5 py-2.5">
+                        <p className="flex min-h-12 items-center gap-2 text-base text-text-light">
                           <VoleyNetIcon className="size-5 shrink-0 text-text-light/70" />
-                          <p className="text-base font-medium text-text-light">
-                            Precisa de rede
-                          </p>
-                        </div>
+                          Precisa de rede
+                        </p>
                       )}
                       <OptionToggle
                         id="barbecue-included"
@@ -1142,11 +1248,30 @@ function ReservationDetails() {
                     }}
                     disabled={isSubmitting}
                     mode="dark"
+                    surface="raised"
                     maxLength={OBSERVATION_MAX_LENGTH}
+                    showCount={false}
                     rows={3}
                     className="mb-0"
                   />
-                </div>
+                  <button
+                    type="button"
+                    disabled={isSubmitting || loading || confirmLoading}
+                    onClick={
+                      court.isPublic !== true
+                        ? statusActionHandlers.onExcluir
+                        : statusActionHandlers.onInativar
+                    }
+                    className={buttonClassName({
+                      variant: "dangerSoft",
+                      size: "md",
+                      fullWidth: true,
+                      className: "mt-5 rounded-full!",
+                    })}
+                  >
+                    <StatusIcons.inactive size={18} className="shrink-0" aria-hidden />
+                    {court.isPublic !== true ? "Excluir horário" : "Inativar horário"}
+                  </button>
               </form>
             )}
           </>
@@ -1161,7 +1286,7 @@ function ReservationDetails() {
 
       {showCreateSticky ? (
         <div className="mpn-action-bar z-20 shrink-0 bg-master px-3 pt-3">
-          <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto w-full max-w-3xl">
             <button
               type="submit"
               form="reservation-create-form"
@@ -1178,41 +1303,26 @@ function ReservationDetails() {
         </div>
       ) : null}
 
-      {showSaveSticky || showCancelSticky ? (
+      {showSaveSticky ? (
         <div className="mpn-action-bar z-20 shrink-0 bg-master px-3 pt-3">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2">
-            {showSaveSticky ? (
-              <button
-                type="submit"
-                form="reservation-edit-form"
-                disabled={savingObservation || loading || confirmLoading}
-                className={buttonClassName({
-                  variant: "primary",
-                  className: "justify-center",
-                })}
-              >
-                {savingObservation ? "Salvando…" : "Salvar alterações"}
-              </button>
-            ) : null}
-            {showCancelSticky ? (
-              <button
-                type="button"
-                disabled={loading || confirmLoading || savingObservation}
-                onClick={askCancelReservation}
-                className={buttonClassName({
-                  variant: "danger",
-                  className: "justify-center",
-                })}
-              >
-                Cancelar reserva
-              </button>
-            ) : null}
+          <div className="mx-auto w-full max-w-3xl">
+            <button
+              type="submit"
+              form="reservation-edit-form"
+              disabled={savingObservation || loading || confirmLoading}
+              className={buttonClassName({
+                variant: "primary",
+                className: "justify-center",
+              })}
+            >
+              {savingObservation ? "Salvando…" : "Salvar alterações"}
+            </button>
           </div>
         </div>
       ) : null}
 
       {showInfoCustomer && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center sm:items-center sm:p-4">
           <button
             type="button"
             aria-label="Fechar"
@@ -1227,7 +1337,7 @@ function ReservationDetails() {
             aria-modal="true"
             aria-labelledby={contactTitleId}
             aria-busy={loading || undefined}
-            className="mpn-action-bar relative z-10 w-full max-w-md rounded-t-2xl bg-master-light p-5 sm:rounded-2xl sm:p-6"
+            className="relative z-10 max-h-[min(92dvh,36rem)] w-full max-w-md overflow-y-auto rounded-t-2xl bg-master-light px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-text-light shadow-2xl sm:rounded-2xl sm:px-6 sm:pt-6 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-text-light/20 sm:hidden" />
             <div className="mb-4 flex items-start justify-between gap-3">
@@ -1244,7 +1354,7 @@ function ReservationDetails() {
                 onClick={() => setShowInfoCustomer(false)}
                 aria-label="Fechar"
                 disabled={loading}
-                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:opacity-50"
+                className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full border border-text-light/20 bg-master text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
               >
                 <BsX size={24} aria-hidden />
               </button>
@@ -1282,11 +1392,10 @@ function ReservationDetails() {
               autoCapitalize="words"
               enterKeyHint="next"
               maxLength={PERSON_NAME_MAX_LENGTH}
-              showCount
             />
             <Input
               name="contact-phone"
-              title="Telefone com DDD (opcional)"
+              title="Telefone com DDD"
               placeholder={PHONE_MASK_PLACEHOLDER}
               type="tel"
               inputMode="tel"
@@ -1337,6 +1446,7 @@ function ReservationDetails() {
         title={confirmAction?.title || ""}
         description={confirmAction?.description || ""}
         confirmLabel={confirmAction?.confirmLabel || "Confirmar"}
+        confirmIcon={confirmAction?.confirmIcon}
         tone={confirmAction?.tone || "primary"}
         loading={confirmLoading}
         onClose={() => {

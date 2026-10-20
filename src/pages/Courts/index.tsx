@@ -19,13 +19,28 @@ import EmptyState, {
   emptyStateActionClassName,
 } from "../../components/EmptyState";
 import { CourtFloor, courtFloorLabel } from "../../onboarding/mockStore";
-import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import {
+  useCompanyBranding,
+  useCompanyCapabilities,
+} from "../../contexts/CompanyBrandingContext";
 import ConfirmSheet from "../../components/ConfirmSheet";
 import EditCourtSheet from "./EditCourtSheet";
-import {
-  resolveCompanyPortalStatus,
-  resolveCourtPortalStatus,
-} from "../../utils/portalVisibility";
+import { resolveCourtPortalStatus } from "../../utils/portalVisibility";
+import { MPN_PUBLIC_SITE_URL } from "../../constants/legal";
+import InfoSheet from "../Info/Sheet";
+import ArenaProfile from "./ArenaProfile";
+
+function arenaPublicUrl(info: IInfo | null): string | null {
+  if (!info) return null;
+  if (info.slug) {
+    return `${MPN_PUBLIC_SITE_URL}/encontre-onde-jogar/${info.slug}`;
+  }
+  return info.link || null;
+}
+
+function displayArenaUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "");
+}
 
 /** Temporário: edição pós-onboarding fica oculta; dados vêm do fluxo /comecar. */
 const SHOW_EDIT_COURT_DATA = false;
@@ -147,7 +162,7 @@ function CourtCard({
             type="button"
             disabled={toggling}
             onClick={onToggleShow}
-            className="mpn-tap inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-master px-3.5 text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50"
+            className="mpn-tap inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-master px-3.5 text-base font-semibold text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {toggling ? "…" : show ? "Ocultar" : "Ativar"}
           </button>
@@ -162,6 +177,7 @@ function CourtsPage() {
   const { loading, withLoading } = useLoading();
   const { notifyError } = useErrors();
   const caps = useCompanyCapabilities();
+  const { setLogoUrl, setCompanyName } = useCompanyBranding();
   const [publicId, setPublicId] = useState("");
   const [info, setInfo] = useState<IInfo | null>(null);
   const [togglingCourtId, setTogglingCourtId] = useState<string | null>(null);
@@ -171,6 +187,8 @@ function CourtsPage() {
   const [pendingVisibility, setPendingVisibility] = useState<IInfoCourt | null>(
     null,
   );
+  const [shareOpen, setShareOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -190,13 +208,15 @@ function CourtsPage() {
       try {
         const response = await infosByCompanyPublicId(publicId);
         setInfo(response);
+        if (response?.companyName) setCompanyName(response.companyName);
+        if (response?.logoUrl) setLogoUrl(response.logoUrl);
         setLoadError(false);
       } catch (error) {
         setLoadError(true);
         console.error(error);
       }
     });
-  }, [publicId, withLoading]);
+  }, [publicId, setCompanyName, setLogoUrl, withLoading]);
 
   useEffect(() => {
     void loadCourts();
@@ -238,55 +258,93 @@ function CourtsPage() {
 
   const courts = info?.courts ?? [];
   const isInitialLoading = loading && !info && !loadError;
-  const companyPortalStatus = resolveCompanyPortalStatus({
-    isActive: info?.isActive,
-    capabilities: caps.ready ? caps : info?.capabilities,
-    courts,
-  });
-  const offSiteNeedsCourts =
-    !companyPortalStatus.onSite &&
-    (caps.portalEligible ?? true) &&
-    courts.every((c) => !c.show);
+  const publicArenaUrl = arenaPublicUrl(info);
+
+  const copyArenaLink = async () => {
+    if (!publicArenaUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicArenaUrl);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      notifyError({
+        message: "Não foi possível copiar. Selecione o link manualmente.",
+        type: "error",
+      });
+    }
+  };
+
+  const shareArenaLink = async () => {
+    if (!publicArenaUrl || typeof navigator.share !== "function") return;
+    try {
+      await navigator.share({
+        title: info?.companyName || "Arena",
+        url: publicArenaUrl,
+      });
+      setShareOpen(false);
+    } catch (error) {
+      if ((error as { name?: string }).name !== "AbortError") {
+        notifyError({
+          message: "Não foi possível compartilhar. Copie o link.",
+          type: "error",
+        });
+      }
+    }
+  };
 
   return (
     <AppLayout>
       <main className="mx-auto min-h-0 w-full max-w-6xl flex-1 overflow-y-auto bg-master px-3 pb-10 pt-4 text-text-light lg:px-8 lg:pt-6">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-text-light">
-            Quadras
-          </h1>
-          <p className="mt-1 text-base leading-5 text-text-light">
-            {offSiteNeedsCourts
-              ? "Marque na agenda o que já está ocupado e ative a quadra."
-              : "Ative no site as que quer divulgar."}
-          </p>
-          {SHOW_ADD_COURT && caps.canMutate && publicId ? (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingCourt(null);
-                setAddingCourt(true);
-              }}
-              className={buttonClassName({
-                variant: "secondary",
-                className: "mt-3",
-              })}
-            >
-              Adicionar quadra
-            </button>
-          ) : null}
-        </div>
-
         {isInitialLoading ? (
           <div
-            className="mt-4 animate-pulse space-y-1.5"
+            className="mt-2 animate-pulse space-y-4"
             aria-label="Carregando quadras"
           >
-            <div className="h-14 rounded-xl bg-master-light/70" />
+            <div className="h-16 rounded-2xl bg-master-light/70" />
+            <div className="h-20 rounded-xl bg-master-light/70" />
             <div className="h-14 rounded-xl bg-master-light/70" />
           </div>
         ) : (
-          <section className="mt-4">
+          <>
+            {info ? (
+              <ArenaProfile
+                publicId={publicId}
+                info={info}
+                onChange={(partial) => {
+                  setInfo((prev) => (prev ? { ...prev, ...partial } : prev));
+                }}
+                onShare={
+                  publicArenaUrl ? () => setShareOpen(true) : undefined
+                }
+              />
+            ) : null}
+            <section className={info ? "mt-8" : undefined}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-semibold tracking-tight text-text-light">
+                    Quadras
+                  </h2>
+                  <p className="mt-1 text-base leading-5 text-text-light">
+                    Ative no site as que quer divulgar.
+                  </p>
+                </div>
+                {SHOW_ADD_COURT && caps.canMutate && publicId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingCourt(null);
+                      setAddingCourt(true);
+                    }}
+                    className={buttonClassName({
+                      variant: "secondary",
+                      fullWidth: false,
+                    })}
+                  >
+                    Adicionar quadra
+                  </button>
+                ) : null}
+              </div>
+            <div className="mt-4">
             {loadError && !info ? (
               <EmptyState
                 title="Não foi possível carregar as quadras."
@@ -350,7 +408,9 @@ function CourtsPage() {
                 })}
               </ul>
             )}
-          </section>
+            </div>
+            </section>
+          </>
         )}
       </main>
 
@@ -413,6 +473,44 @@ function CourtsPage() {
           void loadCourts();
         }}
       />
+      {publicArenaUrl ? (
+        <InfoSheet
+          open={shareOpen}
+          title="Compartilhar"
+          onClose={() => setShareOpen(false)}
+        >
+          <p className="truncate text-base text-text-light/70">
+            {displayArenaUrl(publicArenaUrl)}
+          </p>
+          <div className="mt-4 flex flex-col">
+            {typeof navigator.share === "function" ? (
+              <button
+                type="button"
+                onClick={() => void shareArenaLink()}
+                className="flex min-h-12 items-center text-left text-base font-semibold text-text-light"
+              >
+                Compartilhar em…
+              </button>
+            ) : (
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(publicArenaUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-12 items-center text-base font-semibold text-text-light"
+              >
+                WhatsApp
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => void copyArenaLink()}
+              className="flex min-h-12 items-center text-left text-base font-semibold text-text-light"
+            >
+              {linkCopied ? "Copiado" : "Copiar"}
+            </button>
+          </div>
+        </InfoSheet>
+      ) : null}
     </AppLayout>
   );
 }

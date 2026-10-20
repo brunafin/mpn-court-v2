@@ -88,7 +88,7 @@ function ProductInactiveModal() {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Fechar"
-            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <BsX size={24} aria-hidden />
           </button>

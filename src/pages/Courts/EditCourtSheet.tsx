@@ -3,6 +3,7 @@ import { BsX } from "react-icons/bs";
 import Input from "../../components/Input";
 import Select from "../../components/Select";
 import CheckboxGroup from "../../components/CheckboxGroup";
+import { ChoiceCheck, choiceRowClass } from "../../components/ChoiceCheck";
 import { buttonClassName } from "../../components/Button";
 import {
   createOwnedCourt,
@@ -12,6 +13,7 @@ import {
 import {
   COURT_FLOORS,
   COURT_SPORTS,
+  COURT_SPORTS_PREVIEW_COUNT,
   CourtFloor,
   CourtSport,
   courtSportLabel,
@@ -20,6 +22,11 @@ import {
 import { useErrors } from "../../contexts/ErrorsContext";
 import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { MAX_COURT_PRICE_REAIS } from "../../utils/courtPrice";
+import {
+  collapseSpaces,
+  COURT_NAME_MAX_LENGTH,
+  sanitizeTitleInput,
+} from "../../utils/normalizeFormText";
 
 type EditCourtSheetProps = {
   court: IInfoCourt | null;
@@ -35,6 +42,7 @@ function sportKeysFromLabels(labels: string[]): string[] {
     COURT_SPORTS.map((s) => [courtSportLabel(s.key).toLowerCase(), s.key]),
   );
   byLabel.set("society", "fut7");
+  byLabel.set("fut7 (society)", "fut7");
   byLabel.set("fut6", "fut6");
   byLabel.set("fut7", "fut7");
   byLabel.set("fut11", "fut11");
@@ -75,7 +83,9 @@ export default function EditCourtSheet({
   useEffect(() => {
     if (!open) return;
     if (court) {
-      setName(court.name);
+      setName(
+        collapseSpaces(sanitizeTitleInput(court.name, COURT_NAME_MAX_LENGTH)),
+      );
       setFloor((court.floor as CourtFloor) || "");
       const catalogKeys = sportKeysFromLabels(court.sports);
       setSports(catalogKeys);
@@ -117,9 +127,12 @@ export default function EditCourtSheet({
     name: f.label,
   }));
 
+  const courtName = collapseSpaces(
+    sanitizeTitleInput(name, COURT_NAME_MAX_LENGTH),
+  );
   const parsedPrice = Number(price.replace(",", "."));
   const canSubmit =
-    name.trim().length >= 2 &&
+    courtName.length >= 2 &&
     Boolean(floor) &&
     sports.length > 0 &&
     (!isCreate || (Number.isFinite(parsedPrice) && parsedPrice >= 0.01)) &&
@@ -131,7 +144,7 @@ export default function EditCourtSheet({
 
   const handleSave = async () => {
     if (!canSubmit) return;
-    if (name.trim().length < 2) {
+    if (courtName.length < 2) {
       setFormError("Informe o nome da quadra.");
       return;
     }
@@ -166,7 +179,7 @@ export default function EditCourtSheet({
           return;
         }
         await createOwnedCourt(companyPublicId, {
-          name: name.trim(),
+          name: courtName,
           floor,
           price: parsedPrice,
           is_covered: isCovered,
@@ -184,7 +197,7 @@ export default function EditCourtSheet({
 
       if (!court) return;
       await patchCourt(court.publicId, {
-        name: name.trim(),
+        name: courtName,
         floor,
         is_covered: isCovered,
         is_can_have_net: isCanHaveNet,
@@ -192,7 +205,7 @@ export default function EditCourtSheet({
       });
       onSaved({
         ...court,
-        name: name.trim(),
+        name: courtName,
         floor,
         isCovered,
         isCanHaveNet,
@@ -216,7 +229,7 @@ export default function EditCourtSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-[1100] flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
@@ -228,16 +241,17 @@ export default function EditCourtSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl bg-master-light text-text-light sm:rounded-2xl"
+        className="relative z-10 flex max-h-[min(92dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-master-light text-text-light shadow-2xl sm:rounded-2xl"
       >
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-text-light/20 sm:hidden" />
+        <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3 sm:pt-4">
           <h2 id={titleId} className="text-lg font-semibold">
             {isCreate ? "Adicionar quadra" : "Editar quadra"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="mpn-tap flex size-11 items-center justify-center rounded-full bg-master text-text-light"
+            className="mpn-tap flex size-11 items-center justify-center rounded-full border border-text-light/20 bg-master text-text-light"
             aria-label="Fechar"
           >
             <BsX size={28} aria-hidden />
@@ -249,8 +263,12 @@ export default function EditCourtSheet({
             name="courtName"
             title="Nome"
             mode="dark"
+            maxLength={COURT_NAME_MAX_LENGTH}
+            showCount
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) =>
+              setName(sanitizeTitleInput(e.target.value, COURT_NAME_MAX_LENGTH))
+            }
             required
           />
           <Select
@@ -283,27 +301,30 @@ export default function EditCourtSheet({
               value: s.key,
               label: s.label,
             }))}
+            previewCount={COURT_SPORTS_PREVIEW_COUNT}
             value={sports}
             onChange={setSports}
           />
-          <div className="flex flex-col gap-2 rounded-xl bg-master px-3 py-3">
-            <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-base">
-              <span>Quadra coberta</span>
+          <div className="flex flex-col gap-2">
+            <label className={choiceRowClass(isCovered)}>
               <input
                 type="checkbox"
-                className="size-5 accent-accent-blue"
+                className="peer sr-only"
                 checked={isCovered}
                 onChange={(e) => setIsCovered(e.target.checked)}
               />
+              <ChoiceCheck checked={isCovered} />
+              <span>Quadra coberta</span>
             </label>
-            <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-base">
-              <span>Pode ter rede</span>
+            <label className={choiceRowClass(isCanHaveNet)}>
               <input
                 type="checkbox"
-                className="size-5 accent-accent-blue"
+                className="peer sr-only"
                 checked={isCanHaveNet}
                 onChange={(e) => setIsCanHaveNet(e.target.checked)}
               />
+              <ChoiceCheck checked={isCanHaveNet} />
+              <span>Pode ter rede</span>
             </label>
           </div>
           {formError ? (
@@ -313,7 +334,7 @@ export default function EditCourtSheet({
           ) : null}
         </div>
 
-        <div className="px-4 py-3">
+        <div className="shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
             disabled={!canSubmit}

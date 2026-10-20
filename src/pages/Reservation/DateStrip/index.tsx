@@ -72,7 +72,7 @@ function DateStrip({
               onClick={() => setSelectedDate(day)}
               aria-label={`${WEEKDAYS[day.getDay()]} ${format(day, "d")}`}
               aria-pressed={selected}
-              className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue lg:min-h-[4.25rem] lg:min-w-[3.75rem] ${
+              className={`flex min-h-14 min-w-[3.5rem] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:min-h-[4.25rem] lg:min-w-[3.75rem] ${
                 selected
                   ? "bg-text-light/90 text-master active:brightness-95"
                   : isPast

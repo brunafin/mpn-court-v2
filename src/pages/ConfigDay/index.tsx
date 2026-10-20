@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { MdOutlineArrowBackIos, MdOutlineEventBusy } from "react-icons/md";
+import { MdOutlineArrowBackIos } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import { IReservationItemProps } from "../Reservation/interface";
 import {
@@ -23,6 +23,8 @@ import ConfirmSheet, { ConfirmTone } from "../../components/ConfirmSheet";
 import { useErrors } from "../../contexts/ErrorsContext";
 import { invalidateSchedulesDayCache } from "../../utils/schedulesDayCache";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import { ChoiceCheck } from "../../components/ChoiceCheck";
+import { buttonClassName } from "../../components/Button";
 import { billingNavPath } from "../../utils/billingNav";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -150,7 +152,7 @@ function ConfigDay() {
       label: "Disponíveis",
       count: counts.available,
       Icon: StatusIcons.available,
-      iconClass: "text-accent-green",
+      iconClass: "text-accent-green-ink",
       iconBgClass: "bg-accent-green/15",
       barClass: "bg-accent-green",
     },
@@ -284,12 +286,12 @@ function ConfigDay() {
               })
             }
             aria-label="Voltar para reservas"
-            className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+            className="mpn-tap flex size-11 shrink-0 items-center justify-center rounded-xl text-text-light transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <MdOutlineArrowBackIos size={20} aria-hidden />
           </button>
           <div className="min-w-0">
-            <PageTitle>Detalhes do dia</PageTitle>
+            <PageTitle>Informações</PageTitle>
             <p className="truncate text-base text-text-light/70">{dayTitle}</p>
           </div>
         </div>
@@ -298,12 +300,13 @@ function ConfigDay() {
       <section className="mpn-page-scroll mpn-scroll-end mx-auto w-full max-w-6xl px-3 pt-2 lg:px-8">
         {!canMutate && caps.ready ? (
           <p className="mb-3 rounded-xl bg-master-light px-3 py-3 text-base leading-5 text-text-light/70">
-            Conta em somente leitura — não é possível alterar horários.{" "}
+            Os horários continuam visíveis. Para alterar a grade, quite a
+            mensalidade.{" "}
             <Link
               to={billingNavPath(caps.entitlement)}
               className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
             >
-              Regularizar
+              Quitar mensalidade
             </Link>
           </p>
         ) : null}
@@ -391,9 +394,13 @@ function ConfigDay() {
             type="button"
             disabled={showSummaryLoading || dayActionLoading}
             onClick={() => setConfirmCloseDay(true)}
-            className="mpn-tap mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-master-light px-4 text-base font-semibold text-danger-soft transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50 lg:w-auto lg:min-w-[14rem]"
+            className={buttonClassName({
+              variant: "dangerSoft",
+              size: "md",
+              className: "mt-4 rounded-full!",
+            })}
           >
-            <MdOutlineEventBusy size={20} className="shrink-0" aria-hidden />
+            <StatusIcons.inactive size={18} className="shrink-0" aria-hidden />
             Inativar o dia inteiro
           </button>
         ) : null}
@@ -422,7 +429,7 @@ function ConfigDay() {
                   type="button"
                   disabled={loading || batchActivateLoading}
                   onClick={toggleSelectAllInactive}
-                  className="mpn-tap inline-flex min-h-11 items-center justify-center rounded-xl bg-master-light px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mpn-tap inline-flex min-h-11 items-center justify-center rounded-xl bg-master-light px-3 text-base font-semibold text-text-light/70 transition hover:bg-text-light/10 hover:text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {allSelectableSelected
                     ? "Limpar seleção"
@@ -434,7 +441,7 @@ function ConfigDay() {
                     disabled={loading || batchActivateLoading}
                     onClick={handleActivateSelected}
                     aria-busy={batchActivateLoading}
-                    className="mpn-tap inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-master-light px-3 text-base font-semibold text-accent-green transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mpn-tap inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-master-light px-3 text-base font-semibold text-accent-green-ink transition hover:bg-text-light/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-ink disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <StatusIcons.available
                       size={20}
@@ -471,7 +478,7 @@ function ConfigDay() {
                     <input
                       id={checkboxId}
                       type="checkbox"
-                      className="size-5 shrink-0 rounded border-text-light/30 accent-accent-green disabled:opacity-40"
+                      className="peer sr-only"
                       checked={checked}
                       disabled={
                         !canMutate || loading || batchActivateLoading || isPast
@@ -481,6 +488,7 @@ function ConfigDay() {
                       }
                       aria-label={`Selecionar ${inactiveHour.time} da quadra ${inactiveHour.court}`}
                     />
+                    <ChoiceCheck checked={checked} />
                     <label
                       htmlFor={checkboxId}
                       className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
