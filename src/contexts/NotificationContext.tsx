@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useLocation } from "react-router-dom";
@@ -52,6 +53,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [reminderDate, setReminderDate] = useState<Date | null>(null);
+  const lastUnreadReadAt = useRef(0);
 
   const refreshUnreadCount = useCallback(async () => {
     const companyPublicId = getCompanyPublicIdFromCookie();
@@ -59,6 +61,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       const count = await counterNotes(companyPublicId);
+      lastUnreadReadAt.current = Date.now();
       setUnreadCount(normalizeCount(count));
     } catch (error) {
       console.error("Erro ao buscar lembretes não lidos:", error);
@@ -66,12 +69,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    refreshUnreadCount();
-  }, [refreshUnreadCount]);
-
-  useEffect(() => {
     const onFocus = () => {
-      refreshUnreadCount();
+      if (Date.now() - lastUnreadReadAt.current < 30_000) return;
+      void refreshUnreadCount();
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);

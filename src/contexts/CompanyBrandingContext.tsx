@@ -24,6 +24,8 @@ type CompanyBrandingContextValue = {
   setCompanyName: (name: string) => void;
   /** `null` até o infos carregar — não assumir paid/teste grátis. */
   capabilities: CompanyCapabilities | null;
+  /** `/infos` da empresa (quadras, portal, esportes). `null` até carregar. */
+  companyInfo: IInfo | null;
   /** Primeiro /infos falhou e ainda não há capabilities. */
   capabilitiesError: boolean;
   refreshCapabilities: () => Promise<void>;
@@ -55,6 +57,7 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
   const [capabilities, setCapabilities] = useState<CompanyCapabilities | null>(
     null,
   );
+  const [companyInfo, setCompanyInfo] = useState<IInfo | null>(null);
   const [capabilitiesError, setCapabilitiesError] = useState(false);
 
   const loadInfos = useCallback(async () => {
@@ -73,6 +76,7 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
       // depois que o JWT ganhar companyPublicId; só limpa se perdeu a conta.
       if (!companyPublicId) {
         setCapabilities(null);
+        setCompanyInfo(null);
         setCapabilitiesError(false);
       }
       return;
@@ -81,6 +85,7 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
     setCapabilitiesError(false);
     try {
       const info = await infosByCompanyPublicId(companyPublicId);
+      setCompanyInfo(info);
       if (info.companyName) setCompanyName(info.companyName);
       setCompanyLogoUrl(info.logoUrl || null);
       if (info.capabilities) {
@@ -107,6 +112,14 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
     };
   }, [loadInfos]);
 
+  useEffect(() => {
+    const onFocus = () => {
+      void loadInfos();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadInfos]);
+
   const setLogoUrl = useCallback((url: string | null) => {
     setCompanyLogoUrl(url);
   }, []);
@@ -118,6 +131,7 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
       setLogoUrl,
       setCompanyName,
       capabilities,
+      companyInfo,
       capabilitiesError,
       refreshCapabilities: loadInfos,
     }),
@@ -126,6 +140,7 @@ export function CompanyBrandingProvider({ children }: { children: ReactNode }) {
       companyLogoUrl,
       setLogoUrl,
       capabilities,
+      companyInfo,
       capabilitiesError,
       loadInfos,
     ],
@@ -144,6 +159,7 @@ const brandingFallback: CompanyBrandingContextValue = {
   setLogoUrl: () => undefined,
   setCompanyName: () => undefined,
   capabilities: null,
+  companyInfo: null,
   capabilitiesError: false,
   refreshCapabilities: async () => undefined,
 };

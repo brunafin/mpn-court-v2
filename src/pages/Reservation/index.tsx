@@ -7,7 +7,7 @@ import {
 import LegendAndFilters from "./Legend";
 import { IReservationItemProps } from "./interface";
 import { getSchedulesByCompanyPublicIdAndDate } from "../../api/schedules";
-import { IInfo, IInfoCourt, infosByCompanyPublicId } from "../../api/companies";
+import { IInfo, IInfoCourt } from "../../api/companies";
 import AppLayout from "../../components/AppLayout";
 import {
   getAccessToken,
@@ -35,7 +35,10 @@ import {
   hasSeenActivateCourtGuide,
   markActivateCourtGuideSeen,
 } from "../../utils/activateCourtGuide";
-import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import {
+  useCompanyBranding,
+  useCompanyCapabilities,
+} from "../../contexts/CompanyBrandingContext";
 import { buttonClassName } from "../../components/Button";
 import { useDaySwipe } from "../../hooks/useDaySwipe";
 import { useErrors } from "../../contexts/ErrorsContext";
@@ -95,9 +98,10 @@ function toDateKey(value: Date) {
 
 function Reservation() {
   const { loading, withLoading } = useLoading();
-  const { refreshUnreadCount, setReminderDate } = useNotification();
+  const { setReminderDate } = useNotification();
   const { notifyError } = useErrors();
   const caps = useCompanyCapabilities();
+  const { companyInfo } = useCompanyBranding();
 
   const [showActivateGuide, setShowActivateGuide] = useState(false);
   const navigate = useNavigate();
@@ -193,59 +197,35 @@ function Reservation() {
   }, [dateFrom, location.pathname, locationState, navigate, notifyError]);
 
   useEffect(() => {
-    if (!companyPublicId) return;
-    let cancelled = false;
+    if (!companyPublicId || !companyInfo) return;
 
-    const loadPortalStatus = async () => {
-      try {
-        const info = await infosByCompanyPublicId(companyPublicId);
-        if (cancelled) return;
+    const byName: Record<string, string[]> = {};
+    for (const court of companyInfo.courts ?? []) {
+      const name = court.name?.trim();
+      if (!name) continue;
+      byName[name] = (court.sports ?? [])
+        .map((sport) => sport.trim())
+        .filter(Boolean);
+    }
+    setCourtSportsByName(byName);
+    setPortalCourts(companyInfo.courts ?? []);
 
-        const byName: Record<string, string[]> = {};
-        for (const court of info.courts ?? []) {
-          const name = court.name?.trim();
-          if (!name) continue;
-          byName[name] = (court.sports ?? [])
-            .map((sport) => sport.trim())
-            .filter(Boolean);
-        }
-        setCourtSportsByName(byName);
-        setPortalCourts(info.courts ?? []);
-
-        const active =
-          typeof info.isActive === "boolean"
-            ? info.isActive
-            : (info.courts ?? []).some((court) => court.show);
-        setPublicArenaUrl(arenaPublicUrl(info));
-        if (active) {
-          setShowActivateGuide(false);
-          return;
-        }
-        if (
-          forceGuideFromNavRef.current ||
-          !hasSeenActivateCourtGuide(companyPublicId)
-        ) {
-          setShowActivateGuide(true);
-        }
-      } catch {
-        if (!cancelled) {
-          setCourtSportsByName({});
-          setPortalCourts([]);
-        }
-      }
-    };
-
-    void loadPortalStatus();
-
-    const onFocus = () => {
-      void loadPortalStatus();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [companyPublicId]);
+    const active =
+      typeof companyInfo.isActive === "boolean"
+        ? companyInfo.isActive
+        : (companyInfo.courts ?? []).some((court) => court.show);
+    setPublicArenaUrl(arenaPublicUrl(companyInfo));
+    if (active) {
+      setShowActivateGuide(false);
+      return;
+    }
+    if (
+      forceGuideFromNavRef.current ||
+      !hasSeenActivateCourtGuide(companyPublicId)
+    ) {
+      setShowActivateGuide(true);
+    }
+  }, [companyPublicId, companyInfo]);
 
   const handleCloseActivateGuide = () => {
     setShowActivateGuide(false);
@@ -423,10 +403,6 @@ function Reservation() {
     caps.ready,
     caps.canViewAgenda,
   ]);
-
-  useEffect(() => {
-    refreshUnreadCount();
-  }, [refreshUnreadCount]);
 
   useEffect(() => {
     setReminderDate(date);
