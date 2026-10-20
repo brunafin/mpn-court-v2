@@ -849,7 +849,7 @@ function ReservationDetails() {
                   }
                   needsNet={Boolean(
                     courtSports.find((sport) => sport.id === sportSelected?.id)
-                      ?.needsNet ?? court.reservation.isNeedsNetting,
+                      ?.needsNet ?? court.reservation?.isNeedsNetting,
                   )}
                 />
 
