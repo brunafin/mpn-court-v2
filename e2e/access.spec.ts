@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { E2E_ACCOUNTS, E2E_NEW_PASSWORD } from "./accounts";
-import { login } from "./agenda";
+import { login, openDay } from "./agenda";
+import { addDays, brazilToday } from "./dates";
 
 test("ACC-01 trial encerrado bloqueia a agenda", async ({ page }) => {
   await login(page, E2E_ACCOUNTS.trial.username, E2E_ACCOUNTS.trial.password);
@@ -11,6 +12,7 @@ test("ACC-01 trial encerrado bloqueia a agenda", async ({ page }) => {
 test("ACC-02 conta em modo somente leitura", async ({ page }) => {
   await login(page, E2E_ACCOUNTS.readonly.username, E2E_ACCOUNTS.readonly.password);
   await expect(page.getByText("Mensalidade em aberto")).toBeVisible();
+  await openDay(page, addDays(brazilToday(), 1));
   await expect(page.getByRole("link", { name: /Disponível/ }).first()).toBeVisible();
 });
 
