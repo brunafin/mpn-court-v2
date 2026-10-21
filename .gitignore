@@ -27,3 +27,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+/test-results/
+/playwright-report/
+/blob-report/
+/e2e/.auth/

@@ -132,6 +132,7 @@ function ReservationDetails() {
   const [customerReservationPhone, setCustomerReservationPhone] = useState<
     string | null
   >(null);
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [nameError, setNameError] = useState<string>("");
   const [observation, setObservation] = useState<string>("");
   const [isBarbecueIncluded, setIsBarbecueIncluded] = useState<boolean>(false);
@@ -274,8 +275,9 @@ function ReservationDetails() {
     const contactName = sanitizePersonName(
       customerReservationName ?? court?.reservation?.contactName ?? "",
     );
-    const contactPhone =
-      customerReservationPhone ?? court?.reservation?.contactPhone ?? null;
+    const contactPhone = phoneTouched
+      ? customerReservationPhone
+      : (court?.reservation?.contactPhone ?? null);
 
     if (!contactName || !court?.scheduleId || !id) {
       if (!contactName) {
@@ -1394,6 +1396,7 @@ function ReservationDetails() {
                   ""
               )}
               onChange={(e) => {
+                setPhoneTouched(true);
                 setCustomerReservationPhone(
                   onlyPhoneDigits(e.target.value) || null
                 );

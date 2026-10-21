@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:e2e": "npm --prefix \"${E2E_API_DIR:-../mpn-api}\" run db:seed:e2e && playwright test",
     "preview": "vite preview",
     "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
     "prepare": "husky"
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@playwright/test": "^1.64.1",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.15.30",
     "@types/react": "^19.1.10",
