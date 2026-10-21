@@ -11,16 +11,20 @@ const THEME_COLOR = {
   agendaDark: "#081425",
 } as const;
 
-export function readAgendaColorMode(): ColorMode {
+/** Valor já gravado neste navegador. Nulo se a pessoa ainda não escolheu aqui. */
+export function readStoredColorMode(): ColorMode | null {
   try {
     const stored = localStorage.getItem(AGENDA_COLOR_MODE_KEY);
     if (stored === "dark" || stored === "light") return stored;
-    // Quem tinha escolhido escuro no seletor antigo mantém o painel escuro.
     if (localStorage.getItem(LEGACY_COLOR_MODE_KEY) === "dark") return "dark";
-    return "light";
+    return null;
   } catch {
-    return "light";
+    return null;
   }
+}
+
+export function readAgendaColorMode(): ColorMode {
+  return readStoredColorMode() ?? "light";
 }
 
 export function writeAgendaColorMode(mode: ColorMode) {
