@@ -27,21 +27,21 @@ test("ACC-02 no 10º dia a modal é a de suspensão, sem o aviso de antes", asyn
   await dialog.getByRole("button", { name: "Entendi" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const banner = page.getByRole("status");
-  await expect(banner).toContainText("Mensalidade pendente.");
+  await expect(banner).toContainText("Mensalidade pendente");
   await expect(banner).toContainText(
     "Regularize para voltar a ter o acesso completo",
   );
 
   await page.goto("/quadras");
-  await expect(page.getByRole("status")).toContainText("Mensalidade pendente.");
+  await expect(page.getByRole("status")).toContainText("Mensalidade pendente");
 
   await page.goto("/mensalidades");
-  await expect(page.getByRole("status")).toContainText("Mensalidade pendente.");
+  await expect(page.getByRole("status")).toContainText("Mensalidade pendente");
   await expect(page.getByText("Atrasado")).toBeVisible();
   await expect(page.getByText("Nenhuma mensalidade ainda")).toHaveCount(0);
 
   await openSlot(page, addDays(brazilToday(), 1), "08:00");
-  await expect(page.getByRole("status")).toContainText("Mensalidade pendente.");
+  await expect(page.getByRole("status")).toContainText("Mensalidade pendente");
   await expect(page.getByRole("status")).toContainText(
     "Regularize para voltar a ter o acesso completo",
   );

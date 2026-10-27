@@ -35,6 +35,23 @@ export function useReadOnlyNotice() {
 
 type ReadOnlyNotice = ReturnType<typeof useReadOnlyNotice>;
 
+function ReadOnlyChip({
+  className = "",
+  id,
+}: {
+  className?: string;
+  id?: string;
+}) {
+  return (
+    <span
+      id={id}
+      className={`mpn-readonly-chip inline-flex items-center rounded-md px-2 py-0.5 text-sm font-semibold leading-5 ${className}`}
+    >
+      Mensalidade pendente
+    </span>
+  );
+}
+
 export function ReadOnlyAccessBanner({ notice }: { notice: ReadOnlyNotice }) {
   const location = useLocation();
   if (!notice.restricted || !notice.acked) return null;
@@ -42,27 +59,28 @@ export function ReadOnlyAccessBanner({ notice }: { notice: ReadOnlyNotice }) {
   const onBilling =
     location.pathname.startsWith("/mensalidades") ||
     location.pathname.startsWith("/planos");
-  const onHome = location.pathname === "/reservas";
 
   return (
-    <div
-      role="status"
-      className="shrink-0 border-b border-warning-500/35 bg-warning-500/15 px-4 py-3"
-    >
-      <p className="text-base leading-6 text-text-light">
-        <span className="font-bold">Mensalidade pendente.</span> Regularize para
-        voltar a ter o acesso completo.
-      </p>
-      {!onBilling ? (
-        <div className={onHome ? "flex justify-center" : undefined}>
+    <div role="status" className="mpn-readonly-banner mb-3 shrink-0 px-4 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="min-w-0 text-base leading-6 text-text-light">
+          <ReadOnlyChip className="mr-2 align-middle" />
+          Regularize para voltar a ter o acesso completo.
+        </p>
+        {!onBilling ? (
           <Link
             to={billingNavPath(notice.entitlement)}
-            className="mt-1 inline-flex min-h-11 items-center text-base font-semibold text-accent-badge underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={buttonClassName({
+              variant: "primary",
+              size: "md",
+              fullWidth: false,
+              className: "w-full shrink-0 sm:w-auto",
+            })}
           >
             Regularizar pagamento
           </Link>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -96,13 +114,8 @@ function ReadOnlyAccessModal({ notice }: { notice: ReadOnlyNotice }) {
       aria-labelledby="readonly-billing-title"
     >
       <div className="w-full max-w-md rounded-2xl bg-master p-5 shadow-2xl">
-        <p
-          id="readonly-billing-title"
-          className="text-lg font-bold text-text-light"
-        >
-          Mensalidade pendente
-        </p>
-        <p className="mt-2 text-base leading-6 text-text-light/70">
+        <ReadOnlyChip id="readonly-billing-title" />
+        <p className="mt-3 text-base leading-6 text-text-light/70">
           Reservar, cancelar e alterar horários ficam indisponíveis até a
           regularização da mensalidade.
         </p>

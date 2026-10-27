@@ -279,6 +279,27 @@ html .bg-accent-green {
   color: var(--color-text-light);
 }
 
+/* Inadimplência no claro: branco, para separar do cinza da página. O vermelho fica no filete e na tag. */
+.mpn-readonly-banner {
+  background-color: var(--color-master-light);
+  border-left: 4px solid var(--color-danger-ink);
+}
+
+.mpn-readonly-chip {
+  background-color: var(--color-danger-wash);
+  color: var(--color-danger-ink);
+}
+
+.mpn-agenda-dark .mpn-readonly-banner {
+  background-color: color-mix(in srgb, var(--color-accent) 16%, var(--color-master));
+  border-left-color: var(--color-danger-soft);
+}
+
+.mpn-agenda-dark .mpn-readonly-chip {
+  background-color: color-mix(in srgb, var(--color-danger-soft) 12%, var(--color-master));
+  color: var(--color-danger-soft);
+}
+
 html .bg-warning-500,
 html .bg-warning-500\/90 {
   color: #122033;
