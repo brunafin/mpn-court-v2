@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "npm --prefix \"${E2E_API_DIR:-../mpn-api}\" run db:seed:e2e && playwright test",
+    "test:e2e": "playwright test",
     "preview": "vite preview",
     "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
     "prepare": "husky"

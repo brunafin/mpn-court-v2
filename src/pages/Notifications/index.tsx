@@ -16,6 +16,7 @@ import EmptyState, {
 } from "../../components/EmptyState";
 import { PageTitle } from "../../components/PageTitle";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
+import { BillingAccessNotices } from "../../components/ReadOnlyAccessModal";
 import {
   REMINDER_MESSAGE_MAX_LENGTH,
   sanitizeNoteText,
@@ -156,6 +157,8 @@ function DayReminders() {
         </div>
       </header>
 
+      <BillingAccessNotices />
+
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="sticky top-0 z-10 shrink-0 bg-master-light">
           <div className="mx-auto w-full lg:max-w-6xl lg:px-8">
@@ -176,12 +179,6 @@ function DayReminders() {
               </button>
             ) : null}
           </div>
-          {!canMutate && caps.ready ? (
-            <p className="mx-auto mt-2 w-full text-base text-text-light/70 lg:max-w-6xl">
-              Os lembretes continuam visíveis. Criar ou concluir fica pausado
-              até a mensalidade ser quitada.
-            </p>
-          ) : null}
         </div>
 
         {showListLoading ? (

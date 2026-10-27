@@ -46,6 +46,7 @@ import {
   willFixAsInternal,
 } from "../scheduleVisibility";
 import { useCompanyPublicId } from "../../../hooks/useCompanyPublicId";
+import { BillingAccessNotices } from "../../../components/ReadOnlyAccessModal";
 import {
   invalidateSchedulesDayCache,
   patchSchedulesDayCacheSlot,
@@ -753,6 +754,8 @@ function ReservationDetails() {
         </div>
       </header>
 
+      <BillingAccessNotices />
+
       <section
         className={`mpn-page-scroll mx-auto w-full max-w-3xl px-3 pb-4 pt-3 transition-opacity lg:px-8 ${
           loading && court ? "opacity-80" : ""
@@ -775,13 +778,6 @@ function ReservationDetails() {
                   : "Horário passado — somente consulta"}
               </p>
             )}
-            {!canMutate && caps.ready && !isPastConsultation && (
-              <p className="mb-4 text-base font-medium text-text-light/70">
-                Dá para ver este horário. Reservar, cancelar e criar lembretes
-                ficam pausados até a mensalidade ser quitada.
-              </p>
-            )}
-
             {booked ? (
               <form
                 id="reservation-edit-form"
@@ -1059,21 +1055,6 @@ function ReservationDetails() {
                   >
                     Tentar de novo
                   </button>
-                </div>
-              )}
-
-            {court?.status === ReservationStatusEnum.AVAILABLE &&
-              !isPastSchedule &&
-              caps.ready &&
-              !canMutate && (
-                <div className="mb-5">
-                  <p className="text-lg font-semibold text-text-light">
-                    Reserva pausada
-                  </p>
-                  <p className="mt-2 text-base leading-6 text-text-light/70">
-                    Este horário dá para consultar. Para reservar, quite a
-                    mensalidade — a escrita volta na hora.
-                  </p>
                 </div>
               )}
 

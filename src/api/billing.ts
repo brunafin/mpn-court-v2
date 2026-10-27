@@ -19,6 +19,13 @@ export type BillingPaymentItem = {
   hasCpfOnFile: boolean;
 };
 
+export type DelinquencyReminder = {
+  paymentId: number;
+  dueDate: string;
+  suspendsOn: string;
+  daysAfterDue: number;
+};
+
 export type BillingSummary = {
   openPayment: BillingPaymentItem | null;
   history: BillingPaymentItem[];
@@ -27,6 +34,7 @@ export type BillingSummary = {
   isTrial: boolean;
   trialEndsAt: string;
   pixEnabled: boolean;
+  delinquencyReminder: DelinquencyReminder | null;
 };
 
 export type BillingPixPayload = {

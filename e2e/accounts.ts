@@ -8,6 +8,7 @@ export const E2E_ACCOUNTS = {
   trial: { username: "trial", password: E2E_PASSWORD },
   readonly: { username: "readonly", password: E2E_PASSWORD },
   mustChange: { username: "mustchange", password: E2E_DEFAULT_PASSWORD },
+  pending: { username: "pendente", password: E2E_PASSWORD },
 } as const;
 
 export const E2E_PAST_CONTACT = "Cliente Passado";

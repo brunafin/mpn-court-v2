@@ -18,7 +18,10 @@ import {
   useCompanyCapabilities,
 } from "../../contexts/CompanyBrandingContext";
 import PendingBillingModal from "../PendingBillingModal";
-import { buttonClassName } from "../Button";
+import ReadOnlyAccessModal, {
+  ReadOnlyAccessBanner,
+  useReadOnlyNotice,
+} from "../ReadOnlyAccessModal";
 import { billingNavLabel, billingNavPath } from "../../utils/billingNav";
 import { MPN_SPLIT_TEAMS_URL } from "../../constants/legal";
 type NavItem = {
@@ -83,52 +86,11 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-function AccessBanners() {
-  const caps = useCompanyCapabilities();
-  const location = useLocation();
-
-  if (caps.accessMode === "read_only") {
-    const billingPath = billingNavPath(caps.entitlement);
-    const onBilling =
-      location.pathname.startsWith("/mensalidades") ||
-      location.pathname.startsWith("/planos");
-    return (
-      <div
-        role="status"
-        className="shrink-0 border-b border-warning-500/35 bg-warning-500/15 px-4 py-3"
-      >
-        <p className="text-base font-semibold text-text-light">
-          Mensalidade em aberto
-        </p>
-        <p className="mt-1 text-base text-text-light/70">
-          Dá para consultar a agenda normalmente. Reservar, cancelar e alterar
-          horários ficam pausados até o pagamento — a escrita volta na hora.
-          Enquanto isso, as quadras ficam fora do site e voltam sozinhas depois.
-        </p>
-        {!onBilling ? (
-          <Link
-            to={billingPath}
-            className={buttonClassName({
-              variant: "secondary",
-              size: "md",
-              className: "mt-3 inline-flex w-auto",
-              fullWidth: false,
-            })}
-          >
-            Quitar mensalidade
-          </Link>
-        ) : null}
-      </div>
-    );
-  }
-
-  return null;
-}
-
 function AppLayoutShell({ children }: AppLayoutProps) {
   const location = useLocation();
   const { companyName } = useCompanyBranding();
   const caps = useCompanyCapabilities();
+  const readOnlyNotice = useReadOnlyNotice();
   const navItems = buildNavItems(caps.entitlement, caps.ready);
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -197,9 +159,10 @@ function AppLayoutShell({ children }: AppLayoutProps) {
 
       <div className="mpn-page min-w-0">
         <Header />
-        <AccessBanners />
+        <ReadOnlyAccessBanner notice={readOnlyNotice} />
         {children}
       </div>
+      <ReadOnlyAccessModal notice={readOnlyNotice} />
       <PendingBillingModal />
     </div>
   );

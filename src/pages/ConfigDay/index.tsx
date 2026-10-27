@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineArrowBackIos } from "react-icons/md";
 import { useLoading } from "../../hooks/useLoading";
 import { IReservationItemProps } from "../Reservation/interface";
@@ -23,7 +23,7 @@ import { invalidateSchedulesDayCache } from "../../utils/schedulesDayCache";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 import { ChoiceCheck } from "../../components/ChoiceCheck";
 import { buttonClassName } from "../../components/Button";
-import { billingNavPath } from "../../utils/billingNav";
+import { BillingAccessNotices } from "../../components/ReadOnlyAccessModal";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 function parseIncomingDate(value: unknown): Date {
@@ -290,20 +290,9 @@ function ConfigDay() {
         </div>
       </header>
 
-      <section className="mpn-page-scroll mpn-scroll-end mx-auto w-full max-w-6xl px-3 pt-2 lg:px-8">
-        {!canMutate && caps.ready ? (
-          <p className="mb-3 rounded-xl bg-master-light px-3 py-3 text-base leading-5 text-text-light/70">
-            Os horários continuam visíveis. Para alterar a grade, quite a
-            mensalidade.{" "}
-            <Link
-              to={billingNavPath(caps.entitlement)}
-              className="font-semibold text-accent-blue-soft underline-offset-2 hover:underline"
-            >
-              Quitar mensalidade
-            </Link>
-          </p>
-        ) : null}
+      <BillingAccessNotices />
 
+      <section className="mpn-page-scroll mpn-scroll-end mx-auto w-full max-w-6xl px-3 pt-2 lg:px-8">
         {loadError ? (
           <EmptyState
             title="Não foi possível carregar o dia."

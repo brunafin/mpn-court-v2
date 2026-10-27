@@ -104,7 +104,7 @@ export function userFacingErrorMessage(error: unknown): string {
     return (
       message ||
       (code === 'ACCOUNT_READ_ONLY'
-        ? 'A agenda continua aberta para consulta. Para reservar ou alterar horários, quite a mensalidade em Planos e pagamentos.'
+        ? 'Mensalidade pendente. Regularize para voltar a ter o acesso completo.'
         : 'Seu teste grátis expirou. Contrate um plano para continuar usando a agenda.')
     );
   }

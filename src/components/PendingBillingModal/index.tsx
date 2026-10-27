@@ -1,74 +1,81 @@
 import { useCallback, useEffect, useState } from "react";
+import { BsX } from "react-icons/bs";
 import { Link, useLocation } from "react-router-dom";
-import {
-  BillingSummary,
-  getBillingSummary,
-} from "../../api/billing";
+import { getBillingSummary } from "../../api/billing";
 import { useCompanyPublicId } from "../../hooks/useCompanyPublicId";
-import { formatCurrencyBRL } from "../../utils/formatCurrency";
 import { buttonClassName } from "../Button";
 import { useCompanyCapabilities } from "../../contexts/CompanyBrandingContext";
 
-const DISMISS_PREFIX = "mpn_billing_dismiss_";
+const DISMISS_PREFIX = "mpn_billing_remind_";
 
-function isDueOrOverdue(dueDate: string | null): boolean {
-  if (!dueDate) return false;
-  const [y, m, d] = dueDate.split("-").map(Number);
-  if (!y || !m || !d) return false;
-  const due = new Date(y, m - 1, d);
-  const today = new Date();
-  const startDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-  const startToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  return startDue <= startToday;
+function formatBrDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return isoDate;
+  return `${day}/${month}/${year}`;
 }
 
 function PendingBillingModal() {
   const location = useLocation();
   const caps = useCompanyCapabilities();
   const companyPublicId = useCompanyPublicId();
-  const [summary, setSummary] = useState<BillingSummary | null>(null);
+  const [reminder, setReminder] = useState<{
+    paymentId: number;
+    dueDate: string;
+    suspendsOn: string;
+    daysAfterDue: number;
+  } | null>(null);
   const [open, setOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!companyPublicId) return;
-    if (caps.ready && !caps.canPayBilling) {
+    if (caps.ready && (caps.accessMode === "read_only" || !caps.canPayBilling)) {
+      setOpen(false);
+      return;
+    }
+    const onBilling =
+      location.pathname.startsWith("/mensalidades") ||
+      location.pathname.startsWith("/planos");
+    if (onBilling) {
       setOpen(false);
       return;
     }
     try {
       const data = await getBillingSummary(companyPublicId);
-      setSummary(data);
-      const payment = data.openPayment;
-      if (
-        data.isTrial ||
-        !payment ||
-        payment.paid ||
-        !isDueOrOverdue(payment.dueDate) ||
-        location.pathname.startsWith("/mensalidades") ||
-        location.pathname.startsWith("/planos")
-      ) {
+      const next = data.delinquencyReminder;
+      setReminder(next);
+      if (!next) {
         setOpen(false);
         return;
       }
       const dismissed =
-        sessionStorage.getItem(`${DISMISS_PREFIX}${payment.id}`) === "1";
+        localStorage.getItem(
+          `${DISMISS_PREFIX}${next.paymentId}_${next.daysAfterDue}`,
+        ) === "1";
       setOpen(!dismissed);
     } catch {
       // modal é best-effort
     }
-  }, [location.pathname, caps.ready, caps.canPayBilling, companyPublicId]);
+  }, [
+    location.pathname,
+    caps.ready,
+    caps.accessMode,
+    caps.canPayBilling,
+    companyPublicId,
+  ]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  if (!open || !summary?.openPayment) return null;
+  if (!open || !reminder) return null;
 
-  const payment = summary.openPayment;
+  const dismiss = () => {
+    localStorage.setItem(
+      `${DISMISS_PREFIX}${reminder.paymentId}_${reminder.daysAfterDue}`,
+      "1",
+    );
+    setOpen(false);
+  };
 
   return (
     <div
@@ -78,38 +85,45 @@ function PendingBillingModal() {
       aria-labelledby="pending-billing-title"
     >
       <div className="w-full max-w-md rounded-2xl bg-master p-5 shadow-2xl">
-        <p
-          id="pending-billing-title"
-          className="text-lg font-semibold text-text-light"
-        >
-          Mensalidade pendente
-        </p>
-        <p className="mt-2 text-base text-text-light/70">
-          Há uma mensalidade de {formatCurrencyBRL(payment.value)}
-          {payment.dueDate
-            ? ` com vencimento em ${payment.dueDate.split("-").reverse().join("/")}`
-            : ""}
-          . Você pode pagar agora via PIX.
-        </p>
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
-          <Link
-            to="/mensalidades"
-            className={`${buttonClassName({ variant: "primary", size: "md" })} text-center`}
-            onClick={() => setOpen(false)}
+        <div className="flex items-start justify-between gap-3">
+          <p
+            id="pending-billing-title"
+            className="text-lg font-bold text-text-light"
           >
-            Ver mensalidades
-          </Link>
+            Mensalidade pendente
+          </p>
           <button
             type="button"
-            className={buttonClassName({ variant: "ghost", size: "md" })}
-            onClick={() => {
-              sessionStorage.setItem(`${DISMISS_PREFIX}${payment.id}`, "1");
-              setOpen(false);
-            }}
+            onClick={dismiss}
+            aria-label="Fechar"
+            className="mpn-tap-solid flex size-11 shrink-0 items-center justify-center rounded-full bg-master-light text-text-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
-            Depois
+            <BsX size={24} aria-hidden />
           </button>
         </div>
+        <p className="mt-2 text-base leading-6 text-text-light/70">
+          Sua mensalidade do dia {formatBrDate(reminder.dueDate)} está em
+          aberto.
+        </p>
+        <p className="mt-3 text-base leading-6 text-text-light/70">
+          A partir de{" "}
+          <span className="font-bold text-text-light">
+            {formatBrDate(reminder.suspendsOn)}
+          </span>
+          , as ações de reservar, cancelar e alterar horários ficarão
+          temporariamente suspensas.
+        </p>
+        <p className="mt-3 text-base leading-6 text-text-light/70">
+          Após a confirmação do pagamento, tudo continua funcionando
+          normalmente.
+        </p>
+        <Link
+          to="/mensalidades"
+          className={`${buttonClassName({ variant: "primary", size: "md" })} mt-5 text-center`}
+          onClick={dismiss}
+        >
+          Regularizar pagamento
+        </Link>
       </div>
     </div>
   );
