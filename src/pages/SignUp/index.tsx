@@ -223,7 +223,9 @@ function SignUp() {
         password,
         acceptedTerms: true,
       });
-      navigate("/cadastro/codigo", { state: { email: normalizedEmail } });
+      navigate("/cadastro/codigo", {
+        state: { email: normalizedEmail, resendCooldownSeconds: 120 },
+      });
     } catch (error) {
       const status = (error as AxiosError)?.response?.status;
       const raw =

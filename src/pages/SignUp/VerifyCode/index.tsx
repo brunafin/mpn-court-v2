@@ -10,17 +10,44 @@ import { MPN_LOGO_URL } from "../../../constants/brand";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CODE_LENGTH = 6;
+const RESEND_COOLDOWN_SECONDS = 120;
 
 function apiMessage(error: unknown, fallback: string): string {
-  return (
-    (error as AxiosError<{ message?: string }>)?.response?.data?.message ||
-    fallback
-  );
+  const message = (
+    error as AxiosError<{ message?: string | string[] }>
+  )?.response?.data?.message;
+  return Array.isArray(message) ? message.join(" ") : message || fallback;
+}
+
+function retryAfterSeconds(error: unknown): number {
+  const response = error as AxiosError<{
+    message?: string | string[];
+    retryAfterSeconds?: number;
+  }>;
+  if (response.response?.status !== 429) return 0;
+
+  const retryAfter = response.response.data?.retryAfterSeconds;
+  const message = response.response.data?.message;
+  const legacyMatch =
+    typeof message === "string" ? message.match(/Aguarde\s+(\d+)s/i) : null;
+  const seconds =
+    typeof retryAfter === "number" ? retryAfter : Number(legacyMatch?.[1]);
+  if (!Number.isFinite(seconds) || seconds <= 0) return 0;
+  return Math.min(RESEND_COOLDOWN_SECONDS, Math.ceil(seconds));
+}
+
+function formatCooldown(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
 function SignUpVerifyCode() {
   const navigate = useNavigate();
   const location = useLocation();
+  const initialLocationState = location.state as
+    | { email?: string; resendCooldownSeconds?: number }
+    | null;
   const [email, setEmail] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState("");
   const [requestingCode, setRequestingCode] = useState(false);
@@ -29,7 +56,9 @@ function SignUpVerifyCode() {
   );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendCooldown, setResendCooldown] = useState(
+    initialLocationState?.resendCooldownSeconds ?? 0
+  );
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
@@ -129,10 +158,15 @@ function SignUpVerifyCode() {
     try {
       await resendCode(email);
       setDigits(Array.from({ length: CODE_LENGTH }, () => ""));
-      setResendCooldown(30);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
       inputsRef.current[0]?.focus();
     } catch (error) {
-      setError(apiMessage(error, "Não foi possível reenviar o código."));
+      const retryAfter = retryAfterSeconds(error);
+      if (retryAfter > 0) {
+        setResendCooldown(retryAfter);
+      } else {
+        setError(apiMessage(error, "Não foi possível reenviar o código."));
+      }
     }
   };
 
@@ -148,10 +182,16 @@ function SignUpVerifyCode() {
     try {
       await resendCode(normalizedEmail);
       setEmail(normalizedEmail);
-      setResendCooldown(30);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
       window.setTimeout(() => inputsRef.current[0]?.focus(), 50);
     } catch (error) {
-      setError(apiMessage(error, "Não foi possível enviar o código."));
+      const retryAfter = retryAfterSeconds(error);
+      if (retryAfter > 0) {
+        setEmail(normalizedEmail);
+        setResendCooldown(retryAfter);
+      } else {
+        setError(apiMessage(error, "Não foi possível enviar o código."));
+      }
     } finally {
       setRequestingCode(false);
     }
@@ -281,6 +321,12 @@ function SignUpVerifyCode() {
               ))}
             </div>
           </fieldset>
+
+          {resendCooldown > 0 && (
+            <p className="mt-4 text-center text-base text-danger-soft" role="status">
+              Você poderá reenviar o código em {formatCooldown(resendCooldown)}.
+            </p>
+          )}
 
           {error && (
             <p className="mt-4 text-center text-base text-danger-soft" role="alert">
